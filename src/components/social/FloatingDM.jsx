@@ -83,7 +83,21 @@ export default function FloatingDM({ user }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [convoMessages.length]);
 
-  // Drag logic
+  // Move mode: click anywhere on screen to place the widget
+  useEffect(() => {
+    if (!moveMode) return;
+    const onClick = (e) => {
+      setPosition({
+        x: Math.max(0, Math.min(window.innerWidth - 320, e.clientX - 28)),
+        y: Math.max(0, Math.min(window.innerHeight - 60, e.clientY - 28)),
+      });
+      setMoveMode(false);
+    };
+    window.addEventListener('click', onClick, true);
+    return () => window.removeEventListener('click', onClick, true);
+  }, [moveMode]);
+
+  // Drag logic (header drag still works too)
   const onMouseDown = (e) => {
     if (e.target.closest('button') || e.target.closest('input') || e.target.closest('form')) return;
     setDragging(true);
