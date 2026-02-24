@@ -15,7 +15,6 @@ import NotificationBell from '../components/social/NotificationBell';
 import DirectMessages from '../components/social/DirectMessages';
 import GoLiveModal from '../components/social/GoLiveModal';
 import UserProfileModal from '../components/social/UserProfileModal';
-import { AnimatePresence } from 'framer-motion';
 
 export default function Social() {
   const [user, setUser] = useState(null);
