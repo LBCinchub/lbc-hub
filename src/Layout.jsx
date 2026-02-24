@@ -127,9 +127,14 @@ export default function Layout({ children, currentPageName }) {
             <div className="hidden md:flex items-center gap-4">
               {user ? (
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-sm font-medium">
-                    {user.full_name?.[0] || user.email?.[0]?.toUpperCase()}
-                  </div>
+                  <button onClick={() => setShowOwnProfile(true)}>
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={user.avatar_url} />
+                      <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-sm font-medium">
+                        {user.full_name?.[0] || user.email?.[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
                 </div>
               ) : (
                 <button 
