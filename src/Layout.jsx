@@ -190,6 +190,9 @@ export default function Layout({ children, currentPageName }) {
         />
       )}
 
+      {/* Floating DM */}
+      {user && <FloatingDM user={user} />}
+
       {/* Main Content */}
       <main className="pt-16">
         {children}
