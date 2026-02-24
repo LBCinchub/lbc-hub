@@ -80,6 +80,10 @@ export default function Social() {
     setDmTarget({ email, name });
   };
 
+  const handleViewProfile = (targetUser) => {
+    setProfileTarget(targetUser);
+  };
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
