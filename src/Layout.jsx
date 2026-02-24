@@ -5,6 +5,7 @@ import { Home, Users, ShoppingBag, Car, Plane, Briefcase, Wrench, Menu, X } from
 import { base44 } from '@/api/base44Client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import UserProfileModal from './components/social/UserProfileModal';
+import FloatingDM from './components/social/FloatingDM';
 
 const navItems = [
   { name: 'Home', icon: Home, page: 'Home' },
