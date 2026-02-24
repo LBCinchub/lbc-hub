@@ -8,6 +8,8 @@ const navItems = [
   { name: 'Home', icon: Home, page: 'Home' },
   { name: 'Social', icon: Users, page: 'Social' },
   { name: 'Marketplace', icon: ShoppingBag, page: 'Marketplace' },
+  { name: 'Jobs', icon: Briefcase, page: 'Jobs' },
+  { name: 'Services', icon: Wrench, page: 'Services' },
   { name: 'Riding', icon: Car, page: 'Riding' },
   { name: 'Travel', icon: Plane, page: 'Travel' },
 ];
