@@ -187,6 +187,13 @@ export default function FloatingDM({ user }) {
                 {!activeConvo && (
                   <button onClick={() => { setComposing(true); setActiveConvo(null); }} className="text-xs text-indigo-400 hover:text-indigo-300 px-2">+ New</button>
                 )}
+                <button
+                  onClick={() => { setOpen(false); setMinimized(false); setMoveMode(true); }}
+                  className="p-1 rounded hover:bg-white/10 text-zinc-400"
+                  title="Move widget"
+                >
+                  <Move className="w-3.5 h-3.5" />
+                </button>
                 <button onClick={() => setMinimized(m => !m)} className="p-1 rounded hover:bg-white/10 text-zinc-400">
                   <Minus className="w-3.5 h-3.5" />
                 </button>
