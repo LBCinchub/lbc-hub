@@ -241,6 +241,17 @@ export default function Social() {
         onClose={() => setGoLiveOpen(false)}
         onStartLive={handleStartLive}
       />
+
+      {/* User Profile Modal */}
+      <AnimatePresence>
+        {profileTarget && (
+          <UserProfileModal
+            targetUser={profileTarget}
+            currentUser={user}
+            onClose={() => setProfileTarget(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
