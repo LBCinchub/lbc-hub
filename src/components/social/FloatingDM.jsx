@@ -128,20 +128,28 @@ export default function FloatingDM({ user }) {
     >
       {/* Floating button (when closed) */}
       {!open && (
-        <motion.button
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          onClick={() => setOpen(true)}
-          className="relative w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-xl flex items-center justify-center hover:scale-110 transition-transform cursor-pointer"
-          onMouseDown={onMouseDown}
-        >
-          <Mail className="w-6 h-6 text-white" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center font-bold">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
-        </motion.button>
+        <div className="flex flex-col items-center gap-1">
+          <motion.button
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            onClick={() => !moveMode && setOpen(true)}
+            className={`relative w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-xl flex items-center justify-center transition-transform cursor-pointer ${moveMode ? 'ring-4 ring-yellow-400 scale-110' : 'hover:scale-110'}`}
+          >
+            <Mail className="w-6 h-6 text-white" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center font-bold">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </motion.button>
+          <button
+            onClick={() => setMoveMode(m => !m)}
+            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs shadow transition-colors ${moveMode ? 'bg-yellow-400 text-black' : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'}`}
+            title="Move — then click anywhere to place"
+          >
+            <Move className="w-3.5 h-3.5" />
+          </button>
+        </div>
       )}
 
       {/* Panel */}
