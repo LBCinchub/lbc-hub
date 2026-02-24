@@ -147,6 +147,7 @@ export default function Social() {
                     post={post}
                     user={user}
                     onDmUser={handleDmUser}
+                    onViewProfile={handleViewProfile}
                   />
                 ))
               )}
