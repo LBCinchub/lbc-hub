@@ -180,6 +180,15 @@ export default function Layout({ children, currentPageName }) {
         )}
       </nav>
 
+      {/* Own Profile Modal */}
+      {showOwnProfile && user && (
+        <UserProfileModal
+          targetUser={user}
+          currentUser={user}
+          onClose={() => setShowOwnProfile(false)}
+        />
+      )}
+
       {/* Main Content */}
       <main className="pt-16">
         {children}
