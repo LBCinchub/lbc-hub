@@ -92,8 +92,9 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
 
       <div className="p-6">
         <div className="flex items-start gap-4">
-          <button onClick={() => onDmUser?.(post.author_email, post.author_name)}>
+          <button onClick={() => onViewProfile?.({ email: post.author_email, full_name: post.author_name, avatar_url: post.author_avatar })}>
             <Avatar className="w-12 h-12">
+              <AvatarImage src={post.author_avatar} />
               <AvatarFallback className="bg-gradient-to-br from-pink-500 to-rose-600 text-white font-medium">
                 {post.author_name?.[0]?.toUpperCase() || '?'}
               </AvatarFallback>
@@ -103,7 +104,7 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
             <div className="flex items-center justify-between mb-2">
               <div>
                 <button
-                  onClick={() => onDmUser?.(post.author_email, post.author_name)}
+                  onClick={() => onViewProfile?.({ email: post.author_email, full_name: post.author_name, avatar_url: post.author_avatar })}
                   className="font-semibold hover:text-indigo-400 transition-colors"
                 >
                   {post.author_name || 'Anonymous'}
