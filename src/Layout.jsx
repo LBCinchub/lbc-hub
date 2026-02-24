@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Home, Users, ShoppingBag, Car, Plane, Menu, X } from 'lucide-react';
+import { Home, Users, ShoppingBag, Car, Plane, Briefcase, Wrench, Menu, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const navItems = [
