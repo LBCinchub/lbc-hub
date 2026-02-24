@@ -113,7 +113,7 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
     setUploading(false);
   };
 
-  const visibilityIcon = { public: Eye, followers_only: Users, private: Lock };
+  const visibilityIcon = { public: Eye, followers_only: EyeOff, private: Lock };
   const displayUser = isOwnProfile && editing
     ? { ...targetUser, ...editForm }
     : targetUser;
