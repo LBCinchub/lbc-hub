@@ -19,6 +19,7 @@ const navItems = [
 export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [showOwnProfile, setShowOwnProfile] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
