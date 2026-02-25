@@ -115,6 +115,20 @@ export default function FloatingDM({ user }) {
     if (!hasDragged.current) setOpen(true);
   };
 
+  useEffect(() => {
+    if (!open) return;
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('[data-dm-panel]')) {
+        setOpen(false);
+        setMinimized(false);
+        setActiveConvo(null);
+        setComposing(false);
+      }
+    };
+    setTimeout(() => document.addEventListener('mousedown', handleOutsideClick), 0);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [open]);
+
   if (!user) return null;
 
   const initials = (name) => name?.[0]?.toUpperCase() || '?';
