@@ -177,6 +177,7 @@ export default function FloatingDM({ user }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 16 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            data-dm-panel
             className="w-[340px] rounded-3xl flex flex-col overflow-hidden"
             style={{
               background: 'rgba(13, 13, 20, 0.96)',
