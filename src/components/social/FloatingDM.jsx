@@ -91,28 +91,30 @@ export default function FloatingDM({ user }) {
 
   const startDrag = (e) => {
     if (e.button !== 0) return;
-    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('form')) return;
     e.preventDefault();
-    dragging.current = true;
+    e.stopPropagation();
     hasDragged.current = false;
     dragStart.current = { mx: e.clientX, my: e.clientY, px: position.x, py: position.y };
 
     const onMove = (ev) => {
       const dx = ev.clientX - dragStart.current.mx;
       const dy = ev.clientY - dragStart.current.my;
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasDragged.current = true;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) hasDragged.current = true;
       setPosition({
         x: Math.max(0, Math.min(window.innerWidth - 64, dragStart.current.px + dx)),
         y: Math.max(0, Math.min(window.innerHeight - 64, dragStart.current.py + dy)),
       });
     };
     const onUp = () => {
-      dragging.current = false;
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
+  };
+
+  const handleButtonClick = () => {
+    if (!hasDragged.current) setOpen(true);
   };
 
   if (!user) return null;
