@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 export default function FloatingDM({ user }) {
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
+  const [activeTab, setActiveTab] = useState('direct'); // 'direct' | 'community' | 'marketplace' | 'requests'
   const [activeConvo, setActiveConvo] = useState(null);
   const [activeName, setActiveName] = useState('');
   const [newRecipient, setNewRecipient] = useState('');
