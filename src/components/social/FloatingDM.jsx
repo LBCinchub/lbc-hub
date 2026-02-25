@@ -35,6 +35,36 @@ export default function FloatingDM({ user }) {
     refetchInterval: 3000,
   });
 
+  const { data: communityMessages = [] } = useQuery({
+    queryKey: ['chatMessages'],
+    queryFn: () => base44.entities.ChatMessage.list('-created_date', 50),
+    enabled: !!user?.email && activeTab === 'community',
+    refetchInterval: 5000,
+  });
+
+  const { data: marketplaceInquiries = [] } = useQuery({
+    queryKey: ['buyerInquiries', user?.email],
+    queryFn: async () => {
+      const asBuyer = await base44.entities.BuyerInquiry.filter({ buyer_email: user.email }, '-created_date', 50);
+      const asSeller = await base44.entities.BuyerInquiry.filter({ seller_email: user.email }, '-created_date', 50);
+      return [...asBuyer, ...asSeller].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    },
+    enabled: !!user?.email && activeTab === 'marketplace',
+    refetchInterval: 5000,
+  });
+
+  const { data: serviceRequests = [] } = useQuery({
+    queryKey: ['serviceRequests', user?.email],
+    queryFn: () => base44.entities.ServiceBooking.filter({ email: user.email }, '-created_date', 50),
+    enabled: !!user?.email && activeTab === 'requests',
+    refetchInterval: 5000,
+  });
+
+  const sendCommunityMutation = useMutation({
+    mutationFn: (content) => base44.entities.ChatMessage.create({ content, author_name: user.full_name || user.email, author_email: user.email }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['chatMessages'] }); setText(''); }
+  });
+
   const threads = {};
   allMessages.forEach(msg => {
     const other = msg.from_email === user.email ? msg.to_email : msg.from_email;
