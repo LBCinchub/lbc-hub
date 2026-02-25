@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Send, X, ArrowLeft, Minus, Move } from 'lucide-react';
+import { Mail, Send, X, ArrowLeft, Minus } from 'lucide-react';
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,9 +17,9 @@ export default function FloatingDM({ user }) {
   const [text, setText] = useState('');
   const [composing, setComposing] = useState(false);
   const [position, setPosition] = useState({ x: window.innerWidth - 340, y: window.innerHeight - 520 });
-  const [dragging, setDragging] = useState(false);
-  const [moveMode, setMoveMode] = useState(false);
+  const dragging = useRef(false);
   const dragStart = useRef(null);
+  const hasDragged = useRef(false);
   const bottomRef = useRef(null);
   const queryClient = useQueryClient();
 
@@ -83,73 +83,56 @@ export default function FloatingDM({ user }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [convoMessages.length]);
 
-  // Move mode: click anywhere on screen to place the widget
-  useEffect(() => {
-    if (!moveMode) return;
-    const onClick = (e) => {
-      setPosition({
-        x: Math.max(0, Math.min(window.innerWidth - 320, e.clientX - 28)),
-        y: Math.max(0, Math.min(window.innerHeight - 60, e.clientY - 28)),
-      });
-      setMoveMode(false);
-    };
-    window.addEventListener('click', onClick, true);
-    return () => window.removeEventListener('click', onClick, true);
-  }, [moveMode]);
-
-  // Drag logic (header drag still works too)
-  const onMouseDown = (e) => {
-    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('form')) return;
-    setDragging(true);
+  // Universal drag handlers
+  const startDrag = (e) => {
+    // Only drag on left mouse button, not on interactive elements
+    if (e.button !== 0) return;
+    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('form')) return;
+    e.preventDefault();
+    dragging.current = true;
+    hasDragged.current = false;
     dragStart.current = { mx: e.clientX, my: e.clientY, px: position.x, py: position.y };
-  };
 
-  useEffect(() => {
-    if (!dragging) return;
-    const onMove = (e) => {
-      const dx = e.clientX - dragStart.current.mx;
-      const dy = e.clientY - dragStart.current.my;
+    const onMove = (ev) => {
+      const dx = ev.clientX - dragStart.current.mx;
+      const dy = ev.clientY - dragStart.current.my;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasDragged.current = true;
       setPosition({
-        x: Math.max(0, Math.min(window.innerWidth - 320, dragStart.current.px + dx)),
-        y: Math.max(0, Math.min(window.innerHeight - 60, dragStart.current.py + dy)),
+        x: Math.max(0, Math.min(window.innerWidth - 64, dragStart.current.px + dx)),
+        y: Math.max(0, Math.min(window.innerHeight - 64, dragStart.current.py + dy)),
       });
     };
-    const onUp = () => setDragging(false);
+
+    const onUp = () => {
+      dragging.current = false;
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
-  }, [dragging]);
+  };
 
   if (!user) return null;
 
   return (
-    <div
-      style={{ position: 'fixed', left: position.x, top: position.y, zIndex: 9999 }}
-    >
+    <div style={{ position: 'fixed', left: position.x, top: position.y, zIndex: 9999 }}>
       {/* Floating button (when closed) */}
       {!open && (
-        <div className="flex flex-col items-center gap-1">
-          <motion.button
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            onClick={() => !moveMode && setOpen(true)}
-            className={`relative w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-xl flex items-center justify-center transition-transform cursor-pointer ${moveMode ? 'ring-4 ring-yellow-400 scale-110' : 'hover:scale-110'}`}
-          >
-            <Mail className="w-6 h-6 text-white" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center font-bold">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </motion.button>
-          <button
-            onClick={() => setMoveMode(m => !m)}
-            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs shadow transition-colors ${moveMode ? 'bg-yellow-400 text-black' : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'}`}
-            title="Move — then click anywhere to place"
-          >
-            <Move className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        <motion.button
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          onMouseDown={startDrag}
+          onClick={() => { if (!hasDragged.current) setOpen(true); }}
+          className="relative w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-xl flex items-center justify-center hover:scale-110 transition-transform cursor-grab active:cursor-grabbing select-none"
+        >
+          <Mail className="w-6 h-6 text-white" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 text-white text-xs flex items-center justify-center font-bold">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+        </motion.button>
       )}
 
       {/* Panel */}
@@ -164,7 +147,7 @@ export default function FloatingDM({ user }) {
           >
             {/* Draggable Header */}
             <div
-              onMouseDown={onMouseDown}
+              onMouseDown={startDrag}
               className="flex items-center justify-between px-4 py-3 border-b border-white/10 cursor-grab active:cursor-grabbing select-none"
               style={{ background: 'rgba(99,102,241,0.15)' }}
             >
@@ -187,13 +170,6 @@ export default function FloatingDM({ user }) {
                 {!activeConvo && (
                   <button onClick={() => { setComposing(true); setActiveConvo(null); }} className="text-xs text-indigo-400 hover:text-indigo-300 px-2">+ New</button>
                 )}
-                <button
-                  onClick={() => { setOpen(false); setMinimized(false); setMoveMode(true); }}
-                  className="p-1 rounded hover:bg-white/10 text-zinc-400"
-                  title="Move widget"
-                >
-                  <Move className="w-3.5 h-3.5" />
-                </button>
                 <button onClick={() => setMinimized(m => !m)} className="p-1 rounded hover:bg-white/10 text-zinc-400">
                   <Minus className="w-3.5 h-3.5" />
                 </button>
