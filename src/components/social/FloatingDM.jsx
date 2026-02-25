@@ -323,8 +323,89 @@ export default function FloatingDM({ user }) {
                     </div>
                   )}
 
-                  {/* Thread list */}
-                  {!activeConvo && !composing && (
+                  {/* Community Tab */}
+                  {activeTab === 'community' && !activeConvo && (
+                    <div className="flex flex-col" style={{ maxHeight: 400 }}>
+                      <div className="overflow-y-auto flex-1 px-3 py-2 space-y-2" style={{ maxHeight: 320 }}>
+                        {communityMessages.length === 0 ? (
+                          <div className="py-10 flex flex-col items-center gap-2">
+                            <Users className="w-8 h-8 text-zinc-600" />
+                            <p className="text-xs text-zinc-500">No community messages yet</p>
+                          </div>
+                        ) : [...communityMessages].reverse().map(msg => {
+                          const mine = msg.author_email === user.email;
+                          return (
+                            <div key={msg.id} className={`flex ${mine ? 'justify-end' : 'justify-start'} gap-2`}>
+                              {!mine && (
+                                <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${avatarGradient(msg.author_email)} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 mt-0.5`}>
+                                  {initials(msg.author_name)}
+                                </div>
+                              )}
+                              <div className="max-w-[75%]">
+                                {!mine && <p className="text-[10px] text-zinc-500 mb-0.5 ml-1">{msg.author_name}</p>}
+                                <div className={`rounded-2xl px-3 py-2 text-xs leading-relaxed ${mine ? 'text-white rounded-br-sm' : 'text-zinc-100 rounded-bl-sm'}`}
+                                  style={mine ? { background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' } : { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                  {msg.content}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <form onSubmit={e => { e.preventDefault(); if (text.trim()) sendCommunityMutation.mutate(text); }} className="px-3 py-2 flex gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                        <input value={text} onChange={e => setText(e.target.value)} placeholder="Message community..." className="flex-1 bg-white/5 rounded-xl px-3 py-1.5 text-sm text-white placeholder:text-zinc-600 outline-none border border-white/8" />
+                        <button type="submit" disabled={!text.trim()} className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-30" style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
+                          <Send className="w-3.5 h-3.5 text-white" />
+                        </button>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* Marketplace Tab */}
+                  {activeTab === 'marketplace' && !activeConvo && (
+                    <div className="overflow-y-auto" style={{ maxHeight: 360 }}>
+                      {marketplaceInquiries.length === 0 ? (
+                        <div className="py-10 flex flex-col items-center gap-2">
+                          <ShoppingBag className="w-8 h-8 text-zinc-600" />
+                          <p className="text-xs text-zinc-500">No marketplace messages</p>
+                        </div>
+                      ) : marketplaceInquiries.map(inq => (
+                        <div key={inq.id} className="px-4 py-3 hover:bg-white/[0.03] transition-colors" style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <p className="text-xs font-semibold text-white truncate">{inq.product_name || 'Product Inquiry'}</p>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${inq.status === 'replied' ? 'bg-emerald-500/20 text-emerald-400' : inq.status === 'closed' ? 'bg-zinc-700 text-zinc-500' : 'bg-indigo-500/20 text-indigo-400'}`}>{inq.status}</span>
+                          </div>
+                          <p className="text-xs text-zinc-400 line-clamp-2">{inq.message}</p>
+                          {inq.reply && <p className="text-xs text-indigo-300 mt-1 italic">↳ {inq.reply}</p>}
+                          <p className="text-[10px] text-zinc-600 mt-1">{inq.buyer_email === user.email ? `To: ${inq.seller_email}` : `From: ${inq.buyer_name || inq.buyer_email}`}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Requests Tab */}
+                  {activeTab === 'requests' && !activeConvo && (
+                    <div className="overflow-y-auto" style={{ maxHeight: 360 }}>
+                      {serviceRequests.length === 0 ? (
+                        <div className="py-10 flex flex-col items-center gap-2">
+                          <Bell className="w-8 h-8 text-zinc-600" />
+                          <p className="text-xs text-zinc-500">No service requests</p>
+                        </div>
+                      ) : serviceRequests.map(req => (
+                        <div key={req.id} className="px-4 py-3 hover:bg-white/[0.03] transition-colors" style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <p className="text-xs font-semibold text-white truncate">{req.service_category}</p>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0 ${req.status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-400' : req.status === 'completed' ? 'bg-zinc-700 text-zinc-400' : 'bg-amber-500/20 text-amber-400'}`}>{req.status}</span>
+                          </div>
+                          {req.message && <p className="text-xs text-zinc-400 line-clamp-2">{req.message}</p>}
+                          <p className="text-[10px] text-zinc-600 mt-1">{format(new Date(req.created_date), 'MMM d, h:mm a')}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Thread list (Direct tab) */}
+                  {activeTab === 'direct' && !activeConvo && !composing && (
                     <div className="overflow-y-auto" style={{ maxHeight: 360 }}>
                       {threadList.length === 0 ? (
                         <div className="py-12 flex flex-col items-center gap-3">
