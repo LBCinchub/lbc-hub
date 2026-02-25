@@ -91,8 +91,6 @@ export default function FloatingDM({ user }) {
 
   const startDrag = (e) => {
     if (e.button !== 0) return;
-    e.preventDefault();
-    e.stopPropagation();
     hasDragged.current = false;
     dragStart.current = { mx: e.clientX, my: e.clientY, px: position.x, py: position.y };
 
