@@ -449,8 +449,8 @@ export default function FloatingDM({ user }) {
                     </div>
                   )}
 
-                  {/* Conversation */}
-                  {(activeConvo || composing) && (
+                  {/* Conversation (Direct tab) */}
+                  {activeTab === 'direct' && (activeConvo || composing) && (
                     <>
                       <div
                         className="overflow-y-auto px-4 py-3 space-y-2"
