@@ -253,7 +253,7 @@ export default function FloatingDM({ user }) {
                 )}
               </div>
               <div className="flex items-center gap-0.5" onMouseDown={e => e.stopPropagation()}>
-                {!activeConvo && (
+                {!activeConvo && activeTab === 'direct' && (
                   <button
                     onClick={() => { setComposing(true); setActiveConvo(null); }}
                     className="w-7 h-7 rounded-full bg-indigo-500/20 hover:bg-indigo-500/40 flex items-center justify-center transition-colors"
@@ -276,6 +276,28 @@ export default function FloatingDM({ user }) {
                 </button>
               </div>
             </div>
+
+            {/* Tabs */}
+            {!activeConvo && (
+              <div className="flex border-b select-none" style={{ borderColor: 'rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.2)' }} onMouseDown={e => e.stopPropagation()}>
+                {[
+                  { id: 'direct', icon: Mail, label: 'DMs' },
+                  { id: 'community', icon: Users, label: 'Community' },
+                  { id: 'marketplace', icon: ShoppingBag, label: 'Market' },
+                  { id: 'requests', icon: Bell, label: 'Requests' },
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => { setActiveTab(tab.id); setComposing(false); }}
+                    className={`flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors ${activeTab === tab.id ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-zinc-600 hover:text-zinc-400'}`}
+                    style={{ borderBottomColor: activeTab === tab.id ? '#6366f1' : 'transparent' }}
+                  >
+                    <tab.icon className="w-3.5 h-3.5" />
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <AnimatePresence>
               {!minimized && (
