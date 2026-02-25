@@ -141,7 +141,7 @@ export default function FloatingDM({ user }) {
           animate={{ scale: 1 }}
           whileHover={{ scale: 1.08 }}
           onMouseDown={startDrag}
-          onClick={() => { if (!hasDragged.current) setOpen(true); }}
+          onClick={handleButtonClick}
           className="relative w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
           style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 60%, #a855f7 100%)', boxShadow: '0 8px 32px rgba(99,102,241,0.45)' }}
         >
