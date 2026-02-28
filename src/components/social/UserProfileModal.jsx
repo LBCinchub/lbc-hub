@@ -128,6 +128,7 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
     setUploadingCover(false);
   };
 
+  // visibility icon map
   const visibilityIcon = { public: Eye, followers_only: EyeOff, private: Lock };
 
   const canViewContent = () => {
