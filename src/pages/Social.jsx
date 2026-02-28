@@ -233,6 +233,10 @@ export default function Social() {
                 </div>
               </ScrollArea>
 
+              {user && (
+                <SuggestedPosts user={user} allPosts={posts} onViewProfile={handleViewProfile} />
+              )}
+
               {user ? (
                 <form onSubmit={handleSendChat} className="p-4 border-t border-white/10">
                   <div className="flex items-center gap-2">
