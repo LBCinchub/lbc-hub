@@ -256,6 +256,24 @@ export default function FloatingDM({ user }) {
                 )}
               </div>
               <div className="flex items-center gap-0.5" onMouseDown={e => e.stopPropagation()}>
+                {activeConvo && !callState && (
+                  <>
+                    <button
+                      onClick={() => setCallState({ type: 'audio', status: 'calling' })}
+                      className="w-7 h-7 rounded-full bg-emerald-500/20 hover:bg-emerald-500/40 flex items-center justify-center transition-colors"
+                      title="Voice call"
+                    >
+                      <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                    </button>
+                    <button
+                      onClick={() => setCallState({ type: 'video', status: 'calling' })}
+                      className="w-7 h-7 rounded-full bg-blue-500/20 hover:bg-blue-500/40 flex items-center justify-center transition-colors"
+                      title="Video call"
+                    >
+                      <Video className="w-3.5 h-3.5 text-blue-400" />
+                    </button>
+                  </>
+                )}
                 {!activeConvo && activeTab === 'direct' && (
                   <button
                     onClick={() => { setComposing(true); setActiveConvo(null); }}
