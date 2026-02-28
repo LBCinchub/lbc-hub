@@ -61,9 +61,42 @@ export default function FloatingDM({ user }) {
     refetchInterval: 5000,
   });
 
+  const isAdmin = user?.role === 'admin';
+
+  const { data: mutedUsers = [] } = useQuery({
+    queryKey: ['mutedUsers'],
+    queryFn: () => base44.entities.MutedUser.list(),
+    enabled: !!user?.email,
+  });
+
+  const mutedEmails = mutedUsers.map(m => m.email);
+
   const sendCommunityMutation = useMutation({
     mutationFn: (content) => base44.entities.ChatMessage.create({ content, author_name: user.full_name || user.email, author_email: user.email, author_avatar: user.avatar_url || '' }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['chatMessages'] }); setText(''); }
+  });
+
+  const deleteMessageMutation = useMutation({
+    mutationFn: (id) => base44.entities.ChatMessage.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chatMessages'] }),
+  });
+
+  const pinMessageMutation = useMutation({
+    mutationFn: ({ id, pinned }) => base44.entities.ChatMessage.update(id, { is_pinned: pinned }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chatMessages'] }),
+  });
+
+  const muteUserMutation = useMutation({
+    mutationFn: (email) => base44.entities.MutedUser.create({ email, muted_by: user.email }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mutedUsers'] }),
+  });
+
+  const unmuteUserMutation = useMutation({
+    mutationFn: (email) => {
+      const record = mutedUsers.find(m => m.email === email);
+      return record ? base44.entities.MutedUser.delete(record.id) : Promise.resolve();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mutedUsers'] }),
   });
 
   const threads = {};
