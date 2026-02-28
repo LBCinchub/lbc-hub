@@ -370,8 +370,8 @@ export default function FloatingDM({ user }) {
                           return (
                             <div key={msg.id} className={`flex ${mine ? 'justify-end' : 'justify-start'} gap-2`}>
                               {!mine && (
-                                <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${avatarGradient(msg.author_email)} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 mt-0.5`}>
-                                  {initials(msg.author_name)}
+                                <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${avatarGradient(msg.author_email)} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 mt-0.5 overflow-hidden`}>
+                                  {msg.author_avatar ? <img src={msg.author_avatar} className="w-full h-full object-cover" /> : initials(msg.author_name)}
                                 </div>
                               )}
                               <div className="max-w-[75%]">

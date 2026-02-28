@@ -58,6 +58,7 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
       content,
       author_name: user.full_name || user.email,
       author_email: user.email,
+      author_avatar: user.avatar_url || '',
     }),
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['comments', post.id] });
