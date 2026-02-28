@@ -455,7 +455,7 @@ export default function FloatingDM({ user }) {
                         return (
                           <button
                             key={thread.email}
-                            onClick={() => { setActiveConvo(thread.email); setActiveName(thread.name); }}
+                            onClick={() => { setActiveConvo(thread.email); setActiveName(thread.name); markDmsReadMutation.mutate(thread.email); }}
                             className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/[0.04] transition-colors text-left group"
                             style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}
                           >
