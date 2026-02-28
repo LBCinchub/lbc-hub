@@ -109,6 +109,23 @@ export default function CreatePost({ user, onGoLive }) {
             )}
           </AnimatePresence>
 
+          {/* Topic Picker */}
+          <AnimatePresence>
+            {showTopics && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                <TopicSelector selected={selectedTopics} onChange={setSelectedTopics} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {selectedTopics.length > 0 && !showTopics && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {selectedTopics.map(t => (
+                <span key={t} className="px-2 py-0.5 rounded-full bg-indigo-600/30 text-indigo-300 text-xs">#{t}</span>
+              ))}
+            </div>
+          )}
+
           <div className="flex items-center justify-between mt-4">
             <div className="flex items-center gap-1">
               <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handleFileSelect(e.target.files, 'image')} />
@@ -121,6 +138,9 @@ export default function CreatePost({ user, onGoLive }) {
               </Button>
               <Button variant="ghost" size="sm" onClick={onGoLive} className="text-rose-400 hover:text-rose-300 hover:bg-white/10 text-sm gap-1.5">
                 <Radio className="w-4 h-4" /> Go Live
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowTopics(s => !s)} className={`text-sm gap-1.5 ${showTopics ? 'text-indigo-400 bg-indigo-500/10' : 'text-zinc-400 hover:text-white hover:bg-white/10'}`}>
+                <Tag className="w-4 h-4" /> Topics
               </Button>
             </div>
             <Button
