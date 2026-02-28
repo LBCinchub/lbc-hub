@@ -11,7 +11,25 @@ import { format } from 'date-fns';
 export default function PostCard({ post, user, onDmUser, onViewProfile }) {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const [summary, setSummary] = useState('');
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
   const queryClient = useQueryClient();
+
+  const isLongPost = (post.content?.length || 0) > 180;
+
+  const handleSummarize = async () => {
+    if (summary) { setShowSummary(s => !s); return; }
+    setSummaryLoading(true);
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Summarize this social media post in 1-2 concise sentences (TL;DR). Post: "${post.content}"`,
+      });
+      setSummary(result || '');
+      setShowSummary(true);
+    } catch { setSummary('Could not summarize.'); setShowSummary(true); }
+    setSummaryLoading(false);
+  };
 
   const { data: followedRecord = [] } = useQuery({
     queryKey: ['followedPost', post.id, user?.email],
