@@ -290,15 +290,15 @@ export default function Travel() {
                 {/* Photo Thumbnails Row */}
                 <div className="flex gap-1.5 p-2 bg-black/40 overflow-x-auto">
                   {Array.from({ length: galleryCount }).map((_, i) => (
-                    <button key={i} onClick={() => setActivePhotoIdx(i)}
-                      className={`flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all duration-200 ${i === activePhotoIdx ? 'border-indigo-500' : 'border-transparent opacity-50 hover:opacity-80'}`}
-                      style={{ width: 72, height: 50 }}>
-                      <img
-                        src={getDestPhoto(travelData.destination_name, i)}
-                        alt={travelData.photo_spots?.[i] || travelData.destination_name}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
+                  <button key={i} onClick={() => setActivePhotoIdx(i)}
+                  className={`flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all duration-200 ${i === activePhotoIdx ? 'border-indigo-500' : 'border-transparent opacity-50 hover:opacity-80'}`}
+                  style={{ width: 72, height: 50 }}>
+                  <img
+                    src={getPhoto(i)}
+                    alt={travelData.photo_spots?.[i] || travelData.destination_name}
+                    className="w-full h-full object-cover"
+                  />
+                  </button>
                   ))}
                 </div>
 
