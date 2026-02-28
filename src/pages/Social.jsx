@@ -215,8 +215,21 @@ export default function Social() {
             })()}
           </div>
 
-          {/* Sidebar - Live Chat */}
-          <div className="lg:col-span-1">
+          {/* Sidebar */}
+          <div className="lg:col-span-1 space-y-4">
+            {/* Suggested Posts */}
+            {user && (
+              <motion.div
+                className="glass rounded-2xl overflow-hidden"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <SuggestedPosts user={user} allPosts={posts} onViewProfile={handleViewProfile} />
+              </motion.div>
+            )}
+
+            {/* Community Chat */}
             <motion.div
               className="glass rounded-2xl overflow-hidden sticky top-24"
               initial={{ opacity: 0, x: 20 }}
@@ -232,7 +245,7 @@ export default function Social() {
                 </div>
               </div>
 
-              <ScrollArea className="h-[400px] p-4">
+              <ScrollArea className="h-[340px] p-4">
                 <div className="space-y-4">
                   {[...chatMessages].reverse().map((msg) => (
                     <div
@@ -261,10 +274,6 @@ export default function Social() {
                   <div ref={chatEndRef} />
                 </div>
               </ScrollArea>
-
-              {user && (
-                <SuggestedPosts user={user} allPosts={posts} onViewProfile={handleViewProfile} />
-              )}
 
               {user ? (
                 <form onSubmit={handleSendChat} className="p-4 border-t border-white/10">
