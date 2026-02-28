@@ -218,25 +218,56 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
               </div>
             )}
 
+            {/* Reactions */}
+            {(post.reactions && Object.keys(post.reactions).length > 0) && (
+              <div className="flex items-center gap-1.5 flex-wrap mb-3 pb-2 border-b border-white/5">
+                {Object.entries(post.reactions).map(([emoji, users]) => {
+                  const userReacted = users?.includes(user?.email);
+                  return (
+                    <button
+                      key={emoji}
+                      onClick={() => user && toggleReactionMutation.mutate(emoji)}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all ${
+                        userReacted
+                          ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/50'
+                          : 'bg-white/5 text-zinc-400 hover:bg-white/10 border border-white/10'
+                      }`}
+                    >
+                      <span>{emoji}</span>
+                      <span>{users?.length || 0}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Actions */}
-            <div className="flex items-center gap-6">
-              <button
-                onClick={() => user && likeMutation.mutate()}
-                className={`flex items-center gap-2 transition-colors ${liked ? 'text-rose-400' : 'text-zinc-400 hover:text-rose-400'}`}
-              >
-                <Heart className={`w-5 h-5 ${liked ? 'fill-rose-400' : ''}`} />
-                <span className="text-sm">{post.likes || 0}</span>
-              </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1">
+                {reactionEmojis.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => user && toggleReactionMutation.mutate(emoji)}
+                    className="p-2 rounded-lg hover:bg-white/5 text-lg transition-all"
+                    title={`React with ${emoji}`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+
               <button
                 onClick={() => setShowComments(s => !s)}
-                className="flex items-center gap-2 text-zinc-400 hover:text-indigo-400 transition-colors"
+                className="flex items-center gap-2 text-zinc-400 hover:text-indigo-400 transition-colors ml-2"
               >
                 <MessageCircle className="w-5 h-5" />
                 <span className="text-sm">{comments.length || 0}</span>
               </button>
+
               <button className="flex items-center gap-2 text-zinc-400 hover:text-emerald-400 transition-colors">
                 <Share2 className="w-5 h-5" />
               </button>
+
               {user && (
                 <button
                   onClick={() => followPostMutation.mutate()}
