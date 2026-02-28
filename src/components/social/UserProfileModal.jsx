@@ -129,9 +129,6 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
   };
 
   const visibilityIcon = { public: Eye, followers_only: EyeOff, private: Lock };
-  const displayUser = isOwnProfile && editing
-    ? { ...targetUser, ...editForm }
-    : targetUser;
 
   const canViewContent = () => {
     const v = targetUser?.profile_visibility || 'public';
