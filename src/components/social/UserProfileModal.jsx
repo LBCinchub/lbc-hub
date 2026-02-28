@@ -153,7 +153,7 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
         className="w-full max-w-2xl glass rounded-3xl overflow-hidden"
       >
         {/* Header / Cover */}
-        <div className="relative h-36 bg-gradient-to-r from-indigo-600/40 to-purple-600/40 overflow-hidden">
+        <div className="relative h-36 overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.4) 0%, rgba(168,85,247,0.4) 100%)' }}>
           {(editing ? editForm.cover_url : targetUser?.cover_url) && (
             <img
               src={editing ? editForm.cover_url : targetUser?.cover_url}
@@ -166,10 +166,17 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
             <X className="w-5 h-5" />
           </button>
           {isOwnProfile && editing && (
-            <label className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/50 hover:bg-black/70 cursor-pointer transition-colors text-xs text-white z-10">
-              <Camera className="w-3.5 h-3.5" />
-              {uploadingCover ? 'Uploading...' : 'Change Cover'}
-              <input type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
+            <label className="absolute inset-0 flex items-center justify-center cursor-pointer group z-10">
+              <input type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} disabled={uploadingCover} />
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center gap-1 bg-black/50 rounded-2xl px-4 py-3">
+                <Camera className="w-6 h-6 text-white" />
+                <span className="text-xs text-white font-medium">{uploadingCover ? 'Uploading...' : 'Change Cover'}</span>
+              </div>
+              {uploadingCover && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                  <div className="text-white text-sm font-medium animate-pulse">Uploading...</div>
+                </div>
+              )}
             </label>
           )}
         </div>
