@@ -480,80 +480,8 @@ export default function FloatingDM({ user }) {
                     </div>
                   )}
 
-                  {/* Call UI */}
-                  {activeTab === 'direct' && activeConvo && callState && (
-                    <div className="flex flex-col items-center justify-center py-8 gap-4" style={{ minHeight: 260 }}>
-                      <div className={`w-20 h-20 rounded-3xl bg-gradient-to-br ${avatarGradient(activeConvo)} flex items-center justify-center text-white text-3xl font-bold shadow-xl`}>
-                        {initials(activeName)}
-                      </div>
-                      <div className="text-center">
-                        <p className="text-white font-semibold">{activeName || activeConvo}</p>
-                        {callState.status === 'calling' ? (
-                          <p className="text-xs text-zinc-400 mt-1 animate-pulse">
-                            {callState.type === 'video' ? '📹' : '📞'} Calling...
-                          </p>
-                        ) : (
-                          <p className="text-xs text-emerald-400 mt-1">Connected</p>
-                        )}
-                      </div>
-                      {callState.type === 'video' && callState.status === 'active' && (
-                        <div className="w-full px-4">
-                          <div className="w-full h-28 rounded-2xl bg-zinc-800 flex items-center justify-center" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
-                            {camOff ? (
-                              <VideoOff className="w-8 h-8 text-zinc-600" />
-                            ) : (
-                              <p className="text-xs text-zinc-500">Camera preview</p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-3 mt-2">
-                        {callState.status === 'calling' ? (
-                          <button
-                            onClick={() => setCallState(null)}
-                            className="w-12 h-12 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors shadow-lg"
-                          >
-                            <PhoneOff className="w-5 h-5 text-white" />
-                          </button>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => setMuted(m => !m)}
-                              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${muted ? 'bg-red-500/30 text-red-400' : 'bg-white/10 text-white hover:bg-white/20'}`}
-                            >
-                              {muted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                            </button>
-                            {callState.type === 'video' && (
-                              <button
-                                onClick={() => setCamOff(c => !c)}
-                                className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${camOff ? 'bg-red-500/30 text-red-400' : 'bg-white/10 text-white hover:bg-white/20'}`}
-                              >
-                                {camOff ? <VideoOff className="w-4 h-4" /> : <Video className="w-4 h-4" />}
-                              </button>
-                            )}
-                            <button
-                              onClick={() => setCallState(null)}
-                              className="w-10 h-10 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
-                            >
-                              <PhoneOff className="w-4 h-4 text-white" />
-                            </button>
-                          </>
-                        )}
-                        {callState.status === 'calling' && (
-                          <button
-                            onClick={() => setCallState(cs => ({ ...cs, status: 'active' }))}
-                            className="w-12 h-12 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center transition-colors shadow-lg"
-                            title="Accept (demo)"
-                          >
-                            <Phone className="w-5 h-5 text-white" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
                   {/* Conversation (Direct tab) */}
-                  {activeTab === 'direct' && (activeConvo || composing) && !callState && (
+                  {activeTab === 'direct' && (activeConvo || composing) && (
                     <>
                       <div
                         className="overflow-y-auto px-4 py-3 space-y-2"
