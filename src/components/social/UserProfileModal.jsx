@@ -115,6 +115,15 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
     setUploading(false);
   };
 
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingCover(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setEditForm(f => ({ ...f, cover_url: file_url }));
+    setUploadingCover(false);
+  };
+
   const visibilityIcon = { public: Eye, followers_only: EyeOff, private: Lock };
   const displayUser = isOwnProfile && editing
     ? { ...targetUser, ...editForm }
