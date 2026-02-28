@@ -167,7 +167,7 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
             <X className="w-5 h-5" />
           </button>
           {isOwnProfile && editing && (
-            <label className="absolute inset-0 flex items-center justify-center cursor-pointer group z-10">
+            <label className="absolute inset-0 flex items-center justify-center cursor-pointer group" style={{ zIndex: 5 }}>
               <input type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} disabled={uploadingCover} />
               <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center gap-1 bg-black/50 rounded-2xl px-4 py-3">
                 <Camera className="w-6 h-6 text-white" />
