@@ -18,6 +18,7 @@ import DirectMessages from '../components/social/DirectMessages';
 import GoLiveModal from '../components/social/GoLiveModal';
 import UserProfileModal from '../components/social/UserProfileModal';
 import SuggestedPosts from '../components/social/SuggestedPosts';
+import { TOPICS } from '../components/social/TopicSelector';
 
 export default function Social() {
   const [user, setUser] = useState(null);
