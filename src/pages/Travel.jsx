@@ -174,11 +174,15 @@ export default function Travel() {
     window.open(urls[categoryId], '_blank');
   };
 
-  // Get hero image for the destination
-  const heroUrl = travelData ? getDestPhoto(travelData.destination_name, activePhotoIdx) : '';
+  // Get photo: prefer AI-provided URLs, fall back to hardcoded
+  const getPhoto = (idx = 0) => {
+    const aiUrl = travelData?.photo_urls?.[idx];
+    if (aiUrl && aiUrl.startsWith('http')) return aiUrl;
+    return getDestPhoto(travelData?.destination_name, idx);
+  };
 
-  // Number of gallery dots
-  const galleryCount = Math.min(travelData?.photo_spots?.length || 3, 6);
+  const heroUrl = travelData ? getPhoto(activePhotoIdx) : '';
+  const galleryCount = Math.min(travelData?.photo_urls?.length || travelData?.photo_spots?.length || 3, 6);
 
   return (
     <div className="min-h-screen py-8 px-4">
