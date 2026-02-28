@@ -137,6 +137,26 @@ export default function Social() {
               )}
             </div>
 
+            {/* Topic Filter Bar */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Filter className="w-4 h-4 text-zinc-500 flex-shrink-0" />
+              <button
+                onClick={() => setActiveTopic(null)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${!activeTopic ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}
+              >
+                All
+              </button>
+              {TOPICS.filter(t => posts.some(p => p.topics?.includes(t))).map(topic => (
+                <button
+                  key={topic}
+                  onClick={() => setActiveTopic(activeTopic === topic ? null : topic)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${activeTopic === topic ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}
+                >
+                  #{topic}
+                </button>
+              ))}
+            </div>
+
             {!user && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-2xl p-8 text-center">
                 <p className="text-zinc-400 mb-3">Sign in to post and interact</p>
