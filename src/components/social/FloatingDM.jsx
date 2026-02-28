@@ -17,7 +17,7 @@ export default function FloatingDM({ user }) {
   const [text, setText] = useState('');
   const [composing, setComposing] = useState(false);
 
-  const [position, setPosition] = useState({ x: Math.max(20, window.innerWidth / 2 - 28), y: Math.max(80, window.innerHeight - 90) });
+  const [position, setPosition] = useState({ x: window.innerWidth - 80, y: window.innerHeight - 80 });
   const dragging = useRef(false);
   const dragStart = useRef(null);
   const hasDragged = useRef(false);
