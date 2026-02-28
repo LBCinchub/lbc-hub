@@ -153,10 +153,25 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
         className="w-full max-w-2xl glass rounded-3xl overflow-hidden"
       >
         {/* Header / Cover */}
-        <div className="relative h-32 bg-gradient-to-r from-indigo-600/40 to-purple-600/40">
-          <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors">
+        <div className="relative h-36 bg-gradient-to-r from-indigo-600/40 to-purple-600/40 overflow-hidden">
+          {(editing ? editForm.cover_url : targetUser?.cover_url) && (
+            <img
+              src={editing ? editForm.cover_url : targetUser?.cover_url}
+              alt="cover"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
+          <div className="absolute inset-0 bg-black/20" />
+          <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors z-10">
             <X className="w-5 h-5" />
           </button>
+          {isOwnProfile && editing && (
+            <label className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/50 hover:bg-black/70 cursor-pointer transition-colors text-xs text-white z-10">
+              <Camera className="w-3.5 h-3.5" />
+              {uploadingCover ? 'Uploading...' : 'Change Cover'}
+              <input type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
+            </label>
+          )}
         </div>
 
         {/* Avatar + Info */}
