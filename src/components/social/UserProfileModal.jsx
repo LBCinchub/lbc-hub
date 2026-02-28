@@ -32,6 +32,7 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
   const isOwnProfile = currentUser?.email === targetUser?.email;
   const [tab, setTab] = useState('posts');
   const [editing, setEditing] = useState(false);
+  const [savedData, setSavedData] = useState({});
   const [editForm, setEditForm] = useState({
     bio: targetUser?.bio || '',
     avatar_url: targetUser?.avatar_url || '',
@@ -40,6 +41,8 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
   });
   const [uploading, setUploading] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+
+  const displayUser = { ...targetUser, ...savedData };
   const queryClient = useQueryClient();
 
   const { data: userPosts = [] } = useQuery({
