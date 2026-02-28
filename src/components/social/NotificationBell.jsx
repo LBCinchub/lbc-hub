@@ -15,10 +15,6 @@ export default function NotificationBell({ user }) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const handleOpen = () => {
-    setOpen(o => !o);
-  };
-
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', user?.email],
     queryFn: () => base44.entities.Notification.filter({ to_email: user.email }, '-created_date', 20),
