@@ -16,6 +16,9 @@ export default function FloatingDM({ user }) {
   const [newRecipient, setNewRecipient] = useState('');
   const [text, setText] = useState('');
   const [composing, setComposing] = useState(false);
+  const [callState, setCallState] = useState(null); // null | { type: 'audio'|'video', status: 'calling'|'active' }
+  const [muted, setMuted] = useState(false);
+  const [camOff, setCamOff] = useState(false);
   const [position, setPosition] = useState({ x: Math.max(20, window.innerWidth - 380), y: Math.max(80, window.innerHeight - 560) });
   const dragging = useRef(false);
   const dragStart = useRef(null);
