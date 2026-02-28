@@ -396,32 +396,85 @@ export default function FloatingDM({ user }) {
                             <Users className="w-8 h-8 text-zinc-600" />
                             <p className="text-xs text-zinc-500">No community messages yet</p>
                           </div>
-                        ) : [...communityMessages].reverse().map(msg => {
-                          const mine = msg.author_email === user.email;
-                          return (
-                            <div key={msg.id} className={`flex ${mine ? 'justify-end' : 'justify-start'} gap-2`}>
-                              {!mine && (
-                                <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${avatarGradient(msg.author_email)} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 mt-0.5 overflow-hidden`}>
-                                  {msg.author_avatar ? <img src={msg.author_avatar} className="w-full h-full object-cover" /> : initials(msg.author_name)}
-                                </div>
-                              )}
-                              <div className="max-w-[75%]">
-                                {!mine && <p className="text-[10px] text-zinc-500 mb-0.5 ml-1">{msg.author_name}</p>}
-                                <div className={`rounded-2xl px-3 py-2 text-xs leading-relaxed ${mine ? 'text-white rounded-br-sm' : 'text-zinc-100 rounded-bl-sm'}`}
-                                  style={mine ? { background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' } : { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                                  {msg.content}
+                        ) : (() => {
+                          const sorted = [...communityMessages].reverse();
+                          const pinned = sorted.filter(m => m.is_pinned);
+                          const regular = sorted.filter(m => !m.is_pinned);
+                          return [...pinned, ...regular].map(msg => {
+                            const mine = msg.author_email === user.email;
+                            const isMuted = mutedEmails.includes(msg.author_email);
+                            if (isMuted && !isAdmin) return null;
+                            return (
+                              <div key={msg.id} className={`flex ${mine ? 'justify-end' : 'justify-start'} gap-2 group`}>
+                                {!mine && (
+                                  <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${avatarGradient(msg.author_email)} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 mt-0.5 overflow-hidden`}>
+                                    {msg.author_avatar ? <img src={msg.author_avatar} className="w-full h-full object-cover" /> : initials(msg.author_name)}
+                                  </div>
+                                )}
+                                <div className="max-w-[75%]">
+                                  {!mine && (
+                                    <div className="flex items-center gap-1 mb-0.5 ml-1">
+                                      <p className="text-[10px] text-zinc-500">{msg.author_name}</p>
+                                      {isMuted && <span className="text-[9px] text-red-400 bg-red-500/10 px-1 rounded">muted</span>}
+                                      {msg.is_pinned && <span className="text-[9px] text-amber-400 flex items-center gap-0.5"><Pin className="w-2.5 h-2.5" />pinned</span>}
+                                    </div>
+                                  )}
+                                  <div className={`rounded-2xl px-3 py-2 text-xs leading-relaxed ${mine ? 'text-white rounded-br-sm' : 'text-zinc-100 rounded-bl-sm'} ${msg.is_pinned ? 'ring-1 ring-amber-500/30' : ''}`}
+                                    style={mine ? { background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' } : { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                    {msg.content}
+                                  </div>
+                                  {/* Moderation actions (admin only) */}
+                                  {isAdmin && (
+                                    <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <button
+                                        onClick={() => pinMessageMutation.mutate({ id: msg.id, pinned: !msg.is_pinned })}
+                                        className={`text-[10px] flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg transition-colors ${msg.is_pinned ? 'text-amber-400 bg-amber-500/20' : 'text-zinc-500 hover:text-amber-400 hover:bg-amber-500/10'}`}
+                                        title={msg.is_pinned ? 'Unpin' : 'Pin'}
+                                      >
+                                        <Pin className="w-2.5 h-2.5" />{msg.is_pinned ? 'Unpin' : 'Pin'}
+                                      </button>
+                                      <button
+                                        onClick={() => deleteMessageMutation.mutate(msg.id)}
+                                        className="text-[10px] flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                        title="Delete"
+                                      >
+                                        <Trash2 className="w-2.5 h-2.5" />Delete
+                                      </button>
+                                      {!mine && (
+                                        <button
+                                          onClick={() => isMuted ? unmuteUserMutation.mutate(msg.author_email) : muteUserMutation.mutate(msg.author_email)}
+                                          className={`text-[10px] flex items-center gap-0.5 px-1.5 py-0.5 rounded-lg transition-colors ${isMuted ? 'text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20' : 'text-zinc-500 hover:text-red-400 hover:bg-red-500/10'}`}
+                                          title={isMuted ? 'Unmute user' : 'Mute user'}
+                                        >
+                                          <UserX className="w-2.5 h-2.5" />{isMuted ? 'Unmute' : 'Mute'}
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          });
+                        })()}
                       </div>
-                      <form onSubmit={e => { e.preventDefault(); if (text.trim()) sendCommunityMutation.mutate(text); }} className="px-3 py-2 flex gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                        <input value={text} onChange={e => setText(e.target.value)} placeholder="Message community..." className="flex-1 bg-white/5 rounded-xl px-3 py-1.5 text-sm text-white placeholder:text-zinc-600 outline-none border border-white/8" />
-                        <button type="submit" disabled={!text.trim()} className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-30" style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
-                          <Send className="w-3.5 h-3.5 text-white" />
-                        </button>
-                      </form>
+                      {isAdmin && mutedUsers.length > 0 && (
+                        <div className="px-3 py-1.5 flex items-center gap-1.5" style={{ borderTop: '1px solid rgba(255,255,255,0.04)', background: 'rgba(239,68,68,0.05)' }}>
+                          <Shield className="w-3 h-3 text-red-400" />
+                          <p className="text-[10px] text-red-400">{mutedUsers.length} muted user{mutedUsers.length !== 1 ? 's' : ''}</p>
+                        </div>
+                      )}
+                      {mutedEmails.includes(user.email) ? (
+                        <div className="px-3 py-3 text-center text-xs text-red-400" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                          You have been muted by a moderator.
+                        </div>
+                      ) : (
+                        <form onSubmit={e => { e.preventDefault(); if (text.trim()) sendCommunityMutation.mutate(text); }} className="px-3 py-2 flex gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                          <input value={text} onChange={e => setText(e.target.value)} placeholder="Message community..." className="flex-1 bg-white/5 rounded-xl px-3 py-1.5 text-sm text-white placeholder:text-zinc-600 outline-none border border-white/8" />
+                          <button type="submit" disabled={!text.trim()} className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-30" style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
+                            <Send className="w-3.5 h-3.5 text-white" />
+                          </button>
+                        </form>
+                      )}
                     </div>
                   )}
 
