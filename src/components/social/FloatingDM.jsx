@@ -64,7 +64,7 @@ export default function FloatingDM({ user }) {
   });
 
   const sendCommunityMutation = useMutation({
-    mutationFn: (content) => base44.entities.ChatMessage.create({ content, author_name: user.full_name || user.email, author_email: user.email }),
+    mutationFn: (content) => base44.entities.ChatMessage.create({ content, author_name: user.full_name || user.email, author_email: user.email, author_avatar: user.avatar_url || '' }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['chatMessages'] }); setText(''); }
   });
 
