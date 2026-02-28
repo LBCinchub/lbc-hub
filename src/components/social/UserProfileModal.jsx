@@ -103,8 +103,9 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
 
   const updateProfileMutation = useMutation({
     mutationFn: (data) => base44.auth.updateMe(data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+      setSavedData(prev => ({ ...prev, ...variables }));
       setEditing(false);
     }
   });
