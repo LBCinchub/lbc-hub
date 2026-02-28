@@ -187,7 +187,7 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
           <div className="flex items-end justify-between -mt-14 mb-4">
             <div className="relative">
               <Avatar className="w-24 h-24 border-4 border-zinc-900">
-                <AvatarImage src={editing ? editForm.avatar_url : targetUser?.avatar_url} />
+                <AvatarImage src={editing ? editForm.avatar_url : displayUser?.avatar_url} />
                 <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-3xl font-bold">
                   {(targetUser?.full_name || targetUser?.email || '?')[0].toUpperCase()}
                 </AvatarFallback>
