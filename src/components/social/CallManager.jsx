@@ -68,60 +68,53 @@ export default function CallManager({ user }) {
     return peerConn;
   }, [sendSignal]);
 
-  // Poll for incoming signals
+  // Use real-time subscriptions instead of polling
   useEffect(() => {
     if (!user?.email) return;
 
-    const poll = async () => {
-      const signals = await base44.entities.CallSignal.filter({ to_email: user.email }, '-created_date', 20).catch(() => []);
+    const unsubscribe = base44.entities.CallSignal.subscribe(async (event) => {
+      if (event.type !== 'create') return;
+      const sig = event.data;
+      if (!sig || sig.to_email !== user.email) return;
+      if (processedSignals.current.has(sig.id)) return;
+      processedSignals.current.add(sig.id);
 
-      for (const sig of signals) {
-        if (processedSignals.current.has(sig.id)) continue;
-        processedSignals.current.add(sig.id);
+      if (sig.type === 'call-request') {
+        setIncomingCall({
+          from_email: sig.from_email,
+          from_name: sig.from_name,
+          call_type: sig.call_type,
+          session_id: sig.session_id,
+        });
+      }
 
-        // Incoming call request
-        if (sig.type === 'call-request' && !activeCall && !incomingCall) {
-          setIncomingCall({
-            from_email: sig.from_email,
-            from_name: sig.from_name,
-            call_type: sig.call_type,
-            session_id: sig.session_id,
-          });
-        }
+      if (sig.type === 'offer' && pc.current) {
+        const offer = JSON.parse(sig.payload);
+        await pc.current.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await pc.current.createAnswer();
+        await pc.current.setLocalDescription(answer);
+        await sendSignal('answer', answer, sig.session_id, sig.from_email, sig.call_type);
+      }
 
-        // Offer (we are callee)
-        if (sig.type === 'offer' && pc.current) {
-          const offer = JSON.parse(sig.payload);
-          await pc.current.setRemoteDescription(new RTCSessionDescription(offer));
-          const answer = await pc.current.createAnswer();
-          await pc.current.setLocalDescription(answer);
-          await sendSignal('answer', answer, sig.session_id, sig.from_email, sig.call_type);
-        }
-
-        // Answer (we are caller)
-        if (sig.type === 'answer' && pc.current) {
-          const answer = JSON.parse(sig.payload);
-          if (pc.current.signalingState === 'have-local-offer') {
-            await pc.current.setRemoteDescription(new RTCSessionDescription(answer));
-          }
-        }
-
-        // ICE candidate
-        if (sig.type === 'ice-candidate' && pc.current) {
-          const candidate = JSON.parse(sig.payload);
-          await pc.current.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
-        }
-
-        // Hangup
-        if (sig.type === 'hangup') {
-          cleanup();
+      if (sig.type === 'answer' && pc.current) {
+        const answer = JSON.parse(sig.payload);
+        if (pc.current.signalingState === 'have-local-offer') {
+          await pc.current.setRemoteDescription(new RTCSessionDescription(answer));
         }
       }
-    };
 
-    pollingRef.current = setInterval(poll, 8000);
-    return () => clearInterval(pollingRef.current);
-  }, [user?.email, activeCall, incomingCall, cleanup, sendSignal]);
+      if (sig.type === 'ice-candidate' && pc.current) {
+        const candidate = JSON.parse(sig.payload);
+        await pc.current.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
+      }
+
+      if (sig.type === 'hangup') {
+        cleanup();
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user?.email, cleanup, sendSignal]);
 
   // Attach local stream to video element
   useEffect(() => {
