@@ -222,6 +222,10 @@ export default function FloatingDM({ user }) {
             data-dm-panel
             className="w-[340px] rounded-3xl flex flex-col overflow-hidden"
             style={{
+              position: 'fixed',
+              bottom: 80,
+              left: '50%',
+              transform: 'translateX(-50%)',
               background: 'rgba(13, 13, 20, 0.96)',
               backdropFilter: 'blur(32px)',
               border: '1px solid rgba(255,255,255,0.07)',
