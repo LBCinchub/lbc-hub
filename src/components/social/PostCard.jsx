@@ -178,6 +178,15 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
               <button className="flex items-center gap-2 text-zinc-400 hover:text-emerald-400 transition-colors">
                 <Share2 className="w-5 h-5" />
               </button>
+              {user && (
+                <button
+                  onClick={() => followPostMutation.mutate()}
+                  className={`flex items-center gap-2 ml-auto transition-colors ${isFollowed ? 'text-indigo-400' : 'text-zinc-400 hover:text-indigo-400'}`}
+                  title={isFollowed ? 'Unsave post' : 'Save post'}
+                >
+                  <Bookmark className={`w-5 h-5 ${isFollowed ? 'fill-indigo-400' : ''}`} />
+                </button>
+              )}
             </div>
 
             {/* Comments */}
