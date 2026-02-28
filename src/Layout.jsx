@@ -6,6 +6,7 @@ import { base44 } from '@/api/base44Client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import UserProfileModal from './components/social/UserProfileModal';
 import FloatingDM from './components/social/FloatingDM';
+import CallManager from './components/social/CallManager';
 
 const navItems = [
   { name: 'Home', icon: Home, page: 'Home' },
