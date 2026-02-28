@@ -166,6 +166,7 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
                   {comments.map(c => (
                     <div key={c.id} className="flex items-start gap-3">
                       <Avatar className="w-8 h-8 flex-shrink-0">
+                        <AvatarImage src={c.author_avatar} />
                         <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs">
                           {c.author_name?.[0]?.toUpperCase()}
                         </AvatarFallback>
@@ -179,6 +180,7 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
                   {user && (
                     <div className="flex items-center gap-2 pt-1">
                       <Avatar className="w-8 h-8 flex-shrink-0">
+                        <AvatarImage src={user.avatar_url} />
                         <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs">
                           {user.full_name?.[0] || user.email?.[0]?.toUpperCase()}
                         </AvatarFallback>
