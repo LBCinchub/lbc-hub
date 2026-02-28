@@ -19,6 +19,7 @@ import UserProfileModal from '../components/social/UserProfileModal';
 export default function Social() {
   const [user, setUser] = useState(null);
   const [chatMessage, setChatMessage] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [goLiveOpen, setGoLiveOpen] = useState(false);
   const [dmTarget, setDmTarget] = useState(null);
   const [profileTarget, setProfileTarget] = useState(null);
