@@ -160,7 +160,35 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
               </Button>
             </div>
 
-            <p className="text-zinc-200 leading-relaxed mb-4">{post.content}</p>
+            <p className="text-zinc-200 leading-relaxed mb-2">{post.content}</p>
+
+            {/* AI Summary */}
+            {isLongPost && (
+              <div className="mb-3">
+                <button
+                  onClick={handleSummarize}
+                  className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                >
+                  {summaryLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  {summaryLoading ? 'Summarizing…' : showSummary ? 'Hide summary' : 'TL;DR'}
+                </button>
+                <AnimatePresence>
+                  {showSummary && summary && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-2 overflow-hidden"
+                    >
+                      <div className="flex items-start gap-2 bg-indigo-950/50 border border-indigo-500/20 rounded-xl px-3 py-2">
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-indigo-200 leading-relaxed">{summary}</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
 
             {/* Media */}
             {post.media_urls?.length > 0 && (
