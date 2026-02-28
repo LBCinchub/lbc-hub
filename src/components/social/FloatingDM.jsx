@@ -242,7 +242,7 @@ export default function FloatingDM({ user }) {
               <div className="flex items-center gap-2.5" onMouseDown={e => e.stopPropagation()}>
                 {activeConvo ? (
                   <button
-                    onClick={() => { setActiveConvo(null); setActiveName(''); setComposing(false); setCallState(null); }}
+                    onClick={() => { setActiveConvo(null); setActiveName(''); setComposing(false); }}
                     className="flex items-center gap-2 group"
                   >
                     <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
