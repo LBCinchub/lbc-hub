@@ -163,7 +163,7 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
             />
           )}
           <div className="absolute inset-0 bg-black/20" />
-          <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors z-10">
+          <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors" style={{ zIndex: 20 }}>
             <X className="w-5 h-5" />
           </button>
           {isOwnProfile && editing && (
