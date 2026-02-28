@@ -232,7 +232,7 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
 
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xl font-bold">{targetUser?.full_name || targetUser?.email}</h2>
+              <h2 className="text-xl font-bold">{displayUser?.full_name || displayUser?.email}</h2>
               {avgRating && (
                 <span className="flex items-center gap-1 text-amber-400 text-sm font-medium">
                   <Star className="w-4 h-4 fill-amber-400" /> {avgRating} seller
