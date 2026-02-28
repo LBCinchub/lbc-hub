@@ -381,7 +381,7 @@ export default function Travel() {
                         <div key={i} className="group glass rounded-xl overflow-hidden hover:border-indigo-500/40 transition-all border border-white/5">
                           <div className="h-40 overflow-hidden bg-zinc-800 relative">
                             <img
-                              src={getDestPhoto(travelData.destination_name, i)}
+                              src={getPhoto(i)}
                               alt={attraction.name}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
