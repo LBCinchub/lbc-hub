@@ -62,6 +62,8 @@ export default function CreatePost({ user, onGoLive }) {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       setText('');
       removeMedia();
+      setSelectedTopics([]);
+      setShowTopics(false);
     },
   });
 
