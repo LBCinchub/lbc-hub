@@ -269,10 +269,10 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
               </div>
             ) : (
               <>
-                {targetUser?.bio && <p className="text-sm text-zinc-300 mt-2 leading-relaxed">{targetUser.bio}</p>}
+                {displayUser?.bio && <p className="text-sm text-zinc-300 mt-2 leading-relaxed">{displayUser.bio}</p>}
                 <div className="flex items-center gap-1 text-xs text-zinc-500 mt-1">
-                  {targetUser?.profile_visibility === 'private' && <><Lock className="w-3 h-3" /> Private profile</>}
-                  {targetUser?.profile_visibility === 'followers_only' && <><EyeOff className="w-3 h-3" /> Followers only</>}
+                  {displayUser?.profile_visibility === 'private' && <><Lock className="w-3 h-3" /> Private profile</>}
+                  {displayUser?.profile_visibility === 'followers_only' && <><EyeOff className="w-3 h-3" /> Followers only</>}
                 </div>
               </>
             )}
