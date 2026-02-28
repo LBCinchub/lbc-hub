@@ -13,6 +13,31 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
   const [commentText, setCommentText] = useState('');
   const queryClient = useQueryClient();
 
+  const { data: followedRecord = [] } = useQuery({
+    queryKey: ['followedPost', post.id, user?.email],
+    queryFn: () => base44.entities.FollowedPost.filter({ post_id: post.id, user_email: user.email }),
+    enabled: !!user?.email,
+  });
+  const isFollowed = followedRecord.length > 0;
+
+  const followPostMutation = useMutation({
+    mutationFn: () => {
+      if (isFollowed) {
+        return base44.entities.FollowedPost.delete(followedRecord[0].id);
+      }
+      return base44.entities.FollowedPost.create({
+        post_id: post.id,
+        user_email: user.email,
+        post_author_name: post.author_name,
+        post_content_preview: post.content?.slice(0, 100),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['followedPost', post.id, user?.email] });
+      queryClient.invalidateQueries({ queryKey: ['followedPosts', user?.email] });
+    },
+  });
+
   const liked = post.liked_by?.includes(user?.email);
 
   const { data: comments = [] } = useQuery({
