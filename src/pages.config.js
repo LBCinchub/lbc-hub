@@ -54,6 +54,7 @@ import Riding from './pages/Riding';
 import Services from './pages/Services';
 import Social from './pages/Social';
 import Travel from './pages/Travel';
+import FollowedPosts from './pages/FollowedPosts';
 import __Layout from './Layout.jsx';
 
 
@@ -65,6 +66,7 @@ export const PAGES = {
     "Services": Services,
     "Social": Social,
     "Travel": Travel,
+    "FollowedPosts": FollowedPosts,
 }
 
 export const pagesConfig = {
