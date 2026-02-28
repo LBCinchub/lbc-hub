@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageIcon, Video, Radio, X, Loader2, Upload } from 'lucide-react';
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
@@ -46,6 +46,7 @@ export default function CreatePost({ user, onGoLive }) {
         content: text,
         author_name: user.full_name || user.email,
         author_email: user.email,
+        author_avatar: user.avatar_url || '',
         likes: 0,
         liked_by: [],
         media_type: mediaType,
@@ -69,6 +70,7 @@ export default function CreatePost({ user, onGoLive }) {
     <motion.div className="glass rounded-2xl p-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       <div className="flex items-start gap-4">
         <Avatar className="w-12 h-12 flex-shrink-0">
+          <AvatarImage src={user.avatar_url} />
           <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-medium">
             {user.full_name?.[0] || user.email?.[0]?.toUpperCase()}
           </AvatarFallback>
