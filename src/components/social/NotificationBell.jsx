@@ -36,7 +36,13 @@ export default function NotificationBell({ user }) {
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen(o => !o)}
+        onClick={() => {
+          const opening = !open;
+          setOpen(opening);
+          if (opening) {
+            unread.forEach(n => markReadMutation.mutate(n.id));
+          }
+        }}
         className="relative p-2 rounded-xl hover:bg-white/10 transition-colors"
       >
         <Bell className="w-5 h-5 text-zinc-300" />
