@@ -239,7 +239,7 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
                 </span>
               )}
             </div>
-            <p className="text-sm text-zinc-400">{targetUser?.email}</p>
+            <p className="text-sm text-zinc-400">{displayUser?.email}</p>
 
             {editing ? (
               <div className="space-y-3 pt-2">
