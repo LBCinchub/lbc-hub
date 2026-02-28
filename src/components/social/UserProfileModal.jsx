@@ -155,9 +155,9 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
       >
         {/* Header / Cover */}
         <div className="relative h-36 overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.4) 0%, rgba(168,85,247,0.4) 100%)' }}>
-          {(editing ? editForm.cover_url : targetUser?.cover_url) && (
+          {(editing ? editForm.cover_url : displayUser?.cover_url) && (
             <img
-              src={editing ? editForm.cover_url : targetUser?.cover_url}
+              src={editing ? editForm.cover_url : displayUser?.cover_url}
               alt="cover"
               className="absolute inset-0 w-full h-full object-cover"
             />
