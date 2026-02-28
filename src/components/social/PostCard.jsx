@@ -56,7 +56,7 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
     },
   });
 
-  const liked = post.liked_by?.includes(user?.email);
+  const reactionEmojis = ['👍', '❤️', '💡', '😂'];
 
   const { data: comments = [] } = useQuery({
     queryKey: ['comments', post.id],
@@ -64,28 +64,32 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
     enabled: showComments,
   });
 
-  const likeMutation = useMutation({
-    mutationFn: () => {
-      const likedBy = post.liked_by || [];
-      if (liked) {
-        return base44.entities.Post.update(post.id, {
-          likes: Math.max(0, (post.likes || 0) - 1),
-          liked_by: likedBy.filter(e => e !== user.email),
-        });
+  const toggleReactionMutation = useMutation({
+    mutationFn: (emoji) => {
+      const reactions = post.reactions || {};
+      const userReactions = reactions[emoji] || [];
+      const hasReacted = userReactions.includes(user.email);
+
+      const newReactions = { ...reactions };
+      if (hasReacted) {
+        newReactions[emoji] = userReactions.filter(e => e !== user.email);
+        if (newReactions[emoji].length === 0) delete newReactions[emoji];
+      } else {
+        newReactions[emoji] = [...userReactions, user.email];
       }
-      return base44.entities.Post.update(post.id, {
-        likes: (post.likes || 0) + 1,
-        liked_by: [...likedBy, user.email],
-      });
+
+      return base44.entities.Post.update(post.id, { reactions: newReactions });
     },
-    onSuccess: async () => {
+    onSuccess: async (_, emoji) => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
-      if (!liked && post.author_email && post.author_email !== user.email) {
+      const userReactions = post.reactions?.[emoji] || [];
+      const hasReacted = userReactions.includes(user.email);
+      if (!hasReacted && post.author_email && post.author_email !== user.email) {
         await base44.entities.Notification.create({
           to_email: post.author_email,
           from_name: user.full_name || user.email,
           type: 'like',
-          message: `${user.full_name || user.email} liked your post`,
+          message: `${user.full_name || user.email} reacted ${emoji} to your post`,
           post_id: post.id,
           read: false,
         });
