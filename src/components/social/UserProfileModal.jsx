@@ -35,9 +35,11 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
   const [editForm, setEditForm] = useState({
     bio: targetUser?.bio || '',
     avatar_url: targetUser?.avatar_url || '',
+    cover_url: targetUser?.cover_url || '',
     profile_visibility: targetUser?.profile_visibility || 'public',
   });
   const [uploading, setUploading] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: userPosts = [] } = useQuery({
