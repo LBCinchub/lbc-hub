@@ -168,9 +168,16 @@ export default function Social() {
 
             {/* Feed */}
             {(() => {
-              const filteredPosts = searchQuery.trim()
-                ? posts.filter(p => p.content?.toLowerCase().includes(searchQuery.toLowerCase()) || p.author_name?.toLowerCase().includes(searchQuery.toLowerCase()))
-                : posts;
+              let filteredPosts = posts;
+              if (searchQuery.trim()) {
+                filteredPosts = filteredPosts.filter(p =>
+                  p.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  p.author_name?.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+              }
+              if (activeTopic) {
+                filteredPosts = filteredPosts.filter(p => p.topics?.includes(activeTopic));
+              }
               return (
                 <div className="space-y-4">
                   {postsLoading ? (
