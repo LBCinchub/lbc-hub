@@ -119,7 +119,7 @@ export default function CallManager({ user }) {
       }
     };
 
-    pollingRef.current = setInterval(poll, 2000);
+    pollingRef.current = setInterval(poll, 8000);
     return () => clearInterval(pollingRef.current);
   }, [user?.email, activeCall, incomingCall, cleanup, sendSignal]);
 
