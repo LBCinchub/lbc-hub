@@ -110,6 +110,32 @@ export default function Social() {
           <div className="lg:col-span-2 space-y-5">
             {user ? (
               <CreatePost user={user} onGoLive={() => setGoLiveOpen(true)} />
+            ) : null}
+
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search posts..."
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-10 pr-10 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {!user && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-2xl p-8 text-center">
+                <p className="text-zinc-400 mb-3">Sign in to post and interact</p>
+                <Button onClick={() => base44.auth.redirectToLogin()} className="btn-primary rounded-full px-6">
+                  Sign In
+                </Button>
+              </motion.div>
             ) : (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-2xl p-8 text-center">
                 <p className="text-zinc-400 mb-3">Sign in to post and interact</p>
