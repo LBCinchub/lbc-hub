@@ -194,6 +194,9 @@ export default function Layout({ children, currentPageName }) {
       {/* Floating DM */}
       {user && <FloatingDM user={user} />}
 
+      {/* WebRTC Call Manager */}
+      {user && <CallManager user={user} />}
+
       {/* Main Content */}
       <main className="pt-16">
         {children}
