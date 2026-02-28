@@ -96,8 +96,13 @@ export default function Travel() {
 
     const response = await base44.integrations.Core.InvokeLLM({
       prompt: `You are a professional travel guide. Provide a detailed, enthusiastic travel guide for: "${query}".
-      Return factual, specific information. For photo_ids, return REAL Unsplash photo IDs (format: photo-XXXXXXXXXX) for famous landmarks in this destination. 
-      Include exactly 6 photo_ids for different iconic spots.`,
+      Return factual, specific information.
+      
+      IMPORTANT for photo_urls: You MUST provide 6 real, working, publicly accessible image URLs of famous landmarks or scenery in this destination.
+      Use real URLs from Wikipedia Commons, well-known travel sites, or any publicly accessible CDN. 
+      Format: direct image URLs ending in .jpg or .png that work without authentication.
+      Example format: https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/320px-Camponotus_flavomarginatus_ant.jpg
+      But use ACTUAL landmark photos for ${query}, not ants. Each URL should show a different iconic landmark or scene.`,
       add_context_from_internet: true,
       response_json_schema: {
         type: 'object',
@@ -143,7 +148,12 @@ export default function Travel() {
           photo_spots: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Names of 6 iconic photo spots / landmarks in this destination'
+            description: 'Names of 6 iconic photo spots / landmarks'
+          },
+          photo_urls: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Array of 6 real, working, publicly accessible image URLs (.jpg or .png) of famous landmarks in this destination from Wikipedia Commons or similar public sources'
           }
         }
       }
