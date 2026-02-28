@@ -55,6 +55,7 @@ export default function CreatePost({ user, onGoLive }) {
         media_type: mediaType,
         media_urls: mediaUrls,
         is_live: false,
+        topics: selectedTopics,
       });
     },
     onSuccess: () => {
