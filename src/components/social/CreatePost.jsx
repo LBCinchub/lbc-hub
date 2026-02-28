@@ -14,6 +14,8 @@ export default function CreatePost({ user, onGoLive }) {
   const [mediaPreviews, setMediaPreviews] = useState([]);
   const [mediaType, setMediaType] = useState('none');
   const [uploading, setUploading] = useState(false);
+  const [selectedTopics, setSelectedTopics] = useState([]);
+  const [showTopics, setShowTopics] = useState(false);
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
   const queryClient = useQueryClient();
