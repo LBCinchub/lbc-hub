@@ -136,13 +136,6 @@ export default function Social() {
                   Sign In
                 </Button>
               </motion.div>
-            ) : (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-2xl p-8 text-center">
-                <p className="text-zinc-400 mb-3">Sign in to post and interact</p>
-                <Button onClick={() => base44.auth.redirectToLogin()} className="btn-primary rounded-full px-6">
-                  Sign In
-                </Button>
-              </motion.div>
             )}
 
             {/* Feed */}
