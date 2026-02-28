@@ -52,28 +52,23 @@ const popularDestinations = [
   { name: 'Sydney', country: 'Australia', photoId: 'photo-1506973035872-a4ec16b8e8d9', rating: 4.7, tag: 'Coastal' },
 ];
 
-// Get a reliable Unsplash image URL using a known photo ID or a search fallback
+// Build a reliable Unsplash image URL from a photo ID
 const getPhotoUrl = (photoId, w = 800, h = 500) =>
   `https://images.unsplash.com/${photoId}?w=${w}&h=${h}&fit=crop&auto=format`;
 
-// For AI-returned keywords, use Unsplash search (more reliable with known terms)
-const getSearchPhotoUrl = (keyword, w = 800, h = 500, page = 1) => {
-  const clean = encodeURIComponent(keyword.toLowerCase().trim());
-  return `https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=${w}&h=${h}&fit=crop`; // fallback base
-};
-
-// Look up hardcoded photo or fall back to a known travel photo
+// Look up hardcoded photo or fall back to generic travel photos
 const getDestPhoto = (destName, idx = 0) => {
-  const key = destName?.toLowerCase();
+  const key = destName?.toLowerCase() || '';
   for (const [k, ids] of Object.entries(DEST_PHOTOS)) {
-    if (key?.includes(k)) return getPhotoUrl(ids[idx % ids.length]);
+    if (key.includes(k)) return getPhotoUrl(ids[idx % ids.length]);
   }
-  // Fallback: generic travel photos
   const fallbacks = [
     'photo-1488085061387-422e29b40080',
     'photo-1469854523086-cc02fe5d8800',
     'photo-1530521954074-e64f6810b32d',
     'photo-1476514525535-07fb3b4ae5f1',
+    'photo-1507525428034-b723cf961d3e',
+    'photo-1500835556837-99ac94a94552',
   ];
   return getPhotoUrl(fallbacks[idx % fallbacks.length]);
 };
