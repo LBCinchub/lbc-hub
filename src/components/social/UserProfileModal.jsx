@@ -192,9 +192,12 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
                 </AvatarFallback>
               </Avatar>
               {isOwnProfile && editing && (
-                <label className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center cursor-pointer hover:bg-indigo-600 transition-colors">
-                  <Camera className="w-4 h-4" />
-                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                <label className="absolute inset-0 rounded-full flex items-center justify-center cursor-pointer bg-black/40 opacity-0 hover:opacity-100 transition-opacity group">
+                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploading} />
+                  <div className="flex flex-col items-center gap-0.5">
+                    <Camera className="w-5 h-5 text-white" />
+                    <span className="text-[9px] text-white font-medium">{uploading ? '...' : 'Change'}</span>
+                  </div>
                 </label>
               )}
             </div>
