@@ -42,8 +42,8 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
   const [uploading, setUploading] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
 
-  const displayUser = { ...targetUser, ...savedData };
   const queryClient = useQueryClient();
+  const displayUser = { ...targetUser, ...savedData };
 
   const { data: userPosts = [] } = useQuery({
     queryKey: ['userPosts', targetUser?.email],
