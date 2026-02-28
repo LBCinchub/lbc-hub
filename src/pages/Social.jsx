@@ -27,6 +27,7 @@ export default function Social() {
   const [goLiveOpen, setGoLiveOpen] = useState(false);
   const [dmTarget, setDmTarget] = useState(null);
   const [profileTarget, setProfileTarget] = useState(null);
+  const [activeTopic, setActiveTopic] = useState(null);
   const queryClient = useQueryClient();
   const chatEndRef = useRef(null);
 
