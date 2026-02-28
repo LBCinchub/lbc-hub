@@ -139,38 +139,45 @@ export default function Social() {
             )}
 
             {/* Feed */}
-            <div className="space-y-4">
-              {postsLoading ? (
-                [...Array(3)].map((_, i) => (
-                  <div key={i} className="glass rounded-2xl p-6 animate-pulse">
-                    <div className="flex gap-4">
-                      <div className="w-12 h-12 rounded-full bg-white/10 flex-shrink-0" />
-                      <div className="flex-1 space-y-3">
-                        <div className="h-4 w-32 bg-white/10 rounded" />
-                        <div className="h-4 w-full bg-white/10 rounded" />
-                        <div className="h-4 w-2/3 bg-white/10 rounded" />
+            {(() => {
+              const filteredPosts = searchQuery.trim()
+                ? posts.filter(p => p.content?.toLowerCase().includes(searchQuery.toLowerCase()) || p.author_name?.toLowerCase().includes(searchQuery.toLowerCase()))
+                : posts;
+              return (
+                <div className="space-y-4">
+                  {postsLoading ? (
+                    [...Array(3)].map((_, i) => (
+                      <div key={i} className="glass rounded-2xl p-6 animate-pulse">
+                        <div className="flex gap-4">
+                          <div className="w-12 h-12 rounded-full bg-white/10 flex-shrink-0" />
+                          <div className="flex-1 space-y-3">
+                            <div className="h-4 w-32 bg-white/10 rounded" />
+                            <div className="h-4 w-full bg-white/10 rounded" />
+                            <div className="h-4 w-2/3 bg-white/10 rounded" />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))
-              ) : posts.length === 0 ? (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-2xl p-12 text-center">
-                  <Users className="w-16 h-16 mx-auto text-zinc-600 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">No posts yet</h3>
-                  <p className="text-zinc-400">Be the first to share something!</p>
-                </motion.div>
-              ) : (
-                posts.map(post => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    user={user}
-                    onDmUser={handleDmUser}
-                    onViewProfile={handleViewProfile}
-                  />
-                ))
-              )}
-            </div>
+                    ))
+                  ) : filteredPosts.length === 0 ? (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-2xl p-12 text-center">
+                      <Search className="w-16 h-16 mx-auto text-zinc-600 mb-4" />
+                      <h3 className="text-xl font-semibold mb-2">{searchQuery ? 'No posts found' : 'No posts yet'}</h3>
+                      <p className="text-zinc-400">{searchQuery ? `No results for "${searchQuery}"` : 'Be the first to share something!'}</p>
+                    </motion.div>
+                  ) : (
+                    filteredPosts.map(post => (
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        user={user}
+                        onDmUser={handleDmUser}
+                        onViewProfile={handleViewProfile}
+                      />
+                    ))
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Sidebar - Live Chat */}
