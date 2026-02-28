@@ -79,6 +79,14 @@ export default function FloatingDM({ user }) {
   const convoMessages = activeConvo ? (threads[activeConvo]?.messages || []) : [];
   const unreadCount = allMessages.filter(m => m.to_email === user?.email && !m.read).length;
 
+  const markDmsReadMutation = useMutation({
+    mutationFn: async (email) => {
+      const unreadMsgs = allMessages.filter(m => m.from_email === email && m.to_email === user.email && !m.read);
+      await Promise.all(unreadMsgs.map(m => base44.entities.DirectMessage.update(m.id, { read: true })));
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dms'] }),
+  });
+
   const sendMutation = useMutation({
     mutationFn: (data) => base44.entities.DirectMessage.create(data),
     onSuccess: () => {
