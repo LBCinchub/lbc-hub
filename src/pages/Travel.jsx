@@ -177,12 +177,8 @@ export default function Travel() {
     window.open(urls[categoryId], '_blank');
   };
 
-  // Get photo: prefer AI-provided URLs, fall back to hardcoded
-  const getPhoto = (idx = 0) => {
-    const aiUrl = travelData?.photo_urls?.[idx];
-    if (aiUrl && aiUrl.startsWith('http')) return aiUrl;
-    return getDestPhoto(travelData?.destination_name, idx);
-  };
+  // Always use our reliable hardcoded Unsplash photos — never trust AI-provided URLs
+  const getPhoto = (idx = 0) => getDestPhoto(travelData?.destination_name, idx);
 
   const heroUrl = travelData ? getPhoto(activePhotoIdx) : '';
   const galleryCount = Math.min(travelData?.photo_urls?.length || travelData?.photo_spots?.length || 3, 6);
