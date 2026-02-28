@@ -160,6 +160,15 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
               </Button>
             </div>
 
+            {/* Topic Tags */}
+            {post.topics?.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {post.topics.map(t => (
+                  <span key={t} className="px-2 py-0.5 rounded-full bg-indigo-600/20 text-indigo-300 text-xs font-medium">#{t}</span>
+                ))}
+              </div>
+            )}
+
             <p className="text-zinc-200 leading-relaxed mb-2">{post.content}</p>
 
             {/* AI Summary */}
