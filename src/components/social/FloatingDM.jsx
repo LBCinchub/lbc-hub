@@ -23,6 +23,7 @@ export default function FloatingDM({ user }) {
   const hasDragged = useRef(false);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
+  const panelRef = useRef(null);
   const queryClient = useQueryClient();
 
   const { data: allMessages = [] } = useQuery({
