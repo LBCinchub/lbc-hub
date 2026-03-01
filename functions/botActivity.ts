@@ -137,86 +137,100 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+const COMMENT_TEXTS = [
+  "Great point! 🙌",
+  "Totally agree with this!",
+  "This is so true 💯",
+  "Thanks for sharing!",
+  "Needed to read this today 👏",
+  "Love this perspective!",
+  "Well said! 🔥",
+  "This resonates with me a lot.",
+  "Couldn't have said it better myself!",
+  "This is golden content 🌟",
+];
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const results = [];
 
-    const bot = pick(BOTS);
-    const actions = [];
+    // Pick 3-6 distinct bots to act this round
+    const shuffled = [...BOTS].sort(() => Math.random() - 0.5);
+    const activeBots = shuffled.slice(0, 3 + Math.floor(Math.random() * 4));
 
-    // 1. Maybe create a post (60% chance)
-    if (Math.random() < 0.6) {
-      const template = pick(POST_TEMPLATES);
-      await base44.asServiceRole.entities.Post.create({
-        content: template.content,
-        author_name: bot.name,
-        author_email: bot.email,
-        author_avatar: bot.avatar,
-        topics: template.topics,
-        reactions: {},
-        media_type: "none",
-        media_urls: [],
-      });
-      actions.push("posted");
-    }
+    // Fetch posts once for all bots to reuse
+    const recentPosts = await base44.asServiceRole.entities.Post.list('-created_date', 30);
 
-    // 2. React to a recent post (80% chance)
-    if (Math.random() < 0.8) {
-      const posts = await base44.asServiceRole.entities.Post.list('-created_date', 20);
-      const eligiblePosts = posts.filter(p => p.author_email !== bot.email);
-      if (eligiblePosts.length > 0) {
-        const targetPost = pick(eligiblePosts);
-        const emoji = pick(REACTIONS);
-        const reactions = targetPost.reactions || {};
-        const existing = reactions[emoji] || [];
-        if (!existing.includes(bot.email)) {
-          reactions[emoji] = [...existing, bot.email];
-          await base44.asServiceRole.entities.Post.update(targetPost.id, { reactions });
-          actions.push(`reacted ${emoji}`);
+    for (const bot of activeBots) {
+      const actions = [];
+
+      // 1. Maybe create a post (25% chance per bot)
+      if (Math.random() < 0.25) {
+        const template = pick(POST_TEMPLATES);
+        await base44.asServiceRole.entities.Post.create({
+          content: template.content,
+          author_name: bot.name,
+          author_email: bot.email,
+          author_avatar: bot.avatar,
+          topics: template.topics,
+          reactions: {},
+          media_type: "none",
+          media_urls: [],
+        });
+        actions.push("posted");
+      }
+
+      // 2. React to 1-3 recent posts (90% chance)
+      if (Math.random() < 0.9) {
+        const eligible = recentPosts.filter(p => p.author_email !== bot.email);
+        const toReact = eligible.slice(0, 1 + Math.floor(Math.random() * 3));
+        for (const targetPost of toReact) {
+          const emoji = pick(REACTIONS);
+          const reactions = { ...(targetPost.reactions || {}) };
+          const existing = reactions[emoji] || [];
+          if (!existing.includes(bot.email)) {
+            reactions[emoji] = [...existing, bot.email];
+            await base44.asServiceRole.entities.Post.update(targetPost.id, { reactions });
+            // Update local cache so next bot sees updated reactions
+            targetPost.reactions = reactions;
+            actions.push(`reacted ${emoji} on "${targetPost.content?.slice(0, 30)}..."`);
+          }
         }
       }
-    }
 
-    // 3. Send a chat message (40% chance)
-    if (Math.random() < 0.4) {
-      await base44.asServiceRole.entities.ChatMessage.create({
-        content: pick(CHAT_TEMPLATES),
-        author_name: bot.name,
-        author_email: bot.email,
-        author_avatar: bot.avatar,
-      });
-      actions.push("chatted");
-    }
-
-    // 4. Maybe comment on a post (30% chance)
-    if (Math.random() < 0.3) {
-      const posts = await base44.asServiceRole.entities.Post.list('-created_date', 10);
-      const eligiblePosts = posts.filter(p => p.author_email !== bot.email);
-      if (eligiblePosts.length > 0) {
-        const targetPost = pick(eligiblePosts);
-        const commentTexts = [
-          "Great point! 🙌",
-          "Totally agree with this!",
-          "This is so true 💯",
-          "Thanks for sharing!",
-          "Needed to read this today 👏",
-          "Love this perspective!",
-          "Well said! 🔥",
-          "This resonates with me a lot.",
-        ];
-        await base44.asServiceRole.entities.Comment.create({
-          post_id: targetPost.id,
-          post_author_email: targetPost.author_email,
-          content: pick(commentTexts),
+      // 3. Send a community chat message (50% chance)
+      if (Math.random() < 0.5) {
+        await base44.asServiceRole.entities.ChatMessage.create({
+          content: pick(CHAT_TEMPLATES),
           author_name: bot.name,
           author_email: bot.email,
           author_avatar: bot.avatar,
         });
-        actions.push("commented");
+        actions.push("chatted");
       }
+
+      // 4. Comment on a post (35% chance)
+      if (Math.random() < 0.35) {
+        const eligible = recentPosts.filter(p => p.author_email !== bot.email);
+        if (eligible.length > 0) {
+          const targetPost = pick(eligible);
+          await base44.asServiceRole.entities.Comment.create({
+            post_id: targetPost.id,
+            post_author_email: targetPost.author_email,
+            content: pick(COMMENT_TEXTS),
+            author_name: bot.name,
+            author_email: bot.email,
+            author_avatar: bot.avatar,
+          });
+          actions.push("commented");
+        }
+      }
+
+      results.push({ bot: bot.name, actions });
     }
 
-    return Response.json({ bot: bot.name, actions });
+    return Response.json({ activeBots: activeBots.length, results });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
