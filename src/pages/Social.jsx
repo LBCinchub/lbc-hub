@@ -47,8 +47,30 @@ export default function Social() {
     refetchInterval: 3000,
   });
 
+  const [knownChatters] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('lbc_chatters') || '[]')); } catch { return new Set(); }
+  });
+
   const sendChatMutation = useMutation({
-    mutationFn: (data) => base44.entities.ChatMessage.create(data),
+    mutationFn: async (data) => {
+      const msg = await base44.entities.ChatMessage.create(data);
+      const isNew = !knownChatters.has(data.author_email);
+      if (isNew) {
+        knownChatters.add(data.author_email);
+        localStorage.setItem('lbc_chatters', JSON.stringify([...knownChatters]));
+      }
+      // Call AI moderator in background (don't await to keep UX snappy)
+      base44.functions.invoke('aiModerator', {
+        message_id: msg.id,
+        content: data.content,
+        author_name: data.author_name,
+        author_email: data.author_email,
+        is_new_user: isNew,
+      }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['chatMessages'] });
+      }).catch(() => {});
+      return msg;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chatMessages'] });
       setChatMessage('');

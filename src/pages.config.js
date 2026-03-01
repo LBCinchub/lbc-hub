@@ -47,6 +47,7 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import FollowedPosts from './pages/FollowedPosts';
 import Home from './pages/Home';
 import Jobs from './pages/Jobs';
 import Marketplace from './pages/Marketplace';
@@ -54,11 +55,11 @@ import Riding from './pages/Riding';
 import Services from './pages/Services';
 import Social from './pages/Social';
 import Travel from './pages/Travel';
-import FollowedPosts from './pages/FollowedPosts';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "FollowedPosts": FollowedPosts,
     "Home": Home,
     "Jobs": Jobs,
     "Marketplace": Marketplace,
@@ -66,7 +67,6 @@ export const PAGES = {
     "Services": Services,
     "Social": Social,
     "Travel": Travel,
-    "FollowedPosts": FollowedPosts,
 }
 
 export const pagesConfig = {
