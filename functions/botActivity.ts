@@ -180,20 +180,38 @@ Deno.serve(async (req) => {
         actions.push("posted");
       }
 
-      // 2. React to 1-3 recent posts (100% chance)
-      if (Math.random() < 1.0) {
+      // 2. React to 1-3 recent posts (100% chance) - emoji reaction + like
+      {
         const eligible = recentPosts.filter(p => p.author_email !== bot.email);
         const toReact = eligible.slice(0, 1 + Math.floor(Math.random() * 3));
         for (const targetPost of toReact) {
+          const updates = {};
+
+          // Emoji reaction
           const emoji = pick(REACTIONS);
           const reactions = { ...(targetPost.reactions || {}) };
           const existing = reactions[emoji] || [];
           if (!existing.includes(bot.email)) {
             reactions[emoji] = [...existing, bot.email];
-            await base44.asServiceRole.entities.Post.update(targetPost.id, { reactions });
-            // Update local cache so next bot sees updated reactions
+            updates.reactions = reactions;
             targetPost.reactions = reactions;
-            actions.push(`reacted ${emoji} on "${targetPost.content?.slice(0, 30)}..."`);
+          }
+
+          // Like (70% chance per reacted post)
+          if (Math.random() < 0.7) {
+            const likedBy = [...(targetPost.liked_by || [])];
+            if (!likedBy.includes(bot.email)) {
+              likedBy.push(bot.email);
+              updates.liked_by = likedBy;
+              updates.likes = likedBy.length;
+              targetPost.liked_by = likedBy;
+              targetPost.likes = likedBy.length;
+            }
+          }
+
+          if (Object.keys(updates).length > 0) {
+            await base44.asServiceRole.entities.Post.update(targetPost.id, updates);
+            actions.push(`reacted+liked "${targetPost.content?.slice(0, 30)}..."`);
           }
         }
       }
