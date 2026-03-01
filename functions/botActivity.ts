@@ -155,9 +155,8 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const results = [];
 
-    // Pick 3-6 distinct bots to act this round
-    const shuffled = [...BOTS].sort(() => Math.random() - 0.5);
-    const activeBots = shuffled.slice(0, 3 + Math.floor(Math.random() * 4));
+    // All 100 bots active every round, shuffled for variety
+    const activeBots = [...BOTS].sort(() => Math.random() - 0.5);
 
     // Fetch posts once for all bots to reuse
     const recentPosts = await base44.asServiceRole.entities.Post.list('-created_date', 30);
