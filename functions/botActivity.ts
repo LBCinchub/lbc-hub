@@ -229,7 +229,7 @@ Deno.serve(async (req) => {
       results.push({ bot: bot.name, actions });
     }
 
-    return Response.json({ activeBots: activeBots.length, results });
+    return Response.json({ activeBots: activeBots.length, totalActions: results.reduce((s, r) => s + r.actions.length, 0), results });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
