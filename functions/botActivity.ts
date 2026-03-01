@@ -180,8 +180,8 @@ Deno.serve(async (req) => {
         actions.push("posted");
       }
 
-      // 2. React to 1-3 recent posts (90% chance)
-      if (Math.random() < 0.9) {
+      // 2. React to 1-3 recent posts (100% chance)
+      if (Math.random() < 1.0) {
         const eligible = recentPosts.filter(p => p.author_email !== bot.email);
         const toReact = eligible.slice(0, 1 + Math.floor(Math.random() * 3));
         for (const targetPost of toReact) {
