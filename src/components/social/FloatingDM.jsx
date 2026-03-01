@@ -230,6 +230,7 @@ export default function FloatingDM({ user }) {
       {/* Floating button (when closed) */}
       {!open && (
         <motion.button
+          id="floating-dm-btn"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           whileHover={{ scale: 1.08 }}
