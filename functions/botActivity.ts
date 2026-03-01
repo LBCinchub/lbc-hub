@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
     const activeBots = [...BOTS].sort(() => Math.random() - 0.5);
 
     // Fetch posts once for all bots to reuse
-    const recentPosts = await base44.asServiceRole.entities.Post.list('-created_date', 30);
+    const recentPosts = await base44.asServiceRole.entities.Post.list('-created_date', 100);
 
     for (const bot of activeBots) {
       const actions = [];
