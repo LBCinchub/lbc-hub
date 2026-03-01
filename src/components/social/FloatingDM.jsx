@@ -34,14 +34,16 @@ export default function FloatingDM({ user }) {
       return [...sent, ...received].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
     },
     enabled: !!user?.email,
-    refetchInterval: 3000,
+    refetchInterval: 15000,
+    retry: false,
   });
 
   const { data: communityMessages = [] } = useQuery({
     queryKey: ['chatMessages'],
     queryFn: () => base44.entities.ChatMessage.list('-created_date', 50),
     enabled: !!user?.email && activeTab === 'community',
-    refetchInterval: 5000,
+    refetchInterval: 10000,
+    retry: false,
   });
 
   const { data: marketplaceInquiries = [] } = useQuery({
@@ -52,14 +54,16 @@ export default function FloatingDM({ user }) {
       return [...asBuyer, ...asSeller].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
     },
     enabled: !!user?.email && activeTab === 'marketplace',
-    refetchInterval: 5000,
+    refetchInterval: 15000,
+    retry: false,
   });
 
   const { data: serviceRequests = [] } = useQuery({
     queryKey: ['serviceRequests', user?.email],
     queryFn: () => base44.entities.ServiceBooking.filter({ email: user.email }, '-created_date', 50),
     enabled: !!user?.email && activeTab === 'requests',
-    refetchInterval: 5000,
+    refetchInterval: 15000,
+    retry: false,
   });
 
   const isAdmin = user?.role === 'admin';
