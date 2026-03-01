@@ -24,7 +24,13 @@ export default function Layout({ children, currentPageName }) {
   const [showOwnProfile, setShowOwnProfile] = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    const loadUser = () => {
+      base44.auth.me().then(setUser).catch(() => {
+        // Retry after 3s if rate limited
+        setTimeout(loadUser, 3000);
+      });
+    };
+    loadUser();
   }, []);
 
   return (
