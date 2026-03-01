@@ -197,14 +197,17 @@ export default function FloatingDM({ user }) {
     if (!open) return;
     const handleOutsideClick = (e) => {
       if (panelRef.current && !panelRef.current.contains(e.target)) {
+        // Also ignore clicks on the floating button itself
+        const floatingBtn = document.getElementById('floating-dm-btn');
+        if (floatingBtn && floatingBtn.contains(e.target)) return;
         setOpen(false);
         setMinimized(false);
         setActiveConvo(null);
         setComposing(false);
       }
     };
-    setTimeout(() => document.addEventListener('mousedown', handleOutsideClick), 0);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
+    const timer = setTimeout(() => document.addEventListener('mousedown', handleOutsideClick), 150);
+    return () => { clearTimeout(timer); document.removeEventListener('mousedown', handleOutsideClick); };
   }, [open]);
 
   if (!user) return null;
