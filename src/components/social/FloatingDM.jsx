@@ -192,7 +192,7 @@ export default function FloatingDM({ user }) {
   useEffect(() => {
     if (!open) return;
     const handleOutsideClick = (e) => {
-      if (!e.target.closest('[data-dm-panel]')) {
+      if (panelRef.current && !panelRef.current.contains(e.target)) {
         setOpen(false);
         setMinimized(false);
         setActiveConvo(null);
