@@ -269,30 +269,39 @@ export default function Social() {
 
               <ScrollArea className="h-[340px] p-4">
                 <div className="space-y-4">
-                  {[...chatMessages].reverse().map((msg) => (
+                  {[...chatMessages].reverse().map((msg) => {
+                    const isAIMod = msg.author_email === 'ai.mod@lbchub.ai';
+                    const isMine = msg.author_email === user?.email;
+                    return (
                     <div
                       key={msg.id}
-                      className={`flex gap-3 ${msg.author_email === user?.email ? 'flex-row-reverse' : ''}`}
+                      className={`flex gap-3 ${isMine ? 'flex-row-reverse' : ''}`}
                     >
                       <Avatar className="w-8 h-8 flex-shrink-0">
-                        <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs">
-                          {msg.author_name?.[0]?.toUpperCase() || '?'}
-                        </AvatarFallback>
+                        {isAIMod ? (
+                          <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-xs">🤖</AvatarFallback>
+                        ) : (
+                          <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs">
+                            {msg.author_name?.[0]?.toUpperCase() || '?'}
+                          </AvatarFallback>
+                        )}
                       </Avatar>
-                      <div className={`max-w-[75%] ${msg.author_email === user?.email ? 'items-end flex flex-col' : ''}`}>
-                        <p className={`text-xs text-zinc-500 mb-1 ${msg.author_email === user?.email ? 'text-right' : ''}`}>
+                      <div className={`max-w-[75%] ${isMine ? 'items-end flex flex-col' : ''}`}>
+                        <p className={`text-xs mb-1 ${isMine ? 'text-right text-zinc-500' : isAIMod ? 'text-emerald-400 font-medium' : 'text-zinc-500'}`}>
                           {msg.author_name}
                         </p>
                         <div className={`rounded-2xl px-3 py-2 text-sm ${
-                          msg.author_email === user?.email
+                          isMine
                             ? 'bg-gradient-to-r from-indigo-600 to-purple-600'
+                            : isAIMod
+                            ? 'bg-emerald-950/60 border border-emerald-500/30 text-emerald-100'
                             : 'bg-white/10'
                         }`}>
                           {msg.content}
                         </div>
                       </div>
                     </div>
-                  ))}
+                  );})}
                   <div ref={chatEndRef} />
                 </div>
               </ScrollArea>
