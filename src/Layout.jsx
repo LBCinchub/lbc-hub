@@ -135,16 +135,27 @@ export default function Layout({ children, currentPageName }) {
             {/* User / CTA */}
             <div className="hidden md:flex items-center gap-4">
               {user ? (
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setShowOwnProfile(true)}>
-                    <Avatar className="w-8 h-8">
-                      <AvatarImage src={user.avatar_url} />
-                      <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-sm font-medium">
-                        {user.full_name?.[0] || user.email?.[0]?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </button>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="cursor-pointer">
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={user.avatar_url} />
+                        <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-sm font-medium">
+                          {user.full_name?.[0] || user.email?.[0]?.toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-zinc-900 border-white/10">
+                    <DropdownMenuItem onClick={() => setShowOwnProfile(true)} className="cursor-pointer text-zinc-200 focus:bg-white/10 focus:text-white">
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => base44.auth.logout()} className="cursor-pointer text-zinc-200 focus:bg-white/10 focus:text-white">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               ) : (
                 <button 
                   onClick={() => base44.auth.redirectToLogin()}
