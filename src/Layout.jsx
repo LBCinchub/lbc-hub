@@ -4,6 +4,7 @@ import { createPageUrl } from '@/utils';
 import { Home, Users, ShoppingBag, Car, Plane, Briefcase, Wrench, Menu, X, LogOut } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import UserProfileModal from './components/social/UserProfileModal';
 import FloatingDM from './components/social/FloatingDM';
 import CallManager from './components/social/CallManager';
