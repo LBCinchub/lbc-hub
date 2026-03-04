@@ -267,18 +267,31 @@ export default function TripPlannerModal({ travelData, onClose }) {
                   <Check className="w-4 h-4 flex-shrink-0" />
                   <span>Saved! {isPublic ? 'Posted to community feed.' : ''}</span>
                 </div>
-                {isPublic && savedId && (
-                  <button
-                    onClick={() => {
-                      const url = `${window.location.origin}${createPageUrl('SharedTrip')}?id=${savedId}`;
-                      navigator.clipboard.writeText(url);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2500);
-                    }}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm transition-colors"
-                  >
-                    {copied ? <><Check className="w-4 h-4 text-emerald-400" />Link copied!</> : <><Copy className="w-4 h-4" />Copy shareable link</>}
-                  </button>
+                {savedId && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => {
+                        const tripUrl = `${window.location.origin}${createPageUrl('SharedTrip')}?id=${savedId}`;
+                        window.location.href = `${createPageUrl('Social')}?shareTrip=${encodeURIComponent(savedId)}&tripName=${encodeURIComponent(tripName)}&dest=${encodeURIComponent(travelData.destination_name)}&days=${numDays}`;
+                      }}
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 text-sm transition-colors"
+                    >
+                      <Users className="w-4 h-4" />
+                      Share to Social
+                    </button>
+                    <button
+                      onClick={() => {
+                        const url = `${window.location.origin}${createPageUrl('SharedTrip')}?id=${savedId}`;
+                        navigator.clipboard.writeText(url);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2500);
+                      }}
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm transition-colors"
+                    >
+                      {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                      {copied ? 'Copied!' : 'Copy Link'}
+                    </button>
+                  </div>
                 )}
               </div>
             )}
