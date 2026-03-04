@@ -70,13 +70,19 @@ export default function TripPlannerModal({ travelData, onClose }) {
   const handleSave = async () => {
     setSaving(true);
     const user = await base44.auth.me();
+    // Sanitize days to ensure activities are valid objects
+    const sanitizedDays = itinerary.map(day => ({
+      ...day,
+      activities: (day.activities || []).filter(a => a && typeof a === 'object' && !Array.isArray(a)),
+    }));
+
     await base44.entities.TripItinerary.create({
       user_email: user.email,
       trip_name: tripName,
       destination: travelData.destination_name,
       num_days: numDays,
       start_date: startDate || undefined,
-      days: itinerary,
+      days: sanitizedDays,
     });
     setSaving(false);
     setSaved(true);
