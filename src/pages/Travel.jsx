@@ -100,15 +100,9 @@ export default function Travel() {
     setActivePhotoIdx(0);
     setActiveTab('overview');
 
-    const response = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are a professional travel guide. Provide a detailed, enthusiastic travel guide for: "${query}".
-      Return factual, specific information.
-      
-      IMPORTANT for photo_urls: You MUST provide 6 real, working, publicly accessible image URLs of famous landmarks or scenery in this destination.
-      Use real URLs from Wikipedia Commons, well-known travel sites, or any publicly accessible CDN. 
-      Format: direct image URLs ending in .jpg or .png that work without authentication.
-      Example format: https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/320px-Camponotus_flavomarginatus_ant.jpg
-      But use ACTUAL landmark photos for ${query}, not ants. Each URL should show a different iconic landmark or scene.`,
+    // Fire two parallel AI calls: one fast for essentials, one for detailed content
+    const essentialsPromise = base44.integrations.Core.InvokeLLM({
+      prompt: `Travel guide essentials for "${query}". Be concise and accurate.`,
       add_context_from_internet: true,
       response_json_schema: {
         type: 'object',
@@ -123,6 +117,17 @@ export default function Travel() {
           timezone: { type: 'string' },
           safety_score: { type: 'number' },
           budget_per_day: { type: 'string' },
+          photo_spots: { type: 'array', items: { type: 'string' } },
+        }
+      }
+    });
+
+    const detailsPromise = base44.integrations.Core.InvokeLLM({
+      prompt: `Detailed travel content for "${query}": top attractions with tips, local cuisine dishes, cultural etiquette tips, budget money-saving tips, and hidden off-the-beaten-path gems. Be specific and enthusiastic.`,
+      add_context_from_internet: true,
+      response_json_schema: {
+        type: 'object',
+        properties: {
           attractions: {
             type: 'array',
             items: {
@@ -151,22 +156,18 @@ export default function Travel() {
               properties: { name: { type: 'string' }, description: { type: 'string' } }
             }
           },
-          photo_spots: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'Names of 6 iconic photo spots / landmarks'
-          },
-          photo_urls: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'Array of 6 real, working, publicly accessible image URLs (.jpg or .png) of famous landmarks in this destination from Wikipedia Commons or similar public sources'
-          }
         }
       }
     });
 
-    setTravelData(response);
+    // Show essentials as soon as they arrive
+    const essentials = await essentialsPromise;
+    setTravelData(essentials);
     setLoading(false);
+
+    // Merge in details when ready
+    const details = await detailsPromise;
+    setTravelData(prev => prev ? { ...prev, ...details } : { ...essentials, ...details });
   };
 
   const handleBookingClick = (categoryId) => {
