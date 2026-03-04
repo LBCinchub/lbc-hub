@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Calendar, ChevronDown, ChevronUp, Clock, Sparkles, ArrowLeft } from 'lucide-react';
+import { MapPin, Calendar, ChevronDown, ChevronUp, Clock, Sparkles, ArrowLeft, Share2, Copy, Users, Check } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
 export default function SharedTrip() {
