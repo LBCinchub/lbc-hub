@@ -94,6 +94,7 @@ export default function CreatePost({ user, onGoLive }) {
       removeMedia();
       setSelectedTopics([]);
       setShowTopics(false);
+      setTripPreview(null);
     },
   });
 
