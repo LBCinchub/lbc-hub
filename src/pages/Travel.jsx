@@ -5,10 +5,11 @@ import {
   Plane, Hotel, Car, Utensils, MapPin, 
   Sparkles, Loader2, ExternalLink, Calendar, 
   Star, Thermometer, Globe, DollarSign, ShieldCheck,
-  Camera, Landmark, UtensilsCrossed, ArrowRight
+  Camera, Landmark, UtensilsCrossed, ArrowRight, CalendarDays
 } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import TripPlannerModal from '../components/travel/TripPlannerModal';
 
 const bookingCategories = [
   { id: 'flights', label: 'Flights', icon: Plane, color: 'from-sky-500 to-blue-600' },
