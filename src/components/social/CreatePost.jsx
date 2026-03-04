@@ -114,11 +114,40 @@ export default function CreatePost({ user, onGoLive }) {
         </Avatar>
         <div className="flex-1">
           <Textarea
-            placeholder="What's on your mind?"
+            placeholder="What's on your mind? Paste a trip link to share your itinerary ✈️"
             value={text}
-            onChange={e => setText(e.target.value)}
+            onChange={handleTextChange}
             className="bg-white/5 border-white/10 resize-none text-white placeholder:text-zinc-500 min-h-[90px]"
           />
+
+          {/* Trip Link Preview */}
+          <AnimatePresence>
+            {(tripPreview || loadingTrip) && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                className="mt-3 rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-3 flex items-center gap-3"
+              >
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                  <Plane className="w-4 h-4 text-white" />
+                </div>
+                {loadingTrip ? (
+                  <div className="flex items-center gap-2 text-sm text-zinc-400"><Loader2 className="w-3.5 h-3.5 animate-spin" />Loading trip...</div>
+                ) : (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">{tripPreview.trip_name}</p>
+                    <div className="flex items-center gap-3 text-xs text-zinc-400 mt-0.5 flex-wrap">
+                      <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-indigo-400" />{tripPreview.destination}</span>
+                      <span className="flex items-center gap-1"><Calendar className="w-3 h-3 text-indigo-400" />{tripPreview.num_days} days</span>
+                      <span className="text-zinc-500">by {tripPreview.user_name}</span>
+                    </div>
+                  </div>
+                )}
+                <button onClick={() => setTripPreview(null)} className="text-zinc-500 hover:text-zinc-300 flex-shrink-0"><X className="w-3.5 h-3.5" /></button>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Media Preview */}
           <AnimatePresence>
