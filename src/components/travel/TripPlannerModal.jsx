@@ -238,14 +238,50 @@ export default function TripPlannerModal({ travelData, onClose }) {
 
         {/* Footer */}
         {itinerary && (
-          <div className="p-5 border-t border-white/10">
-            <Button onClick={handleSave} disabled={saving || saved} className="w-full h-11 btn-primary">
-              {saved
-                ? <><Check className="w-4 h-4 mr-2" />Saved to My Trips!</>
-                : saving
-                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
-                : <><Save className="w-4 h-4 mr-2" />Save Itinerary</>}
-            </Button>
+          <div className="p-5 border-t border-white/10 space-y-3">
+            {/* Visibility toggle */}
+            {!saved && (
+              <button
+                onClick={() => setIsPublic(p => !p)}
+                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border transition-all text-sm ${isPublic ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-300' : 'border-white/10 bg-white/5 text-zinc-400'}`}
+              >
+                <span className="flex items-center gap-2">
+                  {isPublic ? <Globe className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                  {isPublic ? 'Public — visible in community feed & shareable' : 'Private — only you can see this'}
+                </span>
+                <div className={`w-8 h-4 rounded-full transition-colors ${isPublic ? 'bg-indigo-500' : 'bg-zinc-600'}`}>
+                  <div className={`w-3 h-3 rounded-full bg-white mt-0.5 transition-transform ${isPublic ? 'translate-x-4 ml-0.5' : 'translate-x-0.5'}`} />
+                </div>
+              </button>
+            )}
+
+            {!saved ? (
+              <Button onClick={handleSave} disabled={saving} className="w-full h-11 btn-primary">
+                {saving
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
+                  : <><Save className="w-4 h-4 mr-2" />Save Itinerary</>}
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-sm">
+                  <Check className="w-4 h-4 flex-shrink-0" />
+                  <span>Saved! {isPublic ? 'Posted to community feed.' : ''}</span>
+                </div>
+                {isPublic && savedId && (
+                  <button
+                    onClick={() => {
+                      const url = `${window.location.origin}${createPageUrl('SharedTrip')}?id=${savedId}`;
+                      navigator.clipboard.writeText(url);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2500);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm transition-colors"
+                  >
+                    {copied ? <><Check className="w-4 h-4 text-emerald-400" />Link copied!</> : <><Copy className="w-4 h-4" />Copy shareable link</>}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </motion.div>
