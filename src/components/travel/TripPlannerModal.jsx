@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles, Loader2, Save, Calendar, MapPin, ChevronDown, ChevronUp, Check, Share2, Copy, Globe, Lock } from 'lucide-react';
+import { X, Sparkles, Loader2, Save, Calendar, MapPin, ChevronDown, ChevronUp, Check, Share2, Copy, Globe, Lock, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createPageUrl } from '@/utils';
