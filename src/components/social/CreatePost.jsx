@@ -48,20 +48,32 @@ export default function CreatePost({ user, onGoLive }) {
   }, []);
   const queryClient = useQueryClient();
 
-  const handleTextChange = async (e) => {
+  const tripLookupTimer = useRef(null);
+
+  const handleTextChange = (e) => {
     const val = e.target.value;
     setText(val);
+
+    // If a trip was pre-loaded from URL params, don't try to re-fetch from typed text
+    if (shareTripId) return;
+
     const tripId = extractTripId(val);
-    if (tripId && (!tripPreview || tripPreview.id !== tripId)) {
+    if (!tripId) {
+      setTripPreview(null);
+      return;
+    }
+    if (tripPreview?.id === tripId) return;
+
+    // Debounce: only fetch after user stops typing for 600ms
+    clearTimeout(tripLookupTimer.current);
+    tripLookupTimer.current = setTimeout(async () => {
       setLoadingTrip(true);
       try {
         const trip = await base44.entities.TripItinerary.filter({ id: tripId }, '-created_date', 1);
         if (trip?.[0]) setTripPreview(trip[0]);
       } catch {}
       setLoadingTrip(false);
-    } else if (!tripId) {
-      setTripPreview(null);
-    }
+    }, 600);
   };
 
   const handleFileSelect = (files, type) => {
