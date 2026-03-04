@@ -72,6 +72,11 @@ export default function CreatePost({ user, onGoLive }) {
       }
       return base44.entities.Post.create({
         content: text,
+        trip_id: tripPreview?.id || undefined,
+        trip_name: tripPreview?.trip_name || undefined,
+        trip_destination: tripPreview?.destination || undefined,
+        trip_days: tripPreview?.num_days || undefined,
+        trip_user: tripPreview?.user_name || undefined,
         author_name: user.full_name || user.email,
         author_email: user.email,
         author_avatar: user.avatar_url || '',
