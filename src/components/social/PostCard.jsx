@@ -205,6 +205,29 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
               </div>
             )}
 
+            {/* Trip Card Embed */}
+            {post.trip_id && (
+              <Link
+                to={`${createPageUrl('SharedTrip')}?id=${post.trip_id}`}
+                className="block mb-4 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 transition-all p-4 group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                    <Plane className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-white truncate">{post.trip_name}</p>
+                    <div className="flex items-center gap-3 text-xs text-zinc-400 mt-0.5 flex-wrap">
+                      {post.trip_destination && <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-indigo-400" />{post.trip_destination}</span>}
+                      {post.trip_days && <span className="flex items-center gap-1"><Calendar className="w-3 h-3 text-indigo-400" />{post.trip_days} days</span>}
+                      {post.trip_user && <span className="text-zinc-500">by {post.trip_user}</span>}
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-indigo-400 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                </div>
+              </Link>
+            )}
+
             {/* Media */}
             {post.media_urls?.length > 0 && (
               <div className="mb-4 rounded-xl overflow-hidden">
