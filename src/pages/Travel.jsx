@@ -489,6 +489,14 @@ export default function Travel() {
 
                 {/* Book CTAs */}
                 <div className="px-6 pb-6 flex flex-wrap gap-3 border-t border-white/5 pt-4">
+                  <button
+                    onClick={() => setShowTripPlanner(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm font-medium hover:opacity-90 transition-opacity border-2 border-indigo-400/40"
+                  >
+                    <CalendarDays className="w-4 h-4" />
+                    Plan My Trip
+                    <Sparkles className="w-3.5 h-3.5" />
+                  </button>
                   {bookingCategories.map(cat => (
                     <button key={cat.id} onClick={() => handleBookingClick(cat.id)}
                       className={`flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r ${cat.color} text-white text-sm font-medium hover:opacity-90 transition-opacity`}>
