@@ -9,10 +9,24 @@ import { createPageUrl } from '@/utils';
 export default function SharedTrip() {
   const params = new URLSearchParams(window.location.search);
   const tripId = params.get('id');
+  const navigate = useNavigate();
 
   const [trip, setTrip] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedDay, setExpandedDay] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+    setShowShareMenu(false);
+  };
+
+  const handleShareToSocial = () => {
+    navigate(`${createPageUrl('Social')}?shareTrip=${encodeURIComponent(tripId)}&tripName=${encodeURIComponent(trip.trip_name)}&dest=${encodeURIComponent(trip.destination)}&days=${trip.num_days}`);
+  };
 
   useEffect(() => {
     if (!tripId) { setLoading(false); return; }
