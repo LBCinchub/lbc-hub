@@ -133,7 +133,8 @@ export default function CreatePost({ user, onGoLive }) {
         </Avatar>
         <div className="flex-1">
           <Textarea
-            placeholder="What's on your mind? Paste a trip link to share your itinerary ✈️"
+            ref={textareaRef}
+            placeholder={tripPreview ? `Say something about your ${tripPreview.destination} trip... ✈️` : "What's on your mind? Paste a trip link to share your itinerary ✈️"}
             value={text}
             onChange={handleTextChange}
             className="bg-white/5 border-white/10 resize-none text-white placeholder:text-zinc-500 min-h-[90px]"
