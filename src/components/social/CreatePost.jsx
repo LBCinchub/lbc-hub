@@ -39,6 +39,13 @@ export default function CreatePost({ user, onGoLive }) {
   const [loadingTrip, setLoadingTrip] = useState(false);
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
+
+  // Auto-focus textarea when trip is pre-loaded from share
+  React.useEffect(() => {
+    if (shareTripId && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, []);
   const queryClient = useQueryClient();
 
   const handleTextChange = async (e) => {
