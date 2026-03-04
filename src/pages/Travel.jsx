@@ -88,6 +88,7 @@ export default function Travel() {
   const [travelData, setTravelData] = useState(null);
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showTripPlanner, setShowTripPlanner] = useState(false);
 
   const handleSearch = async (dest) => {
     const query = dest || destination.trim();
