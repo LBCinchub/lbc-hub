@@ -14,6 +14,9 @@ export default function TripPlannerModal({ travelData, onClose }) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [savedId, setSavedId] = useState(null);
+  const [isPublic, setIsPublic] = useState(true);
+  const [copied, setCopied] = useState(false);
   const [expandedDay, setExpandedDay] = useState(0);
 
   const generateItinerary = async () => {
