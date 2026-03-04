@@ -31,10 +31,11 @@ export default function CreatePost({ user, onGoLive }) {
   const [showTopics, setShowTopics] = useState(false);
   const [tripPreview, setTripPreview] = useState(() => {
     if (shareTripId && shareTripName) {
-      return { id: shareTripId, trip_name: shareTripName, destination: shareTripDest, num_days: shareTripDays, user_name: user?.full_name || user?.email };
+      return { id: shareTripId, trip_name: shareTripName, destination: shareTripDest, num_days: Number(shareTripDays), user_name: user?.full_name || user?.email };
     }
     return null;
   });
+  const textareaRef = useRef(null);
   const [loadingTrip, setLoadingTrip] = useState(false);
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
