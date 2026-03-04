@@ -16,6 +16,12 @@ function extractTripId(text) {
 }
 
 export default function CreatePost({ user, onGoLive }) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const shareTripId = urlParams.get('shareTrip');
+  const shareTripName = urlParams.get('tripName');
+  const shareTripDest = urlParams.get('dest');
+  const shareTripDays = urlParams.get('days');
+
   const [text, setText] = useState('');
   const [mediaFiles, setMediaFiles] = useState([]);
   const [mediaPreviews, setMediaPreviews] = useState([]);
@@ -23,7 +29,12 @@ export default function CreatePost({ user, onGoLive }) {
   const [uploading, setUploading] = useState(false);
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [showTopics, setShowTopics] = useState(false);
-  const [tripPreview, setTripPreview] = useState(null); // { id, trip_name, destination, num_days, user_name }
+  const [tripPreview, setTripPreview] = useState(() => {
+    if (shareTripId && shareTripName) {
+      return { id: shareTripId, trip_name: shareTripName, destination: shareTripDest, num_days: shareTripDays, user_name: user?.full_name || user?.email };
+    }
+    return null;
+  });
   const [loadingTrip, setLoadingTrip] = useState(false);
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
