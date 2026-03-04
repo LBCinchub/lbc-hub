@@ -80,17 +80,20 @@ export default function TripPlannerModal({ travelData, onClose }) {
       activities: (day.activities || []).filter(a => a && typeof a === 'object' && !Array.isArray(a)),
     }));
 
-    await base44.entities.TripItinerary.create({
+    const record = await base44.entities.TripItinerary.create({
       user_email: user.email,
+      user_name: user.full_name || user.email,
+      user_avatar: user.avatar_url || '',
       trip_name: tripName,
       destination: travelData.destination_name,
       num_days: numDays,
       start_date: startDate || undefined,
+      is_public: isPublic,
       days: sanitizedDays,
     });
+    setSavedId(record.id);
     setSaving(false);
     setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
   };
 
   return (
