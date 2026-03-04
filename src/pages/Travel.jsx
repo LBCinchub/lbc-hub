@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import TripPlannerModal from '../components/travel/TripPlannerModal';
+import CommunityTrips from '../components/travel/CommunityTrips';
 
 const bookingCategories = [
   { id: 'flights', label: 'Flights', icon: Plane, color: 'from-sky-500 to-blue-600' },
