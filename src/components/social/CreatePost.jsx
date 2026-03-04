@@ -9,6 +9,12 @@ import { Button } from "@/components/ui/button";
 import TopicSelector from './TopicSelector';
 import { Link } from 'react-router-dom';
 
+// Extract SharedTrip id from a pasted URL
+function extractTripId(text) {
+  const match = text.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : null;
+}
+
 export default function CreatePost({ user, onGoLive }) {
   const [text, setText] = useState('');
   const [mediaFiles, setMediaFiles] = useState([]);
@@ -17,9 +23,27 @@ export default function CreatePost({ user, onGoLive }) {
   const [uploading, setUploading] = useState(false);
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [showTopics, setShowTopics] = useState(false);
+  const [tripPreview, setTripPreview] = useState(null); // { id, trip_name, destination, num_days, user_name }
+  const [loadingTrip, setLoadingTrip] = useState(false);
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
   const queryClient = useQueryClient();
+
+  const handleTextChange = async (e) => {
+    const val = e.target.value;
+    setText(val);
+    const tripId = extractTripId(val);
+    if (tripId && (!tripPreview || tripPreview.id !== tripId)) {
+      setLoadingTrip(true);
+      try {
+        const trip = await base44.entities.TripItinerary.filter({ id: tripId }, '-created_date', 1);
+        if (trip?.[0]) setTripPreview(trip[0]);
+      } catch {}
+      setLoadingTrip(false);
+    } else if (!tripId) {
+      setTripPreview(null);
+    }
+  };
 
   const handleFileSelect = (files, type) => {
     const arr = Array.from(files);
