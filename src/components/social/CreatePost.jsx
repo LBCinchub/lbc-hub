@@ -2,11 +2,12 @@ import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ImageIcon, Video, Radio, X, Loader2, Tag } from 'lucide-react';
+import { ImageIcon, Video, Radio, X, Loader2, Tag, Plane, MapPin, Calendar, Link as LinkIcon } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import TopicSelector from './TopicSelector';
+import { Link } from 'react-router-dom';
 
 export default function CreatePost({ user, onGoLive }) {
   const [text, setText] = useState('');
