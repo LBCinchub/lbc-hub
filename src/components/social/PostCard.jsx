@@ -16,7 +16,28 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
   const [summary, setSummary] = useState('');
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const [copied, setCopied] = useState(false);
   const queryClient = useQueryClient();
+
+  const postUrl = `${window.location.origin}${createPageUrl('Social')}`;
+
+  const handleShareToSocial = () => {
+    // Pre-fill the Social page's CreatePost with a link/reference to this post
+    const shareText = `Check out this post by ${post.author_name}: "${post.content?.slice(0, 80)}${post.content?.length > 80 ? '...' : ''}" — ${postUrl}`;
+    navigator.clipboard.writeText(shareText);
+    setCopied(false);
+    setShowShareMenu(false);
+    // Navigate to social with pre-filled text (use URL param)
+    window.location.href = `${createPageUrl('Social')}?share=${encodeURIComponent(post.id)}`;
+  };
+
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}${createPageUrl('Social')}?post=${post.id}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => { setCopied(false); setShowShareMenu(false); }, 2000);
+  };
 
   const isLongPost = (post.content?.length || 0) > 180;
 
