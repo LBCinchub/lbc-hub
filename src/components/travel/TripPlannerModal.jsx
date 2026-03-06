@@ -8,6 +8,7 @@ import { createPageUrl } from '@/utils';
 import { useNavigate } from 'react-router-dom';
 
 export default function TripPlannerModal({ travelData, onClose }) {
+  const navigate = useNavigate();
   const [numDays, setNumDays] = useState(3);
   const [startDate, setStartDate] = useState('');
   const [tripName, setTripName] = useState(`${travelData.destination_name} Trip`);
