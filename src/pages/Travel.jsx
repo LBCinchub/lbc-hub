@@ -160,14 +160,18 @@ export default function Travel() {
       }
     });
 
-    // Show essentials as soon as they arrive
-    const essentials = await essentialsPromise;
-    setTravelData(essentials);
-    setLoading(false);
+    // Show essentials as soon as they arrive, then merge details
+    essentialsPromise.then(essentials => {
+      setTravelData(essentials);
+      setLoading(false);
+    });
 
-    // Merge in details when ready
-    const details = await detailsPromise;
-    setTravelData(prev => prev ? { ...prev, ...details } : { ...essentials, ...details });
+    detailsPromise.then(details => {
+      setTravelData(prev => prev ? { ...prev, ...details } : details);
+    });
+
+    // Wait for both so the function doesn't throw before they complete
+    await Promise.all([essentialsPromise, detailsPromise]).catch(() => {});
   };
 
   const handleBookingClick = (categoryId) => {

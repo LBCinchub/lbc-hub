@@ -53,9 +53,9 @@ import Jobs from './pages/Jobs';
 import Marketplace from './pages/Marketplace';
 import Riding from './pages/Riding';
 import Services from './pages/Services';
+import SharedTrip from './pages/SharedTrip';
 import Social from './pages/Social';
 import Travel from './pages/Travel';
-import SharedTrip from './pages/SharedTrip';
 import __Layout from './Layout.jsx';
 
 
@@ -66,9 +66,9 @@ export const PAGES = {
     "Marketplace": Marketplace,
     "Riding": Riding,
     "Services": Services,
+    "SharedTrip": SharedTrip,
     "Social": Social,
     "Travel": Travel,
-    "SharedTrip": SharedTrip,
 }
 
 export const pagesConfig = {
