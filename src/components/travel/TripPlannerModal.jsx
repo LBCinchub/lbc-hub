@@ -5,6 +5,7 @@ import { X, Sparkles, Loader2, Save, Calendar, MapPin, ChevronDown, ChevronUp, C
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createPageUrl } from '@/utils';
+import { useNavigate } from 'react-router-dom';
 
 export default function TripPlannerModal({ travelData, onClose }) {
   const [numDays, setNumDays] = useState(3);
