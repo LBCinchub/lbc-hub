@@ -230,8 +230,10 @@ export default function ProductModal({ product, user, onClose }) {
 
             {/* Action Buttons */}
             <div className="flex gap-3">
-              <Button className="btn-primary rounded-xl flex-1 py-3">
-                <ShoppingBag className="w-4 h-4 mr-2" /> Buy Now
+              <Button onClick={handleBuyNow} disabled={checkingOut} className="btn-primary rounded-xl flex-1 py-3">
+                {checkingOut
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing...</>
+                  : <><Lock className="w-4 h-4 mr-2" />Secure Checkout — ${product.price}</>}
               </Button>
               {user && (
                 <>
