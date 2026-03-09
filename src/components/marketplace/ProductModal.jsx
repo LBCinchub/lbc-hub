@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Star, MessageSquare, Send, Package,
-  ArrowRight, CheckCircle, ShoppingBag
+  ArrowRight, CheckCircle, ShoppingBag, Loader2, Lock
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
