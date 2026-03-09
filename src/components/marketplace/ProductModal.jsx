@@ -134,6 +134,32 @@ function InquiryForm({ product, user, onDone }) {
 export default function ProductModal({ product, user, onClose }) {
   const [activeSection, setActiveSection] = useState(null); // 'review' | 'inquiry'
   const [done, setDone] = useState(null);
+  const [checkingOut, setCheckingOut] = useState(false);
+
+  const handleBuyNow = async () => {
+    // Block checkout inside iframes (preview mode)
+    if (window.self !== window.top) {
+      alert('Checkout is only available from the published app. Please open the app directly.');
+      return;
+    }
+    setCheckingOut(true);
+    try {
+      const res = await base44.functions.invoke('createCheckoutSession', {
+        productId: product.id,
+        productName: product.name,
+        productPrice: product.price,
+        productImage: product.image_url,
+        successUrl: `${window.location.origin}/Marketplace?success=1`,
+        cancelUrl: `${window.location.origin}/Marketplace`,
+      });
+      if (res.data?.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (err) {
+      alert('Failed to start checkout. Please try again.');
+    }
+    setCheckingOut(false);
+  };
 
   const { data: reviews = [] } = useQuery({
     queryKey: ['reviews', product.id],
