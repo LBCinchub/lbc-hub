@@ -150,6 +150,29 @@ export default function Social() {
               <CreatePost user={user} onGoLive={() => setGoLiveOpen(true)} />
             ) : null}
 
+            {/* Feed Tabs */}
+            <div className="flex items-center gap-1 p-1 glass rounded-2xl">
+              {[
+                { key: 'forYou', label: 'For You', icon: Globe },
+                { key: 'following', label: 'Following', icon: UserCheck },
+                { key: 'videos', label: 'Videos', icon: Video },
+                { key: 'photos', label: 'Photos', icon: Image },
+              ].map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => setFeedTab(key)}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all flex-1 justify-center ${
+                    feedTab === key
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">{label}</span>
+                </button>
+              ))}
+            </div>
+
             {/* Search Bar */}
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
