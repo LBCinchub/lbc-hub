@@ -222,6 +222,16 @@ export default function Social() {
             {/* Feed */}
             {(() => {
               let filteredPosts = posts;
+
+              // Feed tab filter
+              if (feedTab === 'following') {
+                filteredPosts = filteredPosts.filter(p => followingEmails.has(p.author_email));
+              } else if (feedTab === 'videos') {
+                filteredPosts = filteredPosts.filter(p => p.media_type === 'video' || p.media_type === 'live');
+              } else if (feedTab === 'photos') {
+                filteredPosts = filteredPosts.filter(p => p.media_type === 'image');
+              }
+
               if (searchQuery.trim()) {
                 filteredPosts = filteredPosts.filter(p =>
                   p.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
