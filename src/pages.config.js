@@ -72,7 +72,7 @@ export const PAGES = {
 }
 
 export const pagesConfig = {
-    mainPage: "Home",
+    mainPage: "Social",
     Pages: PAGES,
     Layout: __Layout,
 };
