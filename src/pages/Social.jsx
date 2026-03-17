@@ -28,6 +28,14 @@ export default function Social() {
   const [dmTarget, setDmTarget] = useState(null);
   const [profileTarget, setProfileTarget] = useState(null);
   const [activeTopic, setActiveTopic] = useState(null);
+  const [feedTab, setFeedTab] = useState('forYou'); // 'forYou' | 'following' | 'videos' | 'photos'
+
+  const { data: follows = [] } = useQuery({
+    queryKey: ['follows', user?.email],
+    queryFn: () => base44.entities.Follow.filter({ follower_email: user.email }),
+    enabled: !!user,
+  });
+  const followingEmails = new Set(follows.map(f => f.following_email));
   const queryClient = useQueryClient();
   const chatEndRef = useRef(null);
 
