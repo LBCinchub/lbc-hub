@@ -166,27 +166,7 @@ export default function FloatingDM({ user }) {
     }
   }, [activeConvo, composing]);
 
-  const startDrag = (e) => {
-    if (e.button !== 0) return;
-    hasDragged.current = false;
-    dragStart.current = { mx: e.clientX, my: e.clientY, px: position.x, py: position.y };
 
-    const onMove = (ev) => {
-      const dx = ev.clientX - dragStart.current.mx;
-      const dy = ev.clientY - dragStart.current.my;
-      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) hasDragged.current = true;
-      setPosition({
-        x: Math.max(0, Math.min(window.innerWidth - 64, dragStart.current.px + dx)),
-        y: Math.max(0, Math.min(window.innerHeight - 64, dragStart.current.py + dy)),
-      });
-    };
-    const onUp = () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  };
 
   const handleButtonClick = () => {
     if (!hasDragged.current) setOpen(true);
