@@ -20,6 +20,7 @@ import UserProfileModal from '../components/social/UserProfileModal';
 import SuggestedPosts from '../components/social/SuggestedPosts';
 import TrendingWidget from '../components/social/TrendingWidget';
 import MemberSearch from '../components/social/MemberSearch';
+import { Loader2 } from 'lucide-react';
 import { TOPICS } from '../components/social/TopicSelector';
 import { Settings as SettingsIcon } from 'lucide-react';
 
