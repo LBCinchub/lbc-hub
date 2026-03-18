@@ -271,16 +271,16 @@ Provide a brief analysis in JSON format:
               </AvatarFallback>
             </Avatar>
           </button>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-2">
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <button
                   onClick={() => onViewProfile?.({ email: post.author_email, full_name: post.author_name, avatar_url: post.author_avatar })}
-                  className="font-semibold hover:text-indigo-400 transition-colors"
+                  className="text-sm sm:text-base font-semibold hover:text-indigo-400 transition-colors truncate block"
                 >
                   {post.author_name || 'Anonymous'}
                 </button>
-                <p className="text-xs text-zinc-500">{format(new Date(post.created_date), 'MMM d, h:mm a')}</p>
+                <p className="text-[10px] sm:text-xs text-zinc-500">{format(new Date(post.created_date), 'MMM d, h:mm a')}</p>
               </div>
               {user && post.author_email !== user.email && (
                 <Button
@@ -310,14 +310,14 @@ Provide a brief analysis in JSON format:
 
             {/* Topic Tags */}
             {post.topics?.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-2">
+              <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-2">
                 {post.topics.map(t => (
-                  <span key={t} className="px-2 py-0.5 rounded-full bg-indigo-600/20 text-indigo-300 text-xs font-medium">#{t}</span>
+                  <span key={t} className="px-1.5 sm:px-2 py-0.5 rounded-full bg-indigo-600/20 text-indigo-300 text-[10px] sm:text-xs font-medium">#{t}</span>
                 ))}
               </div>
             )}
 
-            <p className="text-zinc-200 leading-relaxed mb-2">{post.content}</p>
+            <p className="text-sm sm:text-base text-zinc-200 leading-relaxed mb-2">{post.content}</p>
 
             {/* AI Summary */}
             {isLongPost && (

@@ -135,9 +135,9 @@ export default function CreatePost({ user, onGoLive }) {
   };
 
   return (
-    <motion.div className="glass rounded-2xl p-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-      <div className="flex items-start gap-4">
-        <Avatar className="w-12 h-12 flex-shrink-0">
+    <motion.div className="glass rounded-2xl p-4 sm:p-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+      <div className="flex items-start gap-3 sm:gap-4">
+        <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
           <AvatarImage src={user.avatar_url} />
           <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-medium">
             {user.full_name?.[0] || user.email?.[0]?.toUpperCase()}
@@ -149,7 +149,7 @@ export default function CreatePost({ user, onGoLive }) {
             placeholder={tripPreview ? `Say something about your ${tripPreview.destination} trip... ✈️` : "What's on your mind? Paste a trip link to share your itinerary ✈️"}
             value={text}
             onChange={handleTextChange}
-            className="bg-white/5 border-white/10 resize-none text-white placeholder:text-zinc-500 min-h-[90px]"
+            className="bg-white/5 border-white/10 resize-none text-sm sm:text-base text-white placeholder:text-zinc-500 min-h-[70px] sm:min-h-[90px]"
           />
 
           {/* Trip Link Preview */}
@@ -218,29 +218,29 @@ export default function CreatePost({ user, onGoLive }) {
             </div>
           )}
 
-          <div className="flex items-center justify-between mt-4">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center justify-between mt-3 sm:mt-4">
+            <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide">
               <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handleFileSelect(e.target.files, 'image')} />
               <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={e => handleFileSelect(e.target.files, 'video')} />
-              <Button variant="ghost" size="sm" onClick={() => imageInputRef.current?.click()} className="text-zinc-400 hover:text-white hover:bg-white/10 text-sm gap-1.5">
-                <ImageIcon className="w-4 h-4" /> Photo
+              <Button variant="ghost" size="sm" onClick={() => imageInputRef.current?.click()} className="text-zinc-400 hover:text-white hover:bg-white/10 text-xs sm:text-sm gap-1 sm:gap-1.5 px-2 sm:px-3 h-8">
+                <ImageIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Photo</span>
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => videoInputRef.current?.click()} className="text-zinc-400 hover:text-white hover:bg-white/10 text-sm gap-1.5">
-                <Video className="w-4 h-4" /> Video
+              <Button variant="ghost" size="sm" onClick={() => videoInputRef.current?.click()} className="text-zinc-400 hover:text-white hover:bg-white/10 text-xs sm:text-sm gap-1 sm:gap-1.5 px-2 sm:px-3 h-8">
+                <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Video</span>
               </Button>
-              <Button variant="ghost" size="sm" onClick={onGoLive} className="text-rose-400 hover:text-rose-300 hover:bg-white/10 text-sm gap-1.5">
-                <Radio className="w-4 h-4" /> Go Live
+              <Button variant="ghost" size="sm" onClick={onGoLive} className="text-rose-400 hover:text-rose-300 hover:bg-white/10 text-xs sm:text-sm gap-1 sm:gap-1.5 px-2 sm:px-3 h-8">
+                <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Live</span>
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowTopics(s => !s)} className={`text-sm gap-1.5 ${showTopics ? 'text-indigo-400 bg-indigo-500/10' : 'text-zinc-400 hover:text-white hover:bg-white/10'}`}>
-                <Tag className="w-4 h-4" /> Topics
+              <Button variant="ghost" size="sm" onClick={() => setShowTopics(s => !s)} className={`text-xs sm:text-sm gap-1 sm:gap-1.5 px-2 sm:px-3 h-8 ${showTopics ? 'text-indigo-400 bg-indigo-500/10' : 'text-zinc-400 hover:text-white hover:bg-white/10'}`}>
+                <Tag className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Topics</span>
               </Button>
             </div>
             <Button
               onClick={handlePost}
               disabled={(!text.trim() && mediaFiles.length === 0) || createMutation.isPending}
-              className="btn-primary rounded-full px-6"
+              className="btn-primary rounded-full px-4 sm:px-6 text-xs sm:text-sm h-8 sm:h-9 flex-shrink-0"
             >
-              {uploading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading...</> : createMutation.isPending ? 'Posting...' : 'Post'}
+              {uploading ? <><Loader2 className="w-3 sm:w-4 h-3 sm:h-4 mr-1 sm:mr-2 animate-spin" /><span className="hidden sm:inline">Uploading...</span><span className="sm:hidden">Up...</span></> : createMutation.isPending ? <span className="hidden sm:inline">Posting...</span> : 'Post'}
             </Button>
           </div>
         </div>
