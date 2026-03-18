@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Package, MessageSquare, TrendingUp,
   Plus, Pencil, Trash2, X, Star, DollarSign, ShoppingBag,
-  ChevronRight, CheckCircle, Clock, AlertCircle, Send
+  ChevronRight, CheckCircle, Clock, AlertCircle, Send, Upload, Loader2
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,16 +28,60 @@ function StatCard({ icon: Icon, label, value, color }) {
 
 function ListingForm({ initial, onSave, onCancel, saving }) {
   const [form, setForm] = useState(initial || { name: '', description: '', price: '', category: 'products', image_url: '', in_stock: true });
+  const [uploading, setUploading] = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploading(true);
+    try {
+      const result = await base44.integrations.Core.UploadFile({ file });
+      set('image_url', result.file_url);
+    } catch (err) {
+      console.error('Upload failed:', err);
+      alert('Failed to upload image. Please try again.');
+    }
+    setUploading(false);
+  };
 
   return (
     <div className="space-y-4">
-      {[['name', 'Product Name'], ['image_url', 'Image URL']].map(([k, label]) => (
-        <div key={k}>
-          <Label className="text-zinc-300 mb-1 block">{label}</Label>
-          <Input value={form[k]} onChange={e => set(k, e.target.value)} className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500" placeholder={label} />
-        </div>
-      ))}
+      <div>
+        <Label className="text-zinc-300 mb-1 block">Product Name</Label>
+        <Input value={form.name} onChange={e => set('name', e.target.value)} className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500" placeholder="Product Name" />
+      </div>
+      
+      <div>
+        <Label className="text-zinc-300 mb-2 block">Product Image</Label>
+        {form.image_url ? (
+          <div className="relative w-full h-40 rounded-xl overflow-hidden bg-white/5 mb-2 group">
+            <img src={form.image_url} alt="Product" className="w-full h-full object-cover" />
+            <button
+              onClick={() => set('image_url', '')}
+              className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+            >
+              <X className="w-6 h-6 text-white" />
+            </button>
+          </div>
+        ) : (
+          <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-indigo-500/50 hover:bg-white/5 transition-colors">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+              disabled={uploading}
+            />
+            {uploading ? (
+              <><Loader2 className="w-8 h-8 text-indigo-400 animate-spin mb-2" /><span className="text-sm text-zinc-400">Uploading...</span></>
+            ) : (
+              <><Upload className="w-8 h-8 text-zinc-400 mb-2" /><span className="text-sm text-zinc-400">Click to upload image</span></>
+            )}
+          </label>
+        )}
+      </div>
       <div>
         <Label className="text-zinc-300 mb-1 block">Description</Label>
         <Textarea value={form.description} onChange={e => set('description', e.target.value)} className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500" placeholder="Describe your product..." />
