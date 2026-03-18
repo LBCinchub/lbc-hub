@@ -148,7 +148,7 @@ export default function Layout({ children, currentPageName }) {
                       </Avatar>
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-zinc-900 border-white/10">
+                  <DropdownMenuContent align="end" className="bg-zinc-900 border-white/10 z-50">
                     <DropdownMenuItem asChild className="cursor-pointer text-zinc-200 focus:bg-white/10 focus:text-white">
                       <Link to={createPageUrl('Profile')}>Profile</Link>
                     </DropdownMenuItem>
