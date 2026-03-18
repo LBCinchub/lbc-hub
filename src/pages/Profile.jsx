@@ -126,7 +126,7 @@ export default function Profile() {
                   </Button>
                 ) : (
                   <div className="flex gap-2">
-                    <Button onClick={() => { setEditMode(false); setBio(user.bio || ''); setLocation(user.location || ''); }} variant="outline" size="icon">
+                    <Button onClick={() => { setEditMode(false); setBio(user.bio || ''); setLocation(user.location || ''); }} variant="outline" size="icon" className="text-zinc-400 hover:text-white">
                       <X className="w-4 h-4" />
                     </Button>
                     <Button onClick={handleSave} className="btn-primary gap-2" disabled={updateProfileMutation.isPending}>
