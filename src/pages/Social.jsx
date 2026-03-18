@@ -125,18 +125,18 @@ export default function Social() {
   }, [chatMessages]);
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen py-4 sm:py-8 px-3 sm:px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-4 sm:mb-8">
           <div>
-            <h1 className="text-4xl font-bold mb-1">Social Hub</h1>
-            <p className="text-zinc-400">Connect, share, and engage with the community</p>
+            <h1 className="text-2xl sm:text-4xl font-bold mb-1">Social Hub</h1>
+            <p className="text-xs sm:text-base text-zinc-400 hidden sm:block">Connect, share, and engage with the community</p>
           </div>
           {user && (
-            <div className="flex items-center gap-2">
-              <Link to={createPageUrl('FollowedPosts')} title="Saved Posts" className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-zinc-400 hover:text-indigo-400">
-                <Bookmark className="w-5 h-5" />
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Link to={createPageUrl('FollowedPosts')} title="Saved Posts" className="p-1.5 sm:p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-zinc-400 hover:text-indigo-400">
+                <Bookmark className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
               <NotificationBell user={user} />
               <DirectMessages user={user} />
@@ -212,9 +212,9 @@ export default function Social() {
             </div>
 
             {!user && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-2xl p-8 text-center">
-                <p className="text-zinc-400 mb-3">Sign in to post and interact</p>
-                <Button onClick={() => base44.auth.redirectToLogin()} className="btn-primary rounded-full px-6">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-2xl p-6 sm:p-8 text-center">
+                <p className="text-sm sm:text-base text-zinc-400 mb-3">Sign in to post and interact</p>
+                <Button onClick={() => base44.auth.redirectToLogin()} className="btn-primary rounded-full px-6 text-sm sm:text-base">
                   Sign In
                 </Button>
               </motion.div>
@@ -246,22 +246,22 @@ export default function Social() {
                 <div className="space-y-4">
                   {postsLoading ? (
                     [...Array(3)].map((_, i) => (
-                      <div key={i} className="glass rounded-2xl p-6 animate-pulse">
-                        <div className="flex gap-4">
-                          <div className="w-12 h-12 rounded-full bg-white/10 flex-shrink-0" />
-                          <div className="flex-1 space-y-3">
-                            <div className="h-4 w-32 bg-white/10 rounded" />
-                            <div className="h-4 w-full bg-white/10 rounded" />
-                            <div className="h-4 w-2/3 bg-white/10 rounded" />
+                      <div key={i} className="glass rounded-2xl p-4 sm:p-6 animate-pulse">
+                        <div className="flex gap-3 sm:gap-4">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex-shrink-0" />
+                          <div className="flex-1 space-y-2 sm:space-y-3">
+                            <div className="h-3 sm:h-4 w-24 sm:w-32 bg-white/10 rounded" />
+                            <div className="h-3 sm:h-4 w-full bg-white/10 rounded" />
+                            <div className="h-3 sm:h-4 w-2/3 bg-white/10 rounded" />
                           </div>
                         </div>
                       </div>
                     ))
                   ) : filteredPosts.length === 0 ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-2xl p-12 text-center">
-                      <Search className="w-16 h-16 mx-auto text-zinc-600 mb-4" />
-                      <h3 className="text-xl font-semibold mb-2">{searchQuery ? 'No posts found' : 'No posts yet'}</h3>
-                      <p className="text-zinc-400">{searchQuery ? `No results for "${searchQuery}"` : 'Be the first to share something!'}</p>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-2xl p-8 sm:p-12 text-center">
+                      <Search className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-zinc-600 mb-3 sm:mb-4" />
+                      <h3 className="text-lg sm:text-xl font-semibold mb-2">{searchQuery ? 'No posts found' : 'No posts yet'}</h3>
+                      <p className="text-sm sm:text-base text-zinc-400">{searchQuery ? `No results for "${searchQuery}"` : 'Be the first to share something!'}</p>
                     </motion.div>
                   ) : (
                     filteredPosts.map(post => (
