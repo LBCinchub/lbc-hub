@@ -46,6 +46,7 @@ export default function Social() {
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
+    window.scrollTo(0, 0);
   }, []);
 
   const { data: posts = [], isLoading: postsLoading } = useQuery({
