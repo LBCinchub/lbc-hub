@@ -20,28 +20,35 @@ export default function LuminaAI() {
   useEffect(() => {
     if (!user) return;
     
-    base44.entities.AIUsage.filter({ user_email: user.email }).then(records => {
-      if (records.length > 0) {
-        const usage = records[0];
-        const lastReset = new Date(usage.last_reset);
-        const now = new Date();
-        const hoursSinceReset = (now - lastReset) / (1000 * 60 * 60);
-        
-        if (hoursSinceReset >= 24) {
-          base44.entities.AIUsage.update(usage.id, { count: 0, last_reset: now.toISOString() });
-          setUsageCount(0);
+    const loadUsage = async () => {
+      try {
+        const records = await base44.entities.AIUsage.filter({ user_email: user.email });
+        if (records.length > 0) {
+          const usage = records[0];
+          const lastReset = new Date(usage.last_reset);
+          const now = new Date();
+          const hoursSinceReset = (now - lastReset) / (1000 * 60 * 60);
+          
+          if (hoursSinceReset >= 24) {
+            await base44.entities.AIUsage.update(usage.id, { count: 0, last_reset: now.toISOString() });
+            setUsageCount(0);
+          } else {
+            setUsageCount(usage.count);
+          }
         } else {
-          setUsageCount(usage.count);
+          await base44.entities.AIUsage.create({ 
+            user_email: user.email, 
+            count: 0, 
+            last_reset: new Date().toISOString() 
+          });
+          setUsageCount(0);
         }
-      } else {
-        base44.entities.AIUsage.create({ 
-          user_email: user.email, 
-          count: 0, 
-          last_reset: new Date().toISOString() 
-        });
-        setUsageCount(0);
+      } catch (err) {
+        console.error('Failed to load usage:', err);
       }
-    });
+    };
+    
+    loadUsage();
   }, [user]);
 
   useEffect(() => {
@@ -97,10 +104,14 @@ User question: ${text}`,
       setMessages(prev => [...prev, aiMessage]);
 
       // Update usage count
-      const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
-      if (usageRecords.length > 0) {
-        await base44.entities.AIUsage.update(usageRecords[0].id, { count: usageRecords[0].count + 1 });
-        setUsageCount(usageRecords[0].count + 1);
+      try {
+        const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
+        if (usageRecords.length > 0) {
+          await base44.entities.AIUsage.update(usageRecords[0].id, { count: usageRecords[0].count + 1 });
+          setUsageCount(usageRecords[0].count + 1);
+        }
+      } catch (err) {
+        console.error('Failed to update usage:', err);
       }
     } catch (error) {
       console.error('Lumina AI Error:', error);
