@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 const BOTS = [
   { name: "Alex Rivera", email: "alex.rivera.bot@lbchub.ai", avatar: "https://i.pravatar.cc/150?img=1" },
