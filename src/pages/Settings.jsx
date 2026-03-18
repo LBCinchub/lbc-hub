@@ -107,7 +107,7 @@ export default function Settings() {
         >
           <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <Settings className="w-4 h-4 text-white" />
+              <SettingsIcon className="w-4 h-4 text-white" />
             </div>
             Profile
           </h2>
