@@ -261,10 +261,10 @@ Provide a brief analysis in JSON format:
         </div>
       )}
 
-      <div className="p-6">
-        <div className="flex items-start gap-4">
+      <div className="p-4 sm:p-6">
+        <div className="flex items-start gap-3 sm:gap-4">
           <button onClick={() => onViewProfile?.({ email: post.author_email, full_name: post.author_name, avatar_url: post.author_avatar })}>
-            <Avatar className="w-12 h-12">
+            <Avatar className="w-10 h-10 sm:w-12 sm:h-12">
               <AvatarImage src={post.author_avatar} />
               <AvatarFallback className="bg-gradient-to-br from-pink-500 to-rose-600 text-white font-medium">
                 {post.author_name?.[0]?.toUpperCase() || '?'}
@@ -288,17 +288,17 @@ Provide a brief analysis in JSON format:
                   variant={isFollowing ? "outline" : "default"}
                   onClick={() => followMutation.mutate()}
                   disabled={followMutation.isPending}
-                  className={`${isFollowing ? 'bg-white/5 hover:bg-white/10 border-white/20' : 'bg-indigo-600 hover:bg-indigo-700'} rounded-full px-3 h-7 text-xs mr-2`}
+                  className={`${isFollowing ? 'bg-white/5 hover:bg-white/10 border-white/20' : 'bg-indigo-600 hover:bg-indigo-700'} rounded-full px-2 sm:px-3 h-7 text-xs mr-1 sm:mr-2`}
                 >
                   {isFollowing ? (
                     <>
-                      <UserCheck className="w-3 h-3 mr-1" />
-                      Following
+                      <UserCheck className="w-3 h-3 sm:mr-1" />
+                      <span className="hidden sm:inline">Following</span>
                     </>
                   ) : (
                     <>
-                      <UserPlus className="w-3 h-3 mr-1" />
-                      Follow
+                      <UserPlus className="w-3 h-3 sm:mr-1" />
+                      <span className="hidden sm:inline">Follow</span>
                     </>
                   )}
                 </Button>
@@ -464,13 +464,13 @@ Provide a brief analysis in JSON format:
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+              <div className="flex items-center gap-0.5 sm:gap-1">
                 {reactionEmojis.map((emoji) => (
                   <button
                     key={emoji}
                     onClick={() => user && toggleReactionMutation.mutate(emoji)}
-                    className="p-2 rounded-lg hover:bg-white/5 text-lg transition-all"
+                    className="p-1.5 sm:p-2 rounded-lg hover:bg-white/5 text-base sm:text-lg transition-all active:scale-95"
                     title={`React with ${emoji}`}
                   >
                     {emoji}

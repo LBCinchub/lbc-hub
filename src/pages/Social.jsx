@@ -144,15 +144,15 @@ export default function Social() {
           )}
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Main Feed */}
-          <div className="lg:col-span-2 space-y-5">
+          <div className="lg:col-span-2 space-y-4 lg:space-y-5">
             {user ? (
               <CreatePost user={user} onGoLive={() => setGoLiveOpen(true)} />
             ) : null}
 
             {/* Feed Tabs */}
-            <div className="flex items-center gap-1 p-1 glass rounded-2xl">
+            <div className="flex items-center gap-1 p-1 glass rounded-2xl overflow-x-auto">
               {[
                 { key: 'forYou', label: 'For You', icon: Globe },
                 { key: 'following', label: 'Following', icon: UserCheck },
@@ -162,14 +162,14 @@ export default function Social() {
                 <button
                   key={key}
                   onClick={() => setFeedTab(key)}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all flex-1 justify-center ${
+                  className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all flex-1 sm:flex-none justify-center whitespace-nowrap min-w-[80px] ${
                     feedTab === key
                       ? 'bg-indigo-600 text-white'
                       : 'text-zinc-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">{label}</span>
+                  <span>{label}</span>
                 </button>
               ))}
             </div>
@@ -192,11 +192,11 @@ export default function Social() {
             </div>
 
             {/* Topic Filter Bar */}
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
               <Filter className="w-4 h-4 text-zinc-500 flex-shrink-0" />
               <button
                 onClick={() => setActiveTopic(null)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${!activeTopic ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${!activeTopic ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}
               >
                 All
               </button>
@@ -204,7 +204,7 @@ export default function Social() {
                 <button
                   key={topic}
                   onClick={() => setActiveTopic(activeTopic === topic ? null : topic)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${activeTopic === topic ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${activeTopic === topic ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}
                 >
                   #{topic}
                 </button>
@@ -280,7 +280,7 @@ export default function Social() {
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-4">
+          <div className="lg:col-span-1 space-y-4 hidden lg:block">
             {/* Trending Topics */}
             <TrendingWidget 
               posts={posts} 
