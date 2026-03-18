@@ -23,6 +23,13 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
   const queryClient = useQueryClient();
   const videoRef = useRef(null);
 
+  const { data: follows = [] } = useQuery({
+    queryKey: ['follows', user?.email],
+    queryFn: () => base44.entities.Follow.filter({ follower_email: user.email }),
+    enabled: !!user,
+  });
+  const isFollowing = follows.some(f => f.following_email === post.author_email);
+
   useEffect(() => {
     if (!videoRef.current || post.media_type !== 'video') return;
 
