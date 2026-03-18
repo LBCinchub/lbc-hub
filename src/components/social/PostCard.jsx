@@ -251,7 +251,7 @@ Provide a brief analysis in JSON format:
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass rounded-2xl overflow-hidden"
+      className="glass rounded-xl sm:rounded-2xl overflow-hidden shadow-lg"
     >
       {/* Live banner */}
       {post.is_live && (

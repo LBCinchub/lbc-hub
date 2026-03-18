@@ -52,6 +52,7 @@ export default function Layout({ children, currentPageName }) {
         .glass {
           background: rgba(255, 255, 255, 0.03);
           backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
           border: 1px solid rgba(255, 255, 255, 0.08);
         }
         

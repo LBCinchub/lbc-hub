@@ -135,7 +135,7 @@ export default function CreatePost({ user, onGoLive }) {
   };
 
   return (
-    <motion.div className="glass rounded-2xl p-4 sm:p-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+    <motion.div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       <div className="flex items-start gap-3 sm:gap-4">
         <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
           <AvatarImage src={user.avatar_url} />

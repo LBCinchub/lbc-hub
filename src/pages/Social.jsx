@@ -245,7 +245,7 @@ export default function Social() {
               return (
                 <div className="space-y-4">
                   {postsLoading ? (
-                    [...Array(3)].map((_, i) => (
+                    [...Array(2)].map((_, i) => (
                       <div key={i} className="glass rounded-2xl p-4 sm:p-6 animate-pulse">
                         <div className="flex gap-3 sm:gap-4">
                           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex-shrink-0" />
