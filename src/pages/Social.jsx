@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Users, Search, X, Bookmark, Filter, Globe, UserCheck, Video, Image } from 'lucide-react';
+import { Send, Users, Search, X, Bookmark, Filter, Globe, UserCheck, Video, Image, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
@@ -199,7 +199,17 @@ export default function Social() {
 
             {/* Topic Filter Bar */}
             <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide w-full">
-              <Filter className="w-4 h-4 text-zinc-500 flex-shrink-0" />
+              {activeTopic ? (
+                <button
+                  onClick={() => setActiveTopic(null)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white transition-all whitespace-nowrap flex-shrink-0"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Back
+                </button>
+              ) : (
+                <Filter className="w-4 h-4 text-zinc-500 flex-shrink-0" />
+              )}
               <button
                 onClick={() => setActiveTopic(null)}
                 className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${!activeTopic ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}
