@@ -26,6 +26,13 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
   useEffect(() => {
     if (!videoRef.current || post.media_type !== 'video') return;
 
+    const handlePlay = () => {
+      // Pause all other videos
+      document.querySelectorAll('video').forEach(v => {
+        if (v !== videoRef.current) v.pause();
+      });
+    };
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -37,8 +44,14 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
       { threshold: 0.5 }
     );
 
-    observer.observe(videoRef.current);
-    return () => observer.disconnect();
+    const currentVideo = videoRef.current;
+    currentVideo.addEventListener('play', handlePlay);
+    observer.observe(currentVideo);
+
+    return () => {
+      currentVideo.removeEventListener('play', handlePlay);
+      observer.disconnect();
+    };
   }, [post.media_type]);
 
   const postUrl = `${window.location.origin}${createPageUrl('Social')}`;
