@@ -154,7 +154,7 @@ export default function Profile() {
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
                       placeholder="Tell us about yourself..."
-                      className="bg-white/5 border-white/10 text-white resize-none h-24"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500 resize-none h-24"
                     />
                   </div>
                 </div>
