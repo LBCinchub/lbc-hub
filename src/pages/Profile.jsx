@@ -126,7 +126,7 @@ export default function Profile() {
                    </Button>
                  ) : (
                    <div className="flex gap-2">
-                     <Button onClick={() => { setEditMode(false); setBio(user.bio || ''); setLocation(user.location || ''); }} variant="outline" className="gap-2 text-zinc-400 hover:text-white">
+                     <Button onClick={() => { setEditMode(false); setBio(user.bio || ''); setLocation(user.location || ''); }} variant="outline" className="gap-2 text-white">
                        <X className="w-4 h-4" />
                        Cancel
                      </Button>
