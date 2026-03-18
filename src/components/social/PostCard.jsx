@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Share2, MoreHorizontal, Send, Radio, Bookmark, Sparkles, Loader2, Plane, MapPin, Calendar, ArrowRight, Copy, Check, Users, X, ChevronLeft, ChevronRight, UserPlus, UserCheck, Trash2 } from 'lucide-react';
+import { MessageCircle, Share2, MoreHorizontal, Send, Radio, Bookmark, Sparkles, Loader2, Plane, MapPin, Calendar, ArrowRight, Copy, Check, Users, X, ChevronLeft, ChevronRight, UserPlus, UserCheck, Trash2, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
