@@ -152,7 +152,7 @@ export default function Layout({ children, currentPageName }) {
                     <DropdownMenuItem asChild className="cursor-pointer text-zinc-200 focus:bg-white/10 focus:text-white">
                       <Link to={createPageUrl('Profile')}>Profile</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => base44.auth.logout()} className="cursor-pointer text-zinc-200 focus:bg-white/10 focus:text-white">
+                    <DropdownMenuItem onClick={() => base44.auth.logout()} className="cursor-pointer text-white focus:bg-white/10 focus:text-white">
                       <LogOut className="w-4 h-4 mr-2 text-zinc-400" />
                       Sign Out
                     </DropdownMenuItem>
