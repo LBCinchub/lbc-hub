@@ -20,6 +20,9 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
   const [copied, setCopied] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [luminaCheck, setLuminaCheck] = useState(null);
+  const [luminaLoading, setLuminaLoading] = useState(false);
+  const [showLumina, setShowLumina] = useState(false);
   const queryClient = useQueryClient();
   const videoRef = useRef(null);
 
@@ -93,6 +96,45 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
       setShowSummary(true);
     } catch { setSummary('Could not summarize.'); setShowSummary(true); }
     setSummaryLoading(false);
+  };
+
+  const handleLuminaCheck = async () => {
+    if (luminaCheck) { setShowLumina(s => !s); return; }
+    setLuminaLoading(true);
+    try {
+      const prompt = `You are Lumina AI, an advanced fact-checker and AI content detector. Analyze this post:
+
+Content: "${post.content}"
+${post.media_type === 'video' ? 'Contains: Video content' : ''}
+${post.media_type === 'image' ? 'Contains: Image content' : ''}
+
+Provide a brief analysis in JSON format:
+{
+  "verdict": "verified" | "disputed" | "ai_generated" | "needs_context",
+  "confidence": 0-100,
+  "explanation": "brief 1-2 sentence explanation",
+  "recommendation": "short user-facing message"
+}`;
+
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            verdict: { type: "string" },
+            confidence: { type: "number" },
+            explanation: { type: "string" },
+            recommendation: { type: "string" }
+          }
+        }
+      });
+      setLuminaCheck(result);
+      setShowLumina(true);
+    } catch { 
+      setLuminaCheck({ verdict: 'error', confidence: 0, explanation: 'Analysis failed', recommendation: 'Could not verify content' }); 
+      setShowLumina(true); 
+    }
+    setLuminaLoading(false);
   };
 
   const { data: followedRecord = [] } = useQuery({
@@ -371,6 +413,55 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
                 })}
               </div>
             )}
+
+            {/* Lumina AI Fact Check */}
+            <div className="mb-3">
+              <button
+                onClick={handleLuminaCheck}
+                className="flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 transition-colors"
+              >
+                {luminaLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                {luminaLoading ? 'Analyzing…' : showLumina ? 'Hide Lumina AI' : '🔍 Check with Lumina AI'}
+              </button>
+              <AnimatePresence>
+                {showLumina && luminaCheck && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-2 overflow-hidden"
+                  >
+                    <div className={`flex items-start gap-2 rounded-xl px-3 py-2.5 border ${
+                      luminaCheck.verdict === 'verified' ? 'bg-emerald-950/50 border-emerald-500/30' :
+                      luminaCheck.verdict === 'ai_generated' ? 'bg-purple-950/50 border-purple-500/30' :
+                      luminaCheck.verdict === 'disputed' ? 'bg-red-950/50 border-red-500/30' :
+                      'bg-amber-950/50 border-amber-500/30'
+                    }`}>
+                      <div className="flex-shrink-0 mt-0.5">
+                        {luminaCheck.verdict === 'verified' ? '✅' :
+                         luminaCheck.verdict === 'ai_generated' ? '🤖' :
+                         luminaCheck.verdict === 'disputed' ? '⚠️' : 'ℹ️'}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-semibold text-white">Lumina AI</span>
+                          <span className={`text-xs px-1.5 py-0.5 rounded ${
+                            luminaCheck.verdict === 'verified' ? 'bg-emerald-500/20 text-emerald-300' :
+                            luminaCheck.verdict === 'ai_generated' ? 'bg-purple-500/20 text-purple-300' :
+                            luminaCheck.verdict === 'disputed' ? 'bg-red-500/20 text-red-300' :
+                            'bg-amber-500/20 text-amber-300'
+                          }`}>
+                            {luminaCheck.confidence}% confidence
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-300 mb-1">{luminaCheck.explanation}</p>
+                        <p className="text-xs font-medium text-white">{luminaCheck.recommendation}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Actions */}
             <div className="flex items-center gap-2 flex-wrap">
