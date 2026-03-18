@@ -10,11 +10,11 @@ export default function RichText({ text, onHashtagClick, onLinkClick }) {
 
     // Regex patterns
     const hashtagRegex = /#(\w+)/g;
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const urlRegex = /(https?:\/\/[^\s]+|(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+(?:[^\s]*)?)/g;
     const mentionRegex = /@(\w+)/g;
 
     // Combine all patterns
-    const combinedRegex = /(#\w+|https?:\/\/[^\s]+|@\w+)/g;
+    const combinedRegex = /(#\w+|https?:\/\/[^\s]+|(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+(?:[^\s]*)?|@\w+)/g;
 
     let match;
     while ((match = combinedRegex.exec(content)) !== null) {
@@ -34,11 +34,12 @@ export default function RichText({ text, onHashtagClick, onLinkClick }) {
           content: matchedText,
           tag: matchedText.slice(1),
         });
-      } else if (matchedText.startsWith('http')) {
+      } else if (matchedText.startsWith('http') || /\.[a-zA-Z]{2,}/.test(matchedText)) {
+        const url = matchedText.startsWith('http') ? matchedText : `https://${matchedText}`;
         parts.push({
           type: 'link',
           content: matchedText,
-          url: matchedText,
+          url: url,
         });
       } else if (matchedText.startsWith('@')) {
         parts.push({
