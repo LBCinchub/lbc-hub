@@ -87,7 +87,7 @@ export default function MemberSearch({ onSelectMember, onViewProfile }) {
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-white/10 rounded-lg shadow-xl z-50 overflow-hidden"
+            className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-white/10 rounded-lg shadow-xl z-[9999] overflow-hidden"
           >
             {loading ? (
               <div className="flex items-center justify-center p-4">
