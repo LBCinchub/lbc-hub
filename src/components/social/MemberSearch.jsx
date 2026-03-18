@@ -53,7 +53,7 @@ export default function MemberSearch({ onSelectMember, onViewProfile }) {
   };
 
   return (
-    <div className="glass rounded-2xl p-4">
+    <div className="glass rounded-2xl p-4 relative">
       <div className="flex items-center gap-2 mb-3">
         <Users className="w-4 h-4 text-indigo-400" />
         <h3 className="font-semibold text-sm">Find Members</h3>
