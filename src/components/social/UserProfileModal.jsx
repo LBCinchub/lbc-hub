@@ -217,8 +217,8 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
                     </Button>
                   </>
                 ) : (
-                  <Button onClick={() => setEditing(true)} variant="outline" className="border-white/20 bg-transparent hover:bg-white/10 rounded-xl text-sm text-white">
-                    <div className="w-5 h-5 bg-black rounded-sm flex items-center justify-center mr-2 flex-shrink-0">
+                  <Button onClick={() => setEditing(true)} variant="outline" className="border-white/20 bg-transparent hover:bg-white/10 rounded-xl text-sm text-blue-400">
+                    <div className="w-5 h-5 bg-zinc-900 rounded-sm flex items-center justify-center mr-2 flex-shrink-0">
                       <Edit2 className="w-3 h-3 text-white" />
                     </div>
                     Edit Profile
