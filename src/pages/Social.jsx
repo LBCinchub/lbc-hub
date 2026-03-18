@@ -19,6 +19,7 @@ import GoLiveModal from '../components/social/GoLiveModal';
 import UserProfileModal from '../components/social/UserProfileModal';
 import SuggestedPosts from '../components/social/SuggestedPosts';
 import TrendingWidget from '../components/social/TrendingWidget';
+import MemberSearch from '../components/social/MemberSearch';
 import { TOPICS } from '../components/social/TopicSelector';
 
 export default function Social() {
@@ -304,6 +305,9 @@ export default function Social() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-4 hidden lg:block">
+            {/* Member Search */}
+            <MemberSearch onViewProfile={handleViewProfile} />
+
             {/* Trending Topics */}
             <TrendingWidget 
               posts={posts} 
