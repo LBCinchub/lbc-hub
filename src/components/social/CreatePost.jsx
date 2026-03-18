@@ -2,12 +2,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ImageIcon, Video, Radio, X, Loader2, Tag, Plane, MapPin, Calendar, FolderOpen } from 'lucide-react';
+import { ImageIcon, Video, Radio, X, Loader2, Tag, Plane, MapPin, Calendar, FolderOpen, Share2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import TopicSelector from './TopicSelector';
 import RichTextEditor from './RichTextEditor';
 import UserGallery from './UserGallery';
+import CrossPostSelector from './CrossPostSelector';
+import SocialAccountsModal from './SocialAccountsModal';
 import { Link } from 'react-router-dom';
 
 // Extract SharedTrip id from a pasted URL
@@ -41,6 +43,8 @@ export default function CreatePost({ user, onGoLive }) {
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
   const [showGallery, setShowGallery] = useState(false);
+  const [showSocialModal, setShowSocialModal] = useState(false);
+  const [selectedPlatforms, setSelectedPlatforms] = useState([]);
 
   // Auto-focus textarea when trip is pre-loaded from share
   React.useEffect(() => {
@@ -103,7 +107,7 @@ export default function CreatePost({ user, onGoLive }) {
         mediaUrls = uploads.map(u => u.file_url);
         setUploading(false);
       }
-      return base44.entities.Post.create({
+      const post = await base44.entities.Post.create({
         content: text,
         trip_id: tripPreview?.id || undefined,
         trip_name: tripPreview?.trip_name || undefined,
@@ -119,7 +123,21 @@ export default function CreatePost({ user, onGoLive }) {
         media_urls: mediaUrls,
         is_live: false,
         topics: selectedTopics,
+        cross_post_platforms: selectedPlatforms,
       });
+
+      // Trigger cross-posting in background (don't await to keep UX snappy)
+      if (selectedPlatforms.length > 0) {
+        base44.functions.invoke('crossPostToSocial', {
+          post_id: post.id,
+          content: text,
+          media_urls: mediaUrls,
+          platforms: selectedPlatforms,
+          user_email: user.email,
+        }).catch(() => {});
+      }
+
+      return post;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
@@ -128,6 +146,7 @@ export default function CreatePost({ user, onGoLive }) {
       setSelectedTopics([]);
       setShowTopics(false);
       setTripPreview(null);
+      setSelectedPlatforms([]);
     },
   });
 
@@ -226,6 +245,22 @@ export default function CreatePost({ user, onGoLive }) {
             </div>
           )}
 
+          {/* Cross-Post Selector */}
+          <div className="mt-3 pt-3 border-t border-white/10">
+            <CrossPostSelector
+              user={user}
+              selectedPlatforms={selectedPlatforms}
+              onToggle={(platform) => {
+                setSelectedPlatforms(prev =>
+                  prev.includes(platform)
+                    ? prev.filter(p => p !== platform)
+                    : [...prev, platform]
+                );
+              }}
+              onManageAccounts={() => setShowSocialModal(true)}
+            />
+          </div>
+
           <div className="flex items-center justify-between mt-3 sm:mt-4">
             <div className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide">
               <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handleFileSelect(e.target.files, 'image')} />
@@ -258,6 +293,13 @@ export default function CreatePost({ user, onGoLive }) {
       </div>
 
       <UserGallery isOpen={showGallery} onClose={() => setShowGallery(false)} onSelectMedia={handleGallerySelect} />
+
+      {showSocialModal && (
+        <SocialAccountsModal
+          user={user}
+          onClose={() => setShowSocialModal(false)}
+        />
+      )}
     </motion.div>
   );
 }
