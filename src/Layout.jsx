@@ -10,7 +10,7 @@ import FloatingDM from './components/social/FloatingDM';
 import CallManager from './components/social/CallManager';
 
 const navItems = [
-  { name: 'Home', icon: Home, page: 'Home' },
+  { name: 'Lumina AI', icon: Home, page: 'LuminaAI' },
   { name: 'Social', icon: Users, page: 'Social' },
   { name: 'Marketplace', icon: ShoppingBag, page: 'Marketplace' },
   { name: 'Jobs', icon: Briefcase, page: 'Jobs' },

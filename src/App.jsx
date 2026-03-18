@@ -8,6 +8,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Profile from './pages/Profile';
+import LuminaAI from './pages/LuminaAI';
 import { useEffect } from 'react';
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -68,6 +69,11 @@ const AuthenticatedApp = () => {
       <Route path="/Profile" element={
         <LayoutWrapper currentPageName="Profile">
           <Profile />
+        </LayoutWrapper>
+      } />
+      <Route path="/LuminaAI" element={
+        <LayoutWrapper currentPageName="LuminaAI">
+          <LuminaAI />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />
