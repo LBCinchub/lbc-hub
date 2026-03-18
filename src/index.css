@@ -83,15 +83,22 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  body {
-    @apply bg-background text-foreground;
+  html, body {
+    @apply bg-zinc-950;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overscroll-behavior: none;
+    overflow-x: hidden;
+    min-height: 100vh;
   }
   
-  html {
-    overflow-x: hidden;
+  body {
+    @apply text-foreground;
+  }
+  
+  #root {
+    @apply bg-zinc-950;
+    min-height: 100vh;
   }
 }
 

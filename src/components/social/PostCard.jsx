@@ -372,9 +372,9 @@ Provide a brief analysis in JSON format:
 
             {/* Media */}
             {post.media_urls?.length > 0 && (
-              <div className="mb-4 rounded-xl overflow-hidden">
+              <div className="mb-4 rounded-xl overflow-hidden bg-zinc-900">
                 {post.media_type === 'video' ? (
-                  <video ref={videoRef} src={post.media_urls[0]} controls loop muted playsInline className="w-full rounded-xl max-h-80 object-cover" />
+                  <video ref={videoRef} src={post.media_urls[0]} controls loop muted playsInline className="w-full rounded-xl max-h-80 object-cover bg-zinc-900" />
                 ) : (
                   <div className={`grid gap-1 ${post.media_urls.length > 1 ? 'grid-cols-2' : ''}`}>
                     {post.media_urls.map((url, i) => (
@@ -383,7 +383,7 @@ Provide a brief analysis in JSON format:
                         src={url}
                         alt=""
                         onClick={() => { setLightboxIndex(i); setLightboxOpen(true); }}
-                        className="w-full object-cover rounded-xl max-h-80 cursor-pointer hover:opacity-90 transition-opacity"
+                        className="w-full object-cover rounded-xl max-h-80 cursor-pointer hover:opacity-90 transition-opacity bg-zinc-900"
                       />
                     ))}
                   </div>

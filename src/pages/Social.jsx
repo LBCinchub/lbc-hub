@@ -125,7 +125,7 @@ export default function Social() {
   }, [chatMessages]);
 
   return (
-    <div className="min-h-screen py-4 sm:py-8 px-3 sm:px-4">
+    <div className="min-h-screen bg-zinc-950 py-4 sm:py-8 px-3 sm:px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 sm:mb-8">
