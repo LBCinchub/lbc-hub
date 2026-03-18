@@ -146,6 +146,30 @@ export default function Social() {
           </div>
           {user && (
             <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="relative">
+                <button
+                  onClick={() => setShowMemberSearch(!showMemberSearch)}
+                  title="Find Members"
+                  className="p-1.5 sm:p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-zinc-400 hover:text-indigo-400"
+                >
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+                {showMemberSearch && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="absolute top-full right-0 mt-2 w-64 bg-zinc-900 border border-white/10 rounded-lg shadow-xl z-[9999]"
+                  >
+                    <div className="p-3">
+                      <MemberSearch onViewProfile={(profile) => {
+                        setProfileTarget(profile);
+                        setShowMemberSearch(false);
+                      }} />
+                    </div>
+                  </motion.div>
+                )}
+              </div>
               <Link to={createPageUrl('FollowedPosts')} title="Saved Posts" className="p-1.5 sm:p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-zinc-400 hover:text-indigo-400">
                 <Bookmark className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
