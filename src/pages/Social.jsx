@@ -335,9 +335,7 @@ export default function Social() {
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-4 hidden lg:block">
-            {/* Member Search */}
-            <MemberSearch onViewProfile={handleViewProfile} />
+           <div className="lg:col-span-1 space-y-4 hidden lg:block">
 
             {/* Trending Topics */}
             <TrendingWidget 
