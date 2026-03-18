@@ -277,6 +277,10 @@ export default function Social() {
                         user={user}
                         onDmUser={handleDmUser}
                         onViewProfile={handleViewProfile}
+                        onHashtagClick={(tag) => {
+                          setActiveTopic(tag);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
                       />
                     ))
                   )}
