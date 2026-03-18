@@ -246,7 +246,10 @@ export default function Social() {
                 );
               }
               if (activeTopic) {
-                filteredPosts = filteredPosts.filter(p => p.topics?.includes(activeTopic));
+                filteredPosts = filteredPosts.filter(p => 
+                  p.topics?.includes(activeTopic) || 
+                  p.content?.toLowerCase().includes(`#${activeTopic.toLowerCase()}`)
+                );
               }
               return (
                 <div className="space-y-4">
