@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Star, Camera, Save, UserPlus, UserMinus,
-  Lock, Eye, EyeOff, FileText, ShoppingBag, Clock
+  Lock, Eye, EyeOff, FileText, ShoppingBag, Clock, Edit2
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -219,7 +219,7 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
                 ) : (
                   <Button onClick={() => setEditing(true)} variant="outline" className="border-white/20 bg-transparent hover:bg-white/10 rounded-xl text-sm">
                     <div className="w-4 h-4 bg-black rounded flex items-center justify-center mr-1.5">
-                      <FileText className="w-3 h-3 text-white" />
+                      <Edit2 className="w-3 h-3 text-white" />
                     </div>
                     Edit Profile
                   </Button>
