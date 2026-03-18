@@ -2,11 +2,12 @@ import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ImageIcon, Video, Radio, X, Loader2, Tag, Plane, MapPin, Calendar, Link as LinkIcon } from 'lucide-react';
+import { ImageIcon, Video, Radio, X, Loader2, Tag, Plane, MapPin, Calendar, FolderOpen } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import TopicSelector from './TopicSelector';
+import RichTextEditor from './RichTextEditor';
+import UserGallery from './UserGallery';
 import { Link } from 'react-router-dom';
 
 // Extract SharedTrip id from a pasted URL
@@ -39,6 +40,7 @@ export default function CreatePost({ user, onGoLive }) {
   const [loadingTrip, setLoadingTrip] = useState(false);
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
+  const [showGallery, setShowGallery] = useState(false);
 
   // Auto-focus textarea when trip is pre-loaded from share
   React.useEffect(() => {
@@ -134,6 +136,14 @@ export default function CreatePost({ user, onGoLive }) {
     createMutation.mutate({ text, mediaType });
   };
 
+  const handleGallerySelect = (selectedItems) => {
+    const urls = selectedItems.map(item => item.url);
+    const type = selectedItems[0].type || 'image';
+    setMediaFiles(urls.map(url => ({ url })));
+    setMediaPreviews(urls);
+    setMediaType(type);
+  };
+
   return (
     <motion.div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       <div className="flex items-start gap-3 sm:gap-4">
@@ -144,12 +154,10 @@ export default function CreatePost({ user, onGoLive }) {
           </AvatarFallback>
         </Avatar>
         <div className="flex-1">
-          <Textarea
-            ref={textareaRef}
-            placeholder={tripPreview ? `Say something about your ${tripPreview.destination} trip... ✈️` : "What's on your mind? Paste a trip link to share your itinerary ✈️"}
+          <RichTextEditor
             value={text}
             onChange={handleTextChange}
-            className="bg-white/5 border-white/10 resize-none text-sm sm:text-base text-white placeholder:text-zinc-500 min-h-[70px] sm:min-h-[90px]"
+            placeholder={tripPreview ? `Say something about your ${tripPreview.destination} trip... ✈️` : "What's on your mind? Paste a trip link to share your itinerary ✈️"}
           />
 
           {/* Trip Link Preview */}
@@ -228,6 +236,9 @@ export default function CreatePost({ user, onGoLive }) {
               <Button variant="ghost" size="sm" onClick={() => videoInputRef.current?.click()} className="text-zinc-400 hover:text-white hover:bg-white/10 text-xs sm:text-sm gap-1 sm:gap-1.5 px-2 sm:px-3 h-8">
                 <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Video</span>
               </Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowGallery(true)} className="text-zinc-400 hover:text-white hover:bg-white/10 text-xs sm:text-sm gap-1 sm:gap-1.5 px-2 sm:px-3 h-8">
+                <FolderOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Gallery</span>
+              </Button>
               <Button variant="ghost" size="sm" onClick={onGoLive} className="text-rose-400 hover:text-rose-300 hover:bg-white/10 text-xs sm:text-sm gap-1 sm:gap-1.5 px-2 sm:px-3 h-8">
                 <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Live</span>
               </Button>
@@ -245,6 +256,8 @@ export default function CreatePost({ user, onGoLive }) {
           </div>
         </div>
       </div>
+
+      <UserGallery isOpen={showGallery} onClose={() => setShowGallery(false)} onSelectMedia={handleGallerySelect} />
     </motion.div>
   );
 }
