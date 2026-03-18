@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings as SettingsIcon, LogOut, Twitter, Linkedin, Loader2, Check, Trash2, AlertCircle, ExternalLink } from 'lucide-react';
+import { Settings as SettingsIcon, LogOut, Twitter, Linkedin, Facebook, Instagram, Video, MessageCircle, Github, Loader2, Check, Trash2, AlertCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -22,6 +22,54 @@ const PLATFORMS = [
     color: 'from-blue-600 to-blue-800',
     scopes: ['w_member_social', 'r_liteprofile'],
     description: 'Share posts and articles on LinkedIn'
+  },
+  { 
+    id: 'facebook', 
+    name: 'Facebook', 
+    icon: Facebook, 
+    color: 'from-blue-500 to-blue-700',
+    scopes: ['pages_manage_posts', 'pages_read_engagement'],
+    description: 'Share updates on your Facebook page'
+  },
+  { 
+    id: 'instagram', 
+    name: 'Instagram', 
+    icon: Instagram, 
+    color: 'from-pink-500 to-purple-600',
+    scopes: ['instagram_basic', 'instagram_content_publish'],
+    description: 'Post content to your Instagram feed'
+  },
+  { 
+    id: 'tiktok', 
+    name: 'TikTok', 
+    icon: Video, 
+    color: 'from-black to-gray-800',
+    scopes: ['user.info.basic', 'video.create'],
+    description: 'Share videos on TikTok'
+  },
+  { 
+    id: 'youtube', 
+    name: 'YouTube', 
+    icon: Video, 
+    color: 'from-red-600 to-red-800',
+    scopes: ['youtube.upload', 'youtube.readonly'],
+    description: 'Upload videos to YouTube'
+  },
+  { 
+    id: 'discord', 
+    name: 'Discord', 
+    icon: MessageCircle, 
+    color: 'from-indigo-600 to-indigo-800',
+    scopes: ['identify', 'guilds'],
+    description: 'Post announcements in your Discord server'
+  },
+  { 
+    id: 'github', 
+    name: 'GitHub', 
+    icon: Github, 
+    color: 'from-gray-700 to-gray-900',
+    scopes: ['repo', 'gist'],
+    description: 'Share updates on GitHub'
   },
 ];
 
@@ -215,7 +263,7 @@ export default function Settings() {
             <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-blue-200">
               <p className="font-medium mb-1">OAuth Authorization</p>
-              <p>When you click "Connect", you'll be securely redirected to {PLATFORMS.map(p => p.name).join(' or ')} to authorize LBC Hub. Your tokens are encrypted and never shared.</p>
+              <p>When you click "Connect", you'll be securely redirected to the platform to authorize LBC Hub. Your tokens are encrypted and never shared.</p>
             </div>
           </div>
         </motion.div>
