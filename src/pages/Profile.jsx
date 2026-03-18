@@ -93,7 +93,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen bg-zinc-950 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header Card */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-2xl p-8 mb-6">

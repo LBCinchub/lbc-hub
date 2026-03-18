@@ -193,7 +193,7 @@ export default function Services() {
   const [bookingService, setBookingService] = useState(null);
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen bg-zinc-950 py-8 px-4">
       <div className="max-w-7xl mx-auto">
 
         {/* Hero */}

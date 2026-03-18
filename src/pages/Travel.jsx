@@ -192,7 +192,7 @@ export default function Travel() {
   const galleryCount = Math.min(travelData?.photo_urls?.length || travelData?.photo_spots?.length || 3, 6);
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen bg-zinc-950 py-8 px-4">
       <div className="max-w-7xl mx-auto">
 
         {/* Header */}

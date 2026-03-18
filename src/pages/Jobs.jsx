@@ -158,7 +158,7 @@ export default function Jobs() {
   const regular = filtered.filter(j => !j.is_featured);
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen bg-zinc-950 py-8 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10">

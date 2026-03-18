@@ -34,7 +34,7 @@ export default function FollowedPosts() {
   const isLoading = followLoading || postsLoading;
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen bg-zinc-950 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center gap-4 mb-8">
           <Link to={createPageUrl('Social')} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors">
