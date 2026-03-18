@@ -163,7 +163,9 @@ export default function Layout({ children, currentPageName }) {
                       <Link to={createPageUrl('Profile')}>Profile</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => base44.auth.logout()} className="cursor-pointer text-white focus:bg-white/10 focus:text-white">
-                      <LogOut className="w-4 h-4 mr-2 text-zinc-400" />
+                      <div className="w-4 h-4 mr-2 bg-black rounded flex items-center justify-center">
+                        <LogOut className="w-3 h-3 text-white" />
+                      </div>
                       Sign Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
