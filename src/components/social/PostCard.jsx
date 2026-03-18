@@ -24,6 +24,7 @@ export default function PostCard({ post, user, onDmUser, onViewProfile, onHashta
   const [luminaCheck, setLuminaCheck] = useState(null);
   const [luminaLoading, setLuminaLoading] = useState(false);
   const [showLumina, setShowLumina] = useState(false);
+  const [showPostMenu, setShowPostMenu] = useState(false);
   const queryClient = useQueryClient();
   const videoRef = useRef(null);
 
