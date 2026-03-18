@@ -21,6 +21,7 @@ import SuggestedPosts from '../components/social/SuggestedPosts';
 import TrendingWidget from '../components/social/TrendingWidget';
 import MemberSearch from '../components/social/MemberSearch';
 import { TOPICS } from '../components/social/TopicSelector';
+import { Settings as SettingsIcon } from 'lucide-react';
 
 export default function Social() {
   const [user, setUser] = useState(null);
@@ -144,6 +145,9 @@ export default function Social() {
             <div className="flex items-center gap-1.5 sm:gap-2">
               <Link to={createPageUrl('FollowedPosts')} title="Saved Posts" className="p-1.5 sm:p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-zinc-400 hover:text-indigo-400">
                 <Bookmark className="w-4 h-4 sm:w-5 sm:h-5" />
+              </Link>
+              <Link to={createPageUrl('Settings')} title="Settings" className="p-1.5 sm:p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-zinc-400 hover:text-indigo-400">
+                <SettingsIcon className="w-4 h-4 sm:w-5 sm:h-5" />
               </Link>
               <NotificationBell user={user} />
               <DirectMessages user={user} />
