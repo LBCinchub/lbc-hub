@@ -35,6 +35,9 @@ export default function Social() {
     queryKey: ['follows', user?.email],
     queryFn: () => base44.entities.Follow.filter({ follower_email: user.email }),
     enabled: !!user,
+    retry: 1,
+    retryDelay: 5000,
+    staleTime: 60000,
   });
   const followingEmails = new Set(follows.map(f => f.following_email));
   const queryClient = useQueryClient();
@@ -47,13 +50,17 @@ export default function Social() {
   const { data: posts = [], isLoading: postsLoading } = useQuery({
     queryKey: ['posts'],
     queryFn: () => base44.entities.Post.list('-created_date', 30),
-    refetchInterval: 10000,
+    refetchInterval: 30000,
+    retry: 1,
+    retryDelay: 5000,
   });
 
   const { data: chatMessages = [] } = useQuery({
     queryKey: ['chatMessages'],
     queryFn: () => base44.entities.ChatMessage.list('-created_date', 50),
-    refetchInterval: 3000,
+    refetchInterval: 15000,
+    retry: 1,
+    retryDelay: 5000,
   });
 
   const [knownChatters] = useState(() => {
