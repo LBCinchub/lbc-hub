@@ -256,6 +256,14 @@ Provide a brief analysis in JSON format:
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['follows', user?.email] }),
   });
 
+  const deletePostMutation = useMutation({
+    mutationFn: () => base44.entities.Post.delete(post.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['myPosts'] });
+    },
+  });
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
