@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, ShoppingBag, Tag, Star, 
-  ArrowRight, Package, Briefcase, Award, LayoutDashboard
+  ArrowRight, Package, Briefcase, Award, LayoutDashboard, Plus
 } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -64,7 +64,15 @@ export default function Marketplace() {
             <p className="text-zinc-400">Discover products, services, and exclusive branded goods</p>
           </motion.div>
           {user && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2">
+              <Button
+                onClick={() => setShowDashboard(true)}
+                size="icon"
+                className="btn-primary rounded-xl"
+                title="Add Listing"
+              >
+                <Plus className="w-5 h-5" />
+              </Button>
               <Button
                 onClick={() => setShowDashboard(true)}
                 className="btn-primary rounded-xl gap-2 whitespace-nowrap"
