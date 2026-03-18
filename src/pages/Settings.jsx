@@ -13,7 +13,8 @@ const PLATFORMS = [
     icon: Twitter, 
     color: 'from-blue-400 to-blue-600',
     scopes: ['tweet.read', 'tweet.write', 'users.read'],
-    description: 'Post tweets directly from LBC Hub'
+    description: 'Post tweets directly from LBC Hub',
+    enabled: true
   },
   { 
     id: 'linkedin', 
@@ -21,7 +22,8 @@ const PLATFORMS = [
     icon: Linkedin, 
     color: 'from-blue-600 to-blue-800',
     scopes: ['w_member_social', 'r_liteprofile'],
-    description: 'Share posts and articles on LinkedIn'
+    description: 'Share posts and articles on LinkedIn',
+    enabled: true
   },
   { 
     id: 'facebook', 
@@ -29,7 +31,8 @@ const PLATFORMS = [
     icon: Facebook, 
     color: 'from-blue-500 to-blue-700',
     scopes: ['pages_manage_posts', 'pages_read_engagement'],
-    description: 'Share updates on your Facebook page'
+    description: 'Share updates on your Facebook page',
+    enabled: false
   },
   { 
     id: 'instagram', 
@@ -37,7 +40,8 @@ const PLATFORMS = [
     icon: Instagram, 
     color: 'from-pink-500 to-purple-600',
     scopes: ['instagram_basic', 'instagram_content_publish'],
-    description: 'Post content to your Instagram feed'
+    description: 'Post content to your Instagram feed',
+    enabled: false
   },
   { 
     id: 'tiktok', 
@@ -45,7 +49,8 @@ const PLATFORMS = [
     icon: Video, 
     color: 'from-black to-gray-800',
     scopes: ['user.info.basic', 'video.create'],
-    description: 'Share videos on TikTok'
+    description: 'Share videos on TikTok',
+    enabled: false
   },
   { 
     id: 'youtube', 
@@ -53,7 +58,8 @@ const PLATFORMS = [
     icon: Video, 
     color: 'from-red-600 to-red-800',
     scopes: ['youtube.upload', 'youtube.readonly'],
-    description: 'Upload videos to YouTube'
+    description: 'Upload videos to YouTube',
+    enabled: false
   },
   { 
     id: 'discord', 
@@ -61,7 +67,8 @@ const PLATFORMS = [
     icon: MessageCircle, 
     color: 'from-indigo-600 to-indigo-800',
     scopes: ['identify', 'guilds'],
-    description: 'Post announcements in your Discord server'
+    description: 'Post announcements in your Discord server',
+    enabled: false
   },
   { 
     id: 'github', 
@@ -69,7 +76,8 @@ const PLATFORMS = [
     icon: Github, 
     color: 'from-gray-700 to-gray-900',
     scopes: ['repo', 'gist'],
-    description: 'Share updates on GitHub'
+    description: 'Share updates on GitHub',
+    enabled: false
   },
 ];
 
@@ -237,6 +245,8 @@ export default function Settings() {
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
+                  ) : !platform.enabled ? (
+                    <span className="ml-4 px-4 py-2 text-sm text-zinc-500">Coming Soon</span>
                   ) : (
                     <button
                       onClick={() => handleConnectOAuth(platform.id)}
