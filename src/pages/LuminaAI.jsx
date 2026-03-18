@@ -49,7 +49,7 @@ Your capabilities:
 
 User question: ${text}`,
         add_context_from_internet: true,
-        model: 'claude_sonnet_4_6'
+        model: 'gemini_3_pro'
       });
 
       const aiMessage = { role: 'assistant', content: response };
