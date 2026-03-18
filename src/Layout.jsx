@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Home, Users, ShoppingBag, Car, Plane, Briefcase, Wrench, Menu, X, LogOut } from 'lucide-react';
+import { Home, Users, ShoppingBag, Car, Plane, Briefcase, Wrench, Menu, X, LogOut, ChevronLeft } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
