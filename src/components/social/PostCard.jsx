@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Share2, MoreHorizontal, Send, Radio, Bookmark, Sparkles, Loader2, Plane, MapPin, Calendar, ArrowRight, Copy, Check, Users, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MessageCircle, Share2, MoreHorizontal, Send, Radio, Bookmark, Sparkles, Loader2, Plane, MapPin, Calendar, ArrowRight, Copy, Check, Users, X, ChevronLeft, ChevronRight, UserPlus, UserCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -188,6 +188,23 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
     },
   });
 
+  const followMutation = useMutation({
+    mutationFn: async () => {
+      if (isFollowing) {
+        const follow = follows.find(f => f.following_email === post.author_email);
+        await base44.entities.Follow.delete(follow.id);
+      } else {
+        await base44.entities.Follow.create({
+          follower_email: user.email,
+          follower_name: user.full_name || user.email,
+          following_email: post.author_email,
+          following_name: post.author_name,
+        });
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['follows', user?.email] }),
+  });
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -214,7 +231,7 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
           </button>
           <div className="flex-1">
             <div className="flex items-center justify-between mb-2">
-              <div>
+              <div className="flex-1">
                 <button
                   onClick={() => onViewProfile?.({ email: post.author_email, full_name: post.author_name, avatar_url: post.author_avatar })}
                   className="font-semibold hover:text-indigo-400 transition-colors"
@@ -223,6 +240,27 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
                 </button>
                 <p className="text-xs text-zinc-500">{format(new Date(post.created_date), 'MMM d, h:mm a')}</p>
               </div>
+              {user && post.author_email !== user.email && (
+                <Button
+                  size="sm"
+                  variant={isFollowing ? "outline" : "default"}
+                  onClick={() => followMutation.mutate()}
+                  disabled={followMutation.isPending}
+                  className={`${isFollowing ? 'bg-white/5 hover:bg-white/10 border-white/20' : 'bg-indigo-600 hover:bg-indigo-700'} rounded-full px-3 h-7 text-xs mr-2`}
+                >
+                  {isFollowing ? (
+                    <>
+                      <UserCheck className="w-3 h-3 mr-1" />
+                      Following
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-3 h-3 mr-1" />
+                      Follow
+                    </>
+                  )}
+                </Button>
+              )}
               <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
                 <MoreHorizontal className="w-5 h-5" />
               </Button>
