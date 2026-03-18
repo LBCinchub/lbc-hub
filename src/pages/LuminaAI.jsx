@@ -90,7 +90,7 @@ Your capabilities:
 
 User question: ${text}`,
         add_context_from_internet: true,
-        model: 'gemini_3_pro'
+        model: 'gemini_3_flash'
       });
 
       const aiMessage = { role: 'assistant', content: response };
