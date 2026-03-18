@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Share2, MoreHorizontal, Send, Radio, Bookmark, Sparkles, Loader2, Plane, MapPin, Calendar, ArrowRight, Copy, Check, Users, X, ChevronLeft, ChevronRight, UserPlus, UserCheck } from 'lucide-react';
+import { MessageCircle, Share2, MoreHorizontal, Send, Radio, Bookmark, Sparkles, Loader2, Plane, MapPin, Calendar, ArrowRight, Copy, Check, Users, X, ChevronLeft, ChevronRight, UserPlus, UserCheck, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -228,6 +228,13 @@ Provide a brief analysis in JSON format:
         });
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
       }
+    },
+  });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId) => base44.entities.Comment.delete(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['comments', post.id] });
     },
   });
 
@@ -547,16 +554,26 @@ Provide a brief analysis in JSON format:
                   className="mt-4 space-y-3 overflow-hidden"
                 >
                   {comments.map(c => (
-                    <div key={c.id} className="flex items-start gap-3">
+                    <div key={c.id} className="flex items-start gap-3 group">
                       <Avatar className="w-8 h-8 flex-shrink-0">
                         <AvatarImage src={c.author_avatar} />
                         <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs">
                           {c.author_name?.[0]?.toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="bg-white/5 rounded-xl px-3 py-2 flex-1">
+                      <div className="bg-white/5 rounded-xl px-3 py-2 flex-1 relative">
                         <p className="text-xs font-semibold text-indigo-400 mb-0.5">{c.author_name}</p>
                         <p className="text-sm text-zinc-300">{c.content}</p>
+                        {user && c.author_email === user.email && (
+                          <button
+                            onClick={() => deleteCommentMutation.mutate(c.id)}
+                            disabled={deleteCommentMutation.isPending}
+                            className="absolute -right-1 -top-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-red-600/20 hover:bg-red-600/40 text-red-400"
+                            title="Delete comment"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
