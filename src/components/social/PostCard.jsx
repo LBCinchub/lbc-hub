@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,6 +21,25 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const queryClient = useQueryClient();
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    if (!videoRef.current || post.media_type !== 'video') return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          videoRef.current?.play().catch(() => {});
+        } else {
+          videoRef.current?.pause();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(videoRef.current);
+    return () => observer.disconnect();
+  }, [post.media_type]);
 
   const postUrl = `${window.location.origin}${createPageUrl('Social')}`;
 
@@ -255,7 +274,7 @@ export default function PostCard({ post, user, onDmUser, onViewProfile }) {
             {post.media_urls?.length > 0 && (
               <div className="mb-4 rounded-xl overflow-hidden">
                 {post.media_type === 'video' ? (
-                  <video src={post.media_urls[0]} controls className="w-full rounded-xl max-h-80 object-cover" />
+                  <video ref={videoRef} src={post.media_urls[0]} controls loop muted playsInline className="w-full rounded-xl max-h-80 object-cover" />
                 ) : (
                   <div className={`grid gap-1 ${post.media_urls.length > 1 ? 'grid-cols-2' : ''}`}>
                     {post.media_urls.map((url, i) => (
