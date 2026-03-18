@@ -18,6 +18,7 @@ import DirectMessages from '../components/social/DirectMessages';
 import GoLiveModal from '../components/social/GoLiveModal';
 import UserProfileModal from '../components/social/UserProfileModal';
 import SuggestedPosts from '../components/social/SuggestedPosts';
+import TrendingWidget from '../components/social/TrendingWidget';
 import { TOPICS } from '../components/social/TopicSelector';
 
 export default function Social() {
@@ -280,6 +281,12 @@ export default function Social() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-4">
+            {/* Trending Topics */}
+            <TrendingWidget 
+              posts={posts} 
+              onTopicClick={(topic) => setActiveTopic(topic)} 
+            />
+
             {/* Suggested Posts */}
             {user && (
               <motion.div
