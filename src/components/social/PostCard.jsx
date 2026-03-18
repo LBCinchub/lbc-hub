@@ -9,8 +9,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format } from 'date-fns';
+import RichText from './RichText';
 
-export default function PostCard({ post, user, onDmUser, onViewProfile }) {
+export default function PostCard({ post, user, onDmUser, onViewProfile, onHashtagClick }) {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [summary, setSummary] = useState('');
@@ -317,7 +318,12 @@ Provide a brief analysis in JSON format:
               </div>
             )}
 
-            <p className="text-sm sm:text-base text-zinc-200 leading-relaxed mb-2">{post.content}</p>
+            <p className="text-sm sm:text-base text-zinc-200 mb-2">
+              <RichText 
+                text={post.content} 
+                onHashtagClick={onHashtagClick}
+              />
+            </p>
 
             {/* AI Summary */}
             {isLongPost && (
