@@ -261,12 +261,16 @@ export default function FloatingDM({ user }) {
             exit={{ opacity: 0, scale: 0.92, y: 16 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             data-dm-panel
-            className="w-[340px] rounded-3xl flex flex-col overflow-hidden"
+            className="rounded-3xl flex flex-col overflow-hidden"
             style={{
               position: 'fixed',
-              bottom: 80,
-              left: '50%',
-              transform: 'translateX(-50%)',
+              bottom: window.innerWidth < 640 ? 8 : 80,
+              left: window.innerWidth < 640 ? 8 : '50%',
+              right: window.innerWidth < 640 ? 8 : 'auto',
+              transform: window.innerWidth < 640 ? 'none' : 'translateX(-50%)',
+              width: window.innerWidth < 640 ? 'auto' : '340px',
+              maxWidth: window.innerWidth < 640 ? 'calc(100vw - 16px)' : '340px',
+              maxHeight: window.innerWidth < 640 ? 'calc(100vh - 16px)' : 'auto',
               background: 'rgba(13, 13, 20, 0.96)',
               backdropFilter: 'blur(32px)',
               border: '1px solid rgba(255,255,255,0.07)',
