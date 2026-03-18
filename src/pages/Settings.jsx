@@ -87,7 +87,11 @@ export default function Settings() {
   const queryClient = useQueryClient();
 
   React.useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me()
+      .then(setUser)
+      .catch((error) => {
+        console.error('Failed to load user:', error.message);
+      });
   }, []);
 
   const { data: accounts = [] } = useQuery({
@@ -108,6 +112,11 @@ export default function Settings() {
     setConnecting(platformId);
 
     try {
+      if (!user?.email) {
+        alert('You must be logged in to connect accounts');
+        return;
+      }
+
       // Trigger OAuth flow via backend function
       const result = await base44.functions.invoke('initiateOAuth', {
         platform: platformId,
@@ -117,10 +126,12 @@ export default function Settings() {
 
       if (result.data?.oauth_url) {
         window.location.href = result.data.oauth_url;
+      } else if (result.data?.error) {
+        alert(result.data.error);
       }
     } catch (error) {
       console.error('OAuth initiation failed:', error);
-      alert(`Failed to connect ${platform.name}. Please try again.`);
+      alert(`Failed to connect ${platform.name}. ${error.message || 'Please try again.'}`);
     } finally {
       setConnecting(null);
     }
