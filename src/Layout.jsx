@@ -24,6 +24,7 @@ export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [showOwnProfile, setShowOwnProfile] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadUser = () => {
