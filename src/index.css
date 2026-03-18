@@ -93,8 +93,9 @@
     @apply bg-zinc-950;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overscroll-behavior: none;
+    overscroll-behavior: auto;
     overflow-x: hidden;
+    overflow-y: auto;
     min-height: 100vh;
     background-color: #09090b !important;
   }
