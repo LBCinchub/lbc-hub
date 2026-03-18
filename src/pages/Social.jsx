@@ -33,6 +33,7 @@ export default function Social() {
   const [profileTarget, setProfileTarget] = useState(null);
   const [activeTopic, setActiveTopic] = useState(null);
   const [feedTab, setFeedTab] = useState('forYou'); // 'forYou' | 'following' | 'videos' | 'photos'
+  const [showMemberSearch, setShowMemberSearch] = useState(false);
 
   const { data: follows = [] } = useQuery({
     queryKey: ['follows', user?.email],
