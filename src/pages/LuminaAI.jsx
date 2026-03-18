@@ -55,7 +55,14 @@ User question: ${text}`,
       const aiMessage = { role: 'assistant', content: response };
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
-      const errorMessage = { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' };
+      console.error('Lumina AI Error:', error);
+      const errorMsg = error.message?.includes('Rate limit') 
+        ? '⏳ Rate limit reached. Please wait a moment and try again.'
+        : error.message?.includes('429')
+        ? '⏳ Too many requests. Please wait 30 seconds and try again.'
+        : `❌ Error: ${error.message || 'Something went wrong. Please try again.'}`;
+      
+      const errorMessage = { role: 'assistant', content: errorMsg };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setLoading(false);
