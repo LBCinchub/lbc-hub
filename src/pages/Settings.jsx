@@ -14,7 +14,7 @@ const PLATFORMS = [
     color: 'from-blue-400 to-blue-600',
     scopes: ['tweet.read', 'tweet.write', 'users.read'],
     description: 'Post tweets directly from LBC Hub',
-    enabled: true
+    enabled: false
   },
   { 
     id: 'linkedin', 
@@ -23,7 +23,7 @@ const PLATFORMS = [
     color: 'from-blue-600 to-blue-800',
     scopes: ['w_member_social', 'r_liteprofile'],
     description: 'Share posts and articles on LinkedIn',
-    enabled: true
+    enabled: false
   },
   { 
     id: 'facebook', 
