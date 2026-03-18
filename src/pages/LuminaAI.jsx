@@ -9,11 +9,40 @@ export default function LuminaAI() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
+  const [usageCount, setUsageCount] = useState(0);
+  const [usageLimit] = useState(10); // 10 requests per day
   const bottomRef = useRef(null);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    
+    base44.entities.AIUsage.filter({ user_email: user.email }).then(records => {
+      if (records.length > 0) {
+        const usage = records[0];
+        const lastReset = new Date(usage.last_reset);
+        const now = new Date();
+        const hoursSinceReset = (now - lastReset) / (1000 * 60 * 60);
+        
+        if (hoursSinceReset >= 24) {
+          base44.entities.AIUsage.update(usage.id, { count: 0, last_reset: now.toISOString() });
+          setUsageCount(0);
+        } else {
+          setUsageCount(usage.count);
+        }
+      } else {
+        base44.entities.AIUsage.create({ 
+          user_email: user.email, 
+          count: 0, 
+          last_reset: new Date().toISOString() 
+        });
+        setUsageCount(0);
+      }
+    });
+  }, [user]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -28,6 +57,18 @@ export default function LuminaAI() {
 
   const handleSend = async (text = input) => {
     if (!text.trim() || loading) return;
+
+    if (!user) {
+      const errorMessage = { role: 'assistant', content: '🔒 Please sign in to use Lumina AI.' };
+      setMessages(prev => [...prev, errorMessage]);
+      return;
+    }
+
+    if (usageCount >= usageLimit) {
+      const errorMessage = { role: 'assistant', content: `⚠️ Daily limit reached (${usageLimit} requests/day). Resets in 24 hours.` };
+      setMessages(prev => [...prev, errorMessage]);
+      return;
+    }
 
     const userMessage = { role: 'user', content: text };
     setMessages(prev => [...prev, userMessage]);
@@ -54,6 +95,13 @@ User question: ${text}`,
 
       const aiMessage = { role: 'assistant', content: response };
       setMessages(prev => [...prev, aiMessage]);
+
+      // Update usage count
+      const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
+      if (usageRecords.length > 0) {
+        await base44.entities.AIUsage.update(usageRecords[0].id, { count: usageRecords[0].count + 1 });
+        setUsageCount(usageRecords[0].count + 1);
+      }
     } catch (error) {
       console.error('Lumina AI Error:', error);
       const errorMsg = error.message?.includes('Rate limit') 
@@ -211,6 +259,11 @@ User question: ${text}`,
       {/* Input Bar */}
       <div className="border-t border-white/5 bg-zinc-950/80 backdrop-blur-xl sticky bottom-0">
         <div className="max-w-4xl mx-auto px-4 py-4">
+          {user && (
+            <div className="text-center text-xs text-zinc-600 mb-2">
+              {usageCount} / {usageLimit} requests used today
+            </div>
+          )}
           <form
             onSubmit={(e) => { e.preventDefault(); handleSend(); }}
             className="relative"
