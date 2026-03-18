@@ -320,9 +320,46 @@ Provide a brief analysis in JSON format:
                   )}
                 </Button>
               )}
-              <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
-                <MoreHorizontal className="w-5 h-5" />
-              </Button>
+              {user && post.author_email === user.email && (
+                <div className="relative">
+                  <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white" onClick={() => setShowPostMenu(!showPostMenu)}>
+                    <MoreHorizontal className="w-5 h-5" />
+                  </Button>
+                  <AnimatePresence>
+                    {showPostMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 6 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 6 }}
+                        className="absolute top-8 right-0 z-50 bg-zinc-800 border border-white/10 rounded-xl shadow-xl overflow-hidden min-w-[140px]"
+                      >
+                        <button
+                          className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-white hover:bg-white/10 transition-colors"
+                        >
+                          <Edit className="w-4 h-4 text-blue-400" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => {
+                            deletePostMutation.mutate();
+                            setShowPostMenu(false);
+                          }}
+                          disabled={deletePostMutation.isPending}
+                          className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-red-400 hover:bg-red-600/20 transition-colors border-t border-white/5"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          {deletePostMutation.isPending ? 'Deleting...' : 'Delete'}
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+              {user && post.author_email !== user.email && (
+                <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
+                  <MoreHorizontal className="w-5 h-5" />
+                </Button>
+              )}
             </div>
 
             {/* Topic Tags */}
