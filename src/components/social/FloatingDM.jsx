@@ -257,8 +257,7 @@ export default function FloatingDM({ user }) {
           >
             {/* Header */}
             <div
-              onMouseDown={startDrag}
-              className="flex items-center justify-between px-4 py-3.5 cursor-grab active:cursor-grabbing select-none"
+              className="flex items-center justify-between px-4 py-3.5 select-none"
               style={{
                 background: 'linear-gradient(135deg, rgba(99,102,241,0.18) 0%, rgba(168,85,247,0.1) 100%)',
                 borderBottom: '1px solid rgba(255,255,255,0.05)',
