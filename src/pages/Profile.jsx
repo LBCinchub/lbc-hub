@@ -145,7 +145,7 @@ export default function Profile() {
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       placeholder="City, Country"
-                      className="bg-white/5 border-white/10 text-white"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500"
                     />
                   </div>
                   <div>
