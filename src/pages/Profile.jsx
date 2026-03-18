@@ -120,21 +120,22 @@ export default function Profile() {
                   <p className="text-zinc-400 text-sm">{user.email}</p>
                 </div>
                 {!editMode ? (
-                  <Button onClick={() => setEditMode(true)} variant="outline" className="gap-2">
-                    <Edit2 className="w-4 h-4" />
-                    Edit Profile
-                  </Button>
-                ) : (
-                  <div className="flex gap-2">
-                    <Button onClick={() => { setEditMode(false); setBio(user.bio || ''); setLocation(user.location || ''); }} variant="outline" size="icon" className="text-zinc-400 hover:text-white">
-                      <X className="w-4 h-4" />
-                    </Button>
-                    <Button onClick={handleSave} className="btn-primary gap-2 text-white" disabled={updateProfileMutation.isPending}>
-                      {updateProfileMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      Save
-                    </Button>
-                  </div>
-                )}
+                   <Button onClick={() => setEditMode(true)} variant="outline" className="gap-2">
+                     <Edit2 className="w-4 h-4" />
+                     Edit Profile
+                   </Button>
+                 ) : (
+                   <div className="flex gap-2">
+                     <Button onClick={() => { setEditMode(false); setBio(user.bio || ''); setLocation(user.location || ''); }} variant="outline" className="gap-2 text-zinc-400 hover:text-white">
+                       <X className="w-4 h-4" />
+                       Cancel
+                     </Button>
+                     <Button onClick={handleSave} className="btn-primary gap-2 text-white" disabled={updateProfileMutation.isPending}>
+                       {updateProfileMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                       Save
+                     </Button>
+                   </div>
+                 )}
               </div>
 
               {editMode ? (
