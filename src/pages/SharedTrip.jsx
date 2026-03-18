@@ -51,7 +51,7 @@ export default function SharedTrip() {
   );
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen bg-zinc-950 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <Link to={createPageUrl('Travel')} className="inline-flex items-center gap-2 text-zinc-400 hover:text-white text-sm transition-colors">

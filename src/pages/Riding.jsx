@@ -36,7 +36,7 @@ export default function Riding() {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4 flex items-center">
+    <div className="min-h-screen bg-zinc-950 py-8 px-4 flex items-center">
       <div className="max-w-5xl mx-auto w-full">
         <motion.div 
           className="relative glass rounded-3xl p-8 md:p-16 overflow-hidden"
