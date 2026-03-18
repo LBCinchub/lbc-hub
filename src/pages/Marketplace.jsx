@@ -33,6 +33,7 @@ export default function Marketplace() {
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState(null);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [openAddListing, setOpenAddListing] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
@@ -66,7 +67,7 @@ export default function Marketplace() {
           {user && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2">
               <Button
-                onClick={() => setShowDashboard(true)}
+                onClick={() => { setOpenAddListing(true); setShowDashboard(true); }}
                 size="icon"
                 className="btn-primary rounded-xl"
                 title="Add Listing"
@@ -74,7 +75,7 @@ export default function Marketplace() {
                 <Plus className="w-5 h-5" />
               </Button>
               <Button
-                onClick={() => setShowDashboard(true)}
+                onClick={() => { setOpenAddListing(false); setShowDashboard(true); }}
                 className="btn-primary rounded-xl gap-2 whitespace-nowrap"
               >
                 <LayoutDashboard className="w-4 h-4" />
@@ -227,7 +228,11 @@ export default function Marketplace() {
       {/* Seller Dashboard Modal */}
       <AnimatePresence>
         {showDashboard && user && (
-          <SellerDashboard user={user} onClose={() => setShowDashboard(false)} />
+          <SellerDashboard 
+            user={user} 
+            onClose={() => { setShowDashboard(false); setOpenAddListing(false); }}
+            openAddListing={openAddListing}
+          />
         )}
       </AnimatePresence>
 

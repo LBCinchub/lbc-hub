@@ -113,10 +113,10 @@ function ListingForm({ initial, onSave, onCancel, saving }) {
   );
 }
 
-export default function SellerDashboard({ user, onClose }) {
-  const [tab, setTab] = useState('overview');
+export default function SellerDashboard({ user, onClose, openAddListing = false }) {
+  const [tab, setTab] = useState(openAddListing ? 'listings' : 'overview');
   const [editingProduct, setEditingProduct] = useState(null);
-  const [creatingNew, setCreatingNew] = useState(false);
+  const [creatingNew, setCreatingNew] = useState(openAddListing);
   const [replyText, setReplyText] = useState({});
   const queryClient = useQueryClient();
 
