@@ -207,7 +207,10 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
                 editing ? (
                   <>
                     <Button onClick={() => updateProfileMutation.mutate(editForm)} disabled={updateProfileMutation.isPending} className="btn-primary rounded-xl gap-1.5 text-sm">
-                      <Save className="w-4 h-4" /> {updateProfileMutation.isPending ? 'Saving...' : 'Save'}
+                      <div className="w-4 h-4 bg-black rounded flex items-center justify-center">
+                        <Save className="w-3 h-3 text-white" />
+                      </div>
+                      {updateProfileMutation.isPending ? 'Saving...' : 'Save'}
                     </Button>
                     <Button onClick={() => setEditing(false)} variant="outline" className="border-white/20 bg-transparent hover:bg-white/10 rounded-xl text-sm">
                       Cancel
@@ -215,6 +218,9 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
                   </>
                 ) : (
                   <Button onClick={() => setEditing(true)} variant="outline" className="border-white/20 bg-transparent hover:bg-white/10 rounded-xl text-sm">
+                    <div className="w-4 h-4 bg-black rounded flex items-center justify-center mr-1.5">
+                      <FileText className="w-3 h-3 text-white" />
+                    </div>
                     Edit Profile
                   </Button>
                 )
