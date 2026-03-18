@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Star, MessageSquare, Send, Package,
-  ArrowRight, CheckCircle, ShoppingBag, Loader2, Lock
+  ArrowRight, CheckCircle, ShoppingBag, Loader2, Lock, Upload, Image as ImageIcon
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,6 +37,8 @@ function ReviewForm({ productId, sellerEmail, user, onDone }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [type, setType] = useState('product');
+  const [photos, setPhotos] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -55,6 +57,22 @@ function ReviewForm({ productId, sellerEmail, user, onDone }) {
     }
   });
 
+  const handlePhotoUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    
+    setUploading(true);
+    try {
+      const uploadPromises = files.map(file => base44.integrations.Core.UploadFile({ file }));
+      const results = await Promise.all(uploadPromises);
+      const urls = results.map(r => r.file_url);
+      setPhotos(prev => [...prev, ...urls].slice(0, 4)); // Max 4 photos
+    } catch (err) {
+      console.error('Upload failed:', err);
+    }
+    setUploading(false);
+  };
+
   const handleSubmit = () => {
     if (!rating) return;
     mutation.mutate({
@@ -65,6 +83,7 @@ function ReviewForm({ productId, sellerEmail, user, onDone }) {
       rating,
       comment,
       type,
+      photo_urls: photos,
     });
   };
 
@@ -89,6 +108,45 @@ function ReviewForm({ productId, sellerEmail, user, onDone }) {
         <Label className="text-zinc-400 mb-1 block">Comment (optional)</Label>
         <Textarea value={comment} onChange={e => setComment(e.target.value)} className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500" placeholder="Share your experience..." />
       </div>
+      
+      <div>
+        <Label className="text-zinc-400 mb-2 block">Photos (optional, max 4)</Label>
+        <div className="space-y-3">
+          {photos.length > 0 && (
+            <div className="grid grid-cols-4 gap-2">
+              {photos.map((url, i) => (
+                <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-white/5 group">
+                  <img src={url} alt={`Review photo ${i+1}`} className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => setPhotos(photos.filter((_, idx) => idx !== i))}
+                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                  >
+                    <X className="w-5 h-5 text-white" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {photos.length < 4 && (
+            <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-indigo-500/50 hover:bg-white/5 transition-colors">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePhotoUpload}
+                className="hidden"
+                disabled={uploading}
+              />
+              {uploading ? (
+                <><Loader2 className="w-5 h-5 animate-spin" /> Uploading...</>
+              ) : (
+                <><Upload className="w-5 h-5 text-zinc-400" /> <span className="text-sm text-zinc-400">Add photos</span></>
+              )}
+            </label>
+          )}
+        </div>
+      </div>
+
       <Button onClick={handleSubmit} disabled={!rating || mutation.isPending} className="btn-primary rounded-xl w-full">
         {mutation.isPending ? 'Submitting...' : 'Submit Review'}
       </Button>
@@ -289,10 +347,10 @@ export default function ProductModal({ product, user, onClose }) {
             {reviews.length > 0 && (
               <div>
                 <h3 className="font-semibold mb-3">Reviews ({reviews.length})</h3>
-                <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+                <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
                   {reviews.map(review => (
                     <div key={review.id} className="bg-white/5 rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <Avatar className="w-7 h-7">
                             <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs">
@@ -308,7 +366,23 @@ export default function ProductModal({ product, user, onClose }) {
                           ))}
                         </div>
                       </div>
-                      {review.comment && <p className="text-sm text-zinc-300 mt-1">{review.comment}</p>}
+                      {review.comment && <p className="text-sm text-zinc-300 mb-2">{review.comment}</p>}
+                      {review.photo_urls && review.photo_urls.length > 0 && (
+                        <div className="grid grid-cols-4 gap-2 mt-2">
+                          {review.photo_urls.map((url, i) => (
+                            <a
+                              key={i}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="aspect-square rounded-lg overflow-hidden bg-white/5 hover:ring-2 hover:ring-indigo-500 transition-all group"
+                            >
+                              <img src={url} alt={`Review photo ${i+1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-xs text-zinc-500 mt-2">{new Date(review.created_date).toLocaleDateString()}</p>
                     </div>
                   ))}
                 </div>
