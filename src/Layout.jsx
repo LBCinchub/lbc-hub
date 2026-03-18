@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import UserProfileModal from './components/social/UserProfileModal';
 import FloatingDM from './components/social/FloatingDM';
+import FloatingLumina from './components/social/FloatingLumina';
 import CallManager from './components/social/CallManager';
 
 const navItems = [
@@ -212,6 +213,9 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Floating DM */}
       {user && <FloatingDM user={user} />}
+
+      {/* Floating Lumina AI */}
+      {user && <FloatingLumina user={user} />}
 
       {/* WebRTC Call Manager */}
       {user && <CallManager user={user} />}
