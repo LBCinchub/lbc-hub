@@ -125,13 +125,13 @@ export default function Social() {
   }, [chatMessages]);
 
   return (
-    <div className="min-h-screen bg-zinc-950 py-4 sm:py-8 px-3 sm:px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-zinc-950 py-4 sm:py-8 px-3 sm:px-4 w-full overflow-x-hidden">
+      <div className="max-w-7xl mx-auto w-full">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4 sm:mb-8">
-          <div>
-            <h1 className="text-2xl sm:text-4xl font-bold mb-1">Social Hub</h1>
-            <p className="text-xs sm:text-base text-zinc-400 hidden sm:block">Connect, share, and engage with the community</p>
+        <div className="flex items-center justify-between mb-4 sm:mb-8 w-full">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-4xl font-bold mb-1 truncate">Social Hub</h1>
+            <p className="text-xs sm:text-base text-zinc-400 hidden sm:block truncate">Connect, share, and engage with the community</p>
           </div>
           {user && (
             <div className="flex items-center gap-1.5 sm:gap-2">
@@ -144,15 +144,15 @@ export default function Social() {
           )}
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
+        <div className="grid lg:grid-cols-3 gap-4 lg:gap-6 w-full">
           {/* Main Feed */}
-          <div className="lg:col-span-2 space-y-4 lg:space-y-5">
+          <div className="lg:col-span-2 space-y-4 lg:space-y-5 w-full min-w-0">
             {user ? (
               <CreatePost user={user} onGoLive={() => setGoLiveOpen(true)} />
             ) : null}
 
             {/* Feed Tabs */}
-            <div className="flex items-center gap-1 p-1 glass rounded-2xl overflow-x-auto">
+            <div className="flex items-center gap-1 p-1 glass rounded-2xl overflow-x-auto scrollbar-hide w-full">
               {[
                 { key: 'forYou', label: 'For You', icon: Globe },
                 { key: 'following', label: 'Following', icon: UserCheck },
@@ -162,41 +162,41 @@ export default function Social() {
                 <button
                   key={key}
                   onClick={() => setFeedTab(key)}
-                  className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all flex-1 sm:flex-none justify-center whitespace-nowrap min-w-[80px] ${
+                  className={`flex items-center gap-1 px-2.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all flex-1 justify-center whitespace-nowrap ${
                     feedTab === key
                       ? 'bg-indigo-600 text-white'
                       : 'text-zinc-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{label}</span>
+                  <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="hidden xs:inline">{label}</span>
                 </button>
               ))}
             </div>
 
             {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 flex-shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search posts..."
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-10 pr-10 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-9 pr-10 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white">
+                <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white flex-shrink-0">
                   <X className="w-4 h-4" />
                 </button>
               )}
             </div>
 
             {/* Topic Filter Bar */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide w-full">
               <Filter className="w-4 h-4 text-zinc-500 flex-shrink-0" />
               <button
                 onClick={() => setActiveTopic(null)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${!activeTopic ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}
+                className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${!activeTopic ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}
               >
                 All
               </button>
@@ -204,7 +204,7 @@ export default function Social() {
                 <button
                   key={topic}
                   onClick={() => setActiveTopic(activeTopic === topic ? null : topic)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${activeTopic === topic ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}
+                  className={`px-2.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${activeTopic === topic ? 'bg-indigo-600 text-white' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}
                 >
                   #{topic}
                 </button>

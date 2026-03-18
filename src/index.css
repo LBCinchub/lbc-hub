@@ -121,4 +121,10 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+  
+  @screen xs {
+    .xs\:inline {
+      display: inline;
+    }
+  }
 }
