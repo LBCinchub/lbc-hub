@@ -171,24 +171,24 @@ export default function FloatingLumina({ user }) {
 
     // Unlimited credits for founder
     const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
+    const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
+    const hasUnlimitedAccess = isFounder || isDevLead;
     
-    if (!isFounder && usageCount >= usageLimit) {
+    if (!hasUnlimitedAccess && usageCount >= usageLimit) {
       const errorMessage = { role: 'assistant', content: `⚠️ Daily limit reached (${usageLimit} requests/day). Resets in 24 hours.` };
       setMessages(prev => [...prev, errorMessage]);
+      if (voiceEnabled) speakText(errorMessage.content);
       return;
     }
 
     const userMessage = { role: 'user', content: text, timestamp: new Date().toISOString() };
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
-    setInput('');
+    if (!voiceChatMode) setInput('');
     setLoading(true);
 
     try {
-      const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
-      const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
-      const hasUnlimitedAccess = isFounder || isDevLead;
-      const conversationContext = messages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
+      const conversationContext = updatedMessages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
       
       // Gather user's digital mirror data
       const [userPosts, userFollows, userTrips, userProducts] = await Promise.all([
