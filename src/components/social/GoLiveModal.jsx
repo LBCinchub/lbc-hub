@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Radio, X, Video, VideoOff, Mic, MicOff, Users, Send, Volume2, VolumeX } from 'lucide-react';
+import { Radio, X, Video, VideoOff, Mic, MicOff, Users, Send, Volume2, VolumeX, Sparkles } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { base44 } from '@/api/base44Client';
 
@@ -12,6 +12,8 @@ export default function GoLiveModal({ open, onClose, onStartLive, user }) {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [luminaActive, setLuminaActive] = useState(false);
+  const [luminaLoading, setLuminaLoading] = useState(false);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -93,10 +95,53 @@ export default function GoLiveModal({ open, onClose, onStartLive, user }) {
     };
 
     setChatMessages(prev => [...prev, message]);
+    const currentInput = chatInput.trim();
     setChatInput('');
 
     if (voiceEnabled) {
       speakMessage(message.text);
+    }
+
+    if (luminaActive) {
+      await askLumina(currentInput);
+    }
+  };
+
+  const askLumina = async (question) => {
+    setLuminaLoading(true);
+    
+    try {
+      const conversationContext = chatMessages.slice(-5).map(m => `${m.user}: ${m.text}`).join('\n');
+      
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are Lumina AI, joining a live stream chat. Respond naturally and conversationally to the viewer's message. Keep responses brief and engaging (1-2 sentences max).
+
+Previous chat:
+${conversationContext}
+
+Viewer: ${question}
+
+Respond as Lumina AI:`,
+        model: 'gemini_3_flash'
+      });
+
+      const luminaMsg = {
+        id: Date.now(),
+        user: '✨ Lumina AI',
+        text: response,
+        timestamp: new Date().toISOString(),
+        isLumina: true
+      };
+
+      setChatMessages(prev => [...prev, luminaMsg]);
+
+      if (voiceEnabled) {
+        speakMessage(response);
+      }
+    } catch (error) {
+      console.error('Lumina error:', error);
+    } finally {
+      setLuminaLoading(false);
     }
   };
 
@@ -195,10 +240,18 @@ export default function GoLiveModal({ open, onClose, onStartLive, user }) {
                   ) : (
                     chatMessages.map(msg => (
                       <div key={msg.id} className="text-xs">
-                        <span className="font-semibold text-indigo-400">{msg.user}: </span>
+                        <span className={`font-semibold ${msg.isLumina ? 'text-purple-400' : 'text-indigo-400'}`}>
+                          {msg.user}:{' '}
+                        </span>
                         <span className="text-zinc-300">{msg.text}</span>
                       </div>
                     ))
+                  )}
+                  {luminaLoading && (
+                    <div className="flex items-center gap-2 text-xs text-purple-400">
+                      <Sparkles className="w-3 h-3 animate-pulse" />
+                      <span>Lumina is typing...</span>
+                    </div>
                   )}
                   <div ref={chatBottomRef} />
                 </div>
@@ -214,9 +267,17 @@ export default function GoLiveModal({ open, onClose, onStartLive, user }) {
                   <input
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="Say something..."
+                    placeholder={luminaActive ? 'Ask Lumina AI...' : 'Say something...'}
                     className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-500 outline-none focus:border-white/20"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setLuminaActive(!luminaActive)}
+                    className={`p-2 rounded-lg transition-colors ${luminaActive ? 'bg-purple-500/20 text-purple-400' : 'bg-white/10 hover:bg-white/20'}`}
+                    title={luminaActive ? 'Disable Lumina AI' : 'Enable Lumina AI'}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                  </button>
                   <button
                     type="button"
                     onClick={() => {
@@ -230,7 +291,8 @@ export default function GoLiveModal({ open, onClose, onStartLive, user }) {
                   </button>
                   <button
                     type="submit"
-                    className="p-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 transition-colors"
+                    disabled={luminaLoading}
+                    className="p-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 transition-colors disabled:opacity-50"
                   >
                     <Send className="w-4 h-4" />
                   </button>
