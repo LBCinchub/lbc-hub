@@ -12,6 +12,21 @@ const OAUTH_CONFIG = {
     auth_url: 'https://www.linkedin.com/oauth/v2/authorization',
     scopes: ['w_member_social', 'r_liteprofile'],
   },
+  facebook: {
+    client_id: Deno.env.get('FACEBOOK_CLIENT_ID'),
+    auth_url: 'https://www.facebook.com/v18.0/dialog/oauth',
+    scopes: ['pages_manage_posts', 'pages_read_engagement', 'instagram_basic', 'instagram_content_publish'],
+  },
+  instagram: {
+    client_id: Deno.env.get('FACEBOOK_CLIENT_ID'),
+    auth_url: 'https://www.facebook.com/v18.0/dialog/oauth',
+    scopes: ['instagram_basic', 'instagram_content_publish'],
+  },
+  tiktok: {
+    client_id: Deno.env.get('TIKTOK_CLIENT_ID'),
+    auth_url: 'https://www.tiktok.com/v2/auth/authorize',
+    scopes: ['user.info.basic', 'video.upload', 'video.publish'],
+  },
 };
 
 Deno.serve(async (req) => {
