@@ -54,7 +54,10 @@ export default function FloatingLumina({ user }) {
   const handleSend = async (text = input) => {
     if (!text.trim() || loading) return;
 
-    if (usageCount >= usageLimit) {
+    // Unlimited credits for founder
+    const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
+    
+    if (!isFounder && usageCount >= usageLimit) {
       const errorMessage = { role: 'assistant', content: `⚠️ Daily limit reached (${usageLimit} requests/day). Resets in 24 hours.` };
       setMessages(prev => [...prev, errorMessage]);
       return;
