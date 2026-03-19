@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
+import SolanaCheckout from './SolanaCheckout';
 
 function StarPicker({ value, onChange }) {
   const [hovered, setHovered] = useState(0);
@@ -193,13 +194,19 @@ export default function ProductModal({ product, user, onClose }) {
   const [activeSection, setActiveSection] = useState(null); // 'review' | 'inquiry'
   const [done, setDone] = useState(null);
   const [checkingOut, setCheckingOut] = useState(false);
+  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
+  const [showSolanaCheckout, setShowSolanaCheckout] = useState(false);
 
-  const handleBuyNow = async () => {
+  const handleBuyNow = () => {
     // Block checkout inside iframes (preview mode)
     if (window.self !== window.top) {
       alert('Checkout is only available from the published app. Please open the app directly.');
       return;
     }
+    setShowPaymentOptions(true);
+  };
+
+  const handleStripeCheckout = async () => {
     setCheckingOut(true);
     try {
       const res = await base44.functions.invoke('createCheckoutSession', {
@@ -231,8 +238,16 @@ export default function ProductModal({ product, user, onClose }) {
     : null;
 
   return (
-    <AnimatePresence>
-      <motion.div
+    <>
+      {showSolanaCheckout && user && (
+        <SolanaCheckout
+          product={product}
+          userEmail={user.email}
+          onClose={() => setShowSolanaCheckout(false)}
+        />
+      )}
+      <AnimatePresence>
+        <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -287,12 +302,11 @@ export default function ProductModal({ product, user, onClose }) {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
-              <Button onClick={handleBuyNow} disabled={checkingOut} className="btn-primary rounded-xl flex-1 py-3">
-                {checkingOut
-                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing...</>
-                  : <><Lock className="w-4 h-4 mr-2" />Secure Checkout — ${product.price}</>}
-              </Button>
+            {!showPaymentOptions ? (
+              <div className="flex gap-3">
+                <Button onClick={handleBuyNow} className="btn-primary rounded-xl flex-1 py-3">
+                  <Lock className="w-4 h-4 mr-2" />Buy Now — ${product.price}
+                </Button>
               {user && (
                 <>
                   <Button
@@ -311,7 +325,40 @@ export default function ProductModal({ product, user, onClose }) {
                   </Button>
                 </>
               )}
-            </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-zinc-400 text-center">Choose your payment method:</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    onClick={handleStripeCheckout}
+                    disabled={checkingOut}
+                    className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-90 rounded-xl py-6 flex flex-col items-center gap-2"
+                  >
+                    {checkingOut ? (
+                      <><Loader2 className="w-5 h-5 animate-spin" /><span className="text-sm">Processing...</span></>
+                    ) : (
+                      <><Lock className="w-5 h-5" /><span className="text-sm font-semibold">Pay with Card</span><span className="text-xs opacity-80">${product.price}</span></>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => setShowSolanaCheckout(true)}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 rounded-xl py-6 flex flex-col items-center gap-2"
+                  >
+                    <span className="text-2xl">◎</span>
+                    <span className="text-sm font-semibold">Pay with Solana</span>
+                    <span className="text-xs opacity-80">${product.price}</span>
+                  </Button>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPaymentOptions(false)}
+                  className="w-full border-white/20 bg-transparent hover:bg-white/10 rounded-xl"
+                >
+                  Back
+                </Button>
+              </div>
+            )}
 
             {/* Forms */}
             <AnimatePresence>
@@ -391,6 +438,7 @@ export default function ProductModal({ product, user, onClose }) {
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+      </AnimatePresence>
+    </>
   );
 }
