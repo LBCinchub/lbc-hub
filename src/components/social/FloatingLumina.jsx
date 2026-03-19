@@ -210,12 +210,24 @@ User question: ${text}`,
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-white/70 hover:text-white transition-colors"
-              >
-                <Minimize2 className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setVoiceEnabled(!voiceEnabled);
+                    if (isSpeaking) stopSpeaking();
+                  }}
+                  className="text-white/70 hover:text-white transition-colors"
+                  title={voiceEnabled ? 'Disable voice output' : 'Enable voice output'}
+                >
+                  {voiceEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+                </button>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="text-white/70 hover:text-white transition-colors"
+                >
+                  <Minimize2 className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Messages */}
@@ -282,10 +294,23 @@ User question: ${text}`,
               className="p-3 border-t border-white/5"
             >
               <div className="flex items-center gap-2 bg-zinc-800 rounded-xl p-2">
+                <button
+                  type="button"
+                  onClick={toggleListening}
+                  disabled={loading}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                    isListening 
+                      ? 'bg-red-500 animate-pulse' 
+                      : 'bg-zinc-700 hover:bg-zinc-600'
+                  } disabled:opacity-40`}
+                  title={isListening ? 'Stop listening' : 'Voice input'}
+                >
+                  {isListening ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4 text-white" />}
+                </button>
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask Lumina..."
+                  placeholder={isListening ? 'Listening...' : 'Ask Lumina or use voice...'}
                   disabled={loading}
                   className="flex-1 bg-transparent text-white placeholder:text-zinc-600 outline-none text-sm"
                 />

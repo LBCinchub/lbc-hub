@@ -12,7 +12,11 @@ export default function LuminaAI() {
   const [usageCount, setUsageCount] = useState(0);
   const [usageLimit] = useState(10); // 10 requests per day
   const [chatId, setChatId] = useState(null);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
   const bottomRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -159,6 +163,11 @@ User question: ${text}`,
       const aiMessage = { role: 'assistant', content: response, timestamp: new Date().toISOString() };
       const finalMessages = [...updatedMessages, aiMessage];
       setMessages(finalMessages);
+
+      // Speak the response if voice is enabled
+      if (voiceEnabled) {
+        speakText(response);
+      }
 
       // Save chat history
       if (chatId) {
