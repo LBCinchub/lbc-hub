@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Bell, Heart, MessageCircle, Mail, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 const iconMap = {
   like: { icon: Heart, color: 'text-rose-400', bg: 'bg-rose-500/20' },
@@ -14,6 +16,7 @@ const iconMap = {
 export default function NotificationBell({ user }) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', user?.email],
@@ -86,10 +89,19 @@ export default function NotificationBell({ user }) {
                   notifications.map(notif => {
                     const cfg = iconMap[notif.type] || iconMap.like;
                     const Icon = cfg.icon;
+                    
+                    const handleClick = () => {
+                      if (!notif.read) markReadMutation.mutate(notif.id);
+                      if (notif.post_id) {
+                        setOpen(false);
+                        navigate(createPageUrl('Social') + '?post=' + notif.post_id);
+                      }
+                    };
+                    
                     return (
                       <div
                         key={notif.id}
-                        onClick={() => !notif.read && markReadMutation.mutate(notif.id)}
+                        onClick={handleClick}
                         className={`flex items-start gap-3 p-4 hover:bg-white/5 cursor-pointer border-b border-white/5 transition-colors ${!notif.read ? 'bg-white/5' : ''}`}
                       >
                         <div className={`w-9 h-9 rounded-full ${cfg.bg} flex items-center justify-center flex-shrink-0`}>
