@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Users, Search, X, Bookmark, Filter, Globe, UserCheck, Video, Image, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,8 @@ export default function Social() {
   const [activeTopic, setActiveTopic] = useState(null);
   const [feedTab, setFeedTab] = useState('forYou'); // 'forYou' | 'following' | 'videos' | 'photos'
   const [showMemberSearch, setShowMemberSearch] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState(null);
+  const [searchParams] = useSearchParams();
 
   const { data: follows = [] } = useQuery({
     queryKey: ['follows', user?.email],
@@ -49,7 +51,11 @@ export default function Social() {
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
     window.scrollTo(0, 0);
-  }, []);
+    const postId = searchParams.get('post');
+    if (postId) {
+      setSelectedPostId(postId);
+    }
+  }, [searchParams]);
 
   const { data: posts = [], isLoading: postsLoading } = useQuery({
     queryKey: ['posts'],
@@ -316,18 +322,21 @@ export default function Social() {
                     </motion.div>
                   ) : (
                     filteredPosts.map(post => (
-                      <PostCard
-                        key={post.id}
-                        post={post}
-                        user={user}
-                        onDmUser={handleDmUser}
-                        onViewProfile={handleViewProfile}
-                        onHashtagClick={(tag) => {
-                          setActiveTopic(tag);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                      />
-                    ))
+                        <PostCard
+                          key={post.id}
+                          post={post}
+                          user={user}
+                          onDmUser={handleDmUser}
+                          onViewProfile={handleViewProfile}
+                          onHashtagClick={(tag) => {
+                            setActiveTopic(tag);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          isSelected={post.id === selectedPostId}
+                          onSelect={() => setSelectedPostId(post.id)}
+                          onClose={() => setSelectedPostId(null)}
+                        />
+                      ))
                   )}
                 </div>
               );
