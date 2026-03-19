@@ -67,9 +67,7 @@ export default function FloatingLumina({ user }) {
     loadData();
   }, [user]);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  // Removed auto-scroll to keep chat at top
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
@@ -408,7 +406,7 @@ User question: ${text}`,
                     </div>
                   )}
 
-                  <div ref={bottomRef} />
+
                 </>
               )}
             </div>
