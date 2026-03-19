@@ -145,7 +145,9 @@ User question: ${text}`,
                 <Sparkles className="w-5 h-5 text-white" />
                 <div>
                   <h3 className="font-semibold text-white text-sm">Lumina AI</h3>
-                  <p className="text-xs text-white/70">{usageCount}/{usageLimit} requests used</p>
+                  <p className="text-xs text-white/70">
+                    {user?.email === 'mokhtartareksamara@gmail.com' ? '∞ Unlimited' : `${usageCount}/${usageLimit} requests used`}
+                  </p>
                 </div>
               </div>
               <button
