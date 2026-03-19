@@ -15,6 +15,7 @@ export default function LuminaAI() {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [voiceChatMode, setVoiceChatMode] = useState(false);
   const bottomRef = useRef(null);
   const recognitionRef = useRef(null);
 
@@ -78,22 +79,30 @@ export default function LuminaAI() {
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
       const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
+      recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = false;
       recognitionRef.current.lang = 'en-US';
 
       recognitionRef.current.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setInput(transcript);
-        setIsListening(false);
+        const transcript = event.results[event.results.length - 1][0].transcript;
+        if (voiceChatMode) {
+          handleSend(transcript);
+        } else {
+          setInput(transcript);
+          setIsListening(false);
+        }
       };
 
       recognitionRef.current.onerror = () => {
-        setIsListening(false);
+        if (!voiceChatMode) setIsListening(false);
       };
 
       recognitionRef.current.onend = () => {
-        setIsListening(false);
+        if (voiceChatMode) {
+          recognitionRef.current.start();
+        } else {
+          setIsListening(false);
+        }
       };
     }
 
@@ -103,7 +112,7 @@ export default function LuminaAI() {
       }
       window.speechSynthesis.cancel();
     };
-  }, []);
+  }, [voiceChatMode]);
 
   const toggleListening = () => {
     if (!recognitionRef.current) {
@@ -115,6 +124,26 @@ export default function LuminaAI() {
       recognitionRef.current.stop();
       setIsListening(false);
     } else {
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
+
+  const toggleVoiceChat = () => {
+    if (!recognitionRef.current) {
+      alert('Speech recognition not supported in this browser');
+      return;
+    }
+
+    if (voiceChatMode) {
+      recognitionRef.current.stop();
+      window.speechSynthesis.cancel();
+      setVoiceChatMode(false);
+      setIsListening(false);
+      setIsSpeaking(false);
+    } else {
+      setVoiceChatMode(true);
+      setVoiceEnabled(true);
       recognitionRef.current.start();
       setIsListening(true);
     }
@@ -287,6 +316,13 @@ User question: ${text}`,
               <Sparkles className="w-8 h-8 text-white" />
             </motion.div>
             <button
+              onClick={toggleVoiceChat}
+              className={`p-3 rounded-xl transition-colors ${voiceChatMode ? 'bg-green-500/20 text-green-400 animate-pulse' : 'bg-white/5 hover:bg-white/10'}`}
+              title={voiceChatMode ? 'Stop voice chat' : 'Start voice chat'}
+            >
+              {voiceChatMode ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
+            </button>
+            <button
               onClick={() => {
                 setVoiceEnabled(!voiceEnabled);
                 if (isSpeaking) stopSpeaking();
@@ -429,40 +465,52 @@ User question: ${text}`,
                `${usageCount} / ${usageLimit} requests used today`}
             </div>
           )}
-          <form
-            onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-            className="relative"
-          >
-            <div className="flex items-center gap-3 glass rounded-2xl p-3 border border-white/10">
-              <button
-                type="button"
-                onClick={toggleListening}
-                disabled={loading}
-                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                  isListening 
-                    ? 'bg-red-500 animate-pulse' 
-                    : 'bg-zinc-700 hover:bg-zinc-600'
-                } disabled:opacity-40`}
-                title={isListening ? 'Stop listening' : 'Voice input'}
-              >
-                {isListening ? <MicOff className="w-5 h-5 text-white" /> : <Mic className="w-5 h-5 text-white" />}
-              </button>
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder={isListening ? 'Listening...' : 'Ask Lumina or use voice...'}
-                disabled={loading}
-                className="flex-1 bg-transparent text-white placeholder:text-zinc-600 outline-none text-sm"
-              />
-              <button
-                type="submit"
-                disabled={!input.trim() || loading}
-                className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center disabled:opacity-40 hover:scale-105 transition-transform"
-              >
-                <Send className="w-4 h-4 text-white" />
-              </button>
+          {voiceChatMode ? (
+            <div className="glass rounded-2xl p-6 border border-green-500/30 bg-green-500/10">
+              <div className="flex items-center justify-center gap-3 text-green-400">
+                <Mic className="w-6 h-6 animate-pulse" />
+                <div className="text-center">
+                  <p className="font-semibold">Voice Chat Active</p>
+                  <p className="text-sm text-zinc-400">Speak to chat with Lumina</p>
+                </div>
+              </div>
             </div>
-          </form>
+          ) : (
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+              className="relative"
+            >
+              <div className="flex items-center gap-3 glass rounded-2xl p-3 border border-white/10">
+                <button
+                  type="button"
+                  onClick={toggleListening}
+                  disabled={loading}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                    isListening 
+                      ? 'bg-red-500 animate-pulse' 
+                      : 'bg-zinc-700 hover:bg-zinc-600'
+                  } disabled:opacity-40`}
+                  title={isListening ? 'Stop listening' : 'Voice input'}
+                >
+                  {isListening ? <MicOff className="w-5 h-5 text-white" /> : <Mic className="w-5 h-5 text-white" />}
+                </button>
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={isListening ? 'Listening...' : 'Ask Lumina or use voice...'}
+                  disabled={loading}
+                  className="flex-1 bg-transparent text-white placeholder:text-zinc-600 outline-none text-sm"
+                />
+                <button
+                  type="submit"
+                  disabled={!input.trim() || loading}
+                  className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center disabled:opacity-40 hover:scale-105 transition-transform"
+                >
+                  <Send className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>
