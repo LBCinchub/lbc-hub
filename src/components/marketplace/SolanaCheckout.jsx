@@ -33,7 +33,7 @@ export default function SolanaCheckout({ product, userEmail, sellerSolanaAddress
 
   if (!sellerSolanaAddress) {
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
         <div className="bg-zinc-900 rounded-2xl border border-white/10 max-w-lg w-full p-6 space-y-4 text-center">
           <h2 className="text-xl font-bold text-white">Solana Payment Not Available</h2>
           <p className="text-zinc-400">The seller has not set up their Solana address yet.</p>
@@ -76,7 +76,7 @@ export default function SolanaCheckout({ product, userEmail, sellerSolanaAddress
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
       <div className="bg-zinc-900 rounded-2xl border border-white/10 max-w-lg w-full p-6 space-y-6">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-white mb-2">Pay with Solana</h2>

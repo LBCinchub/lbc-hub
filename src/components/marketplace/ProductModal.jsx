@@ -247,7 +247,7 @@ export default function ProductModal({ product, user, onClose }) {
     : null;
 
   return (
-    <>
+    <AnimatePresence>
       {showSolanaCheckout && user && (
         <SolanaCheckout
           product={product}
@@ -256,8 +256,7 @@ export default function ProductModal({ product, user, onClose }) {
           onClose={() => setShowSolanaCheckout(false)}
         />
       )}
-      <AnimatePresence>
-        <motion.div
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -449,7 +448,6 @@ export default function ProductModal({ product, user, onClose }) {
           </div>
         </motion.div>
       </motion.div>
-      </AnimatePresence>
-    </>
+    </AnimatePresence>
   );
 }
