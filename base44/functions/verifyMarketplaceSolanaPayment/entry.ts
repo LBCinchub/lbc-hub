@@ -1,7 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 import { Connection, PublicKey } from 'npm:@solana/web3.js@1.95.0';
 
-const SOLANA_ADDRESS = '2SYh5UjyGEVwCMTQrY5LJrGRfEAmU9MqXECRrAMsNK34';
 const AMOUNT_TOLERANCE = 0.02; // 2% tolerance
 
 Deno.serve(async (req) => {
@@ -21,6 +20,19 @@ Deno.serve(async (req) => {
         error: 'Missing required fields' 
       });
     }
+
+    // Get seller's Solana address
+    const productData = await base44.entities.Product.get(productId);
+    const sellerUsers = await base44.entities.User.filter({ email: productData.seller_email }, '-created_date', 1);
+    
+    if (!sellerUsers.length || !sellerUsers[0].solana_address) {
+      return Response.json({ 
+        success: false, 
+        error: 'Seller has not configured Solana address' 
+      });
+    }
+
+    const SOLANA_ADDRESS = sellerUsers[0].solana_address;
 
     // Verify email matches authenticated user
     if (email !== user.email) {
@@ -111,7 +123,7 @@ Deno.serve(async (req) => {
     await base44.entities.Sale.create({
       product_id: productId,
       product_name: productName,
-      seller_email: (await base44.entities.Product.get(productId)).seller_email,
+      seller_email: productData.seller_email,
       buyer_name: user.full_name || user.email,
       buyer_email: user.email,
       amount: productPrice,

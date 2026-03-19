@@ -4,9 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Copy, Check, ExternalLink, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
-const SOLANA_ADDRESS = '2SYh5UjyGEVwCMTQrY5LJrGRfEAmU9MqXECRrAMsNK34';
-
-export default function SolanaCheckout({ product, userEmail, onClose, onSuccess }) {
+export default function SolanaCheckout({ product, userEmail, sellerSolanaAddress, onClose, onSuccess }) {
   const [copied, setCopied] = useState(false);
   const [transactionSignature, setTransactionSignature] = useState('');
   const [verifying, setVerifying] = useState(false);
@@ -28,10 +26,24 @@ export default function SolanaCheckout({ product, userEmail, onClose, onSuccess 
   }, [product.price]);
 
   const copyAddress = () => {
-    navigator.clipboard.writeText(SOLANA_ADDRESS);
+    navigator.clipboard.writeText(sellerSolanaAddress);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (!sellerSolanaAddress) {
+    return (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-zinc-900 rounded-2xl border border-white/10 max-w-lg w-full p-6 space-y-4 text-center">
+          <h2 className="text-xl font-bold text-white">Solana Payment Not Available</h2>
+          <p className="text-zinc-400">The seller has not set up their Solana address yet.</p>
+          <Button onClick={onClose} className="btn-primary rounded-xl w-full">
+            Close
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const handleVerify = async () => {
     if (!transactionSignature.trim()) {
@@ -88,10 +100,10 @@ export default function SolanaCheckout({ product, userEmail, onClose, onSuccess 
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm text-zinc-400">Recipient Address:</label>
+            <label className="text-sm text-zinc-400">Seller's Solana Address:</label>
             <div className="flex gap-2">
               <Input
-                value={SOLANA_ADDRESS}
+                value={sellerSolanaAddress}
                 readOnly
                 className="bg-zinc-800 border-white/10 text-white text-xs"
               />

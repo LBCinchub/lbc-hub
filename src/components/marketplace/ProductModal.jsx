@@ -196,6 +196,15 @@ export default function ProductModal({ product, user, onClose }) {
   const [checkingOut, setCheckingOut] = useState(false);
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
   const [showSolanaCheckout, setShowSolanaCheckout] = useState(false);
+  const [sellerData, setSellerData] = useState(null);
+
+  React.useEffect(() => {
+    if (product.seller_email) {
+      base44.entities.User.filter({ email: product.seller_email }, '-created_date', 1)
+        .then(users => setSellerData(users[0]))
+        .catch(() => {});
+    }
+  }, [product.seller_email]);
 
   const handleBuyNow = () => {
     // Block checkout inside iframes (preview mode)
@@ -243,6 +252,7 @@ export default function ProductModal({ product, user, onClose }) {
         <SolanaCheckout
           product={product}
           userEmail={user.email}
+          sellerSolanaAddress={sellerData?.solana_address}
           onClose={() => setShowSolanaCheckout(false)}
         />
       )}
@@ -343,11 +353,12 @@ export default function ProductModal({ product, user, onClose }) {
                   </Button>
                   <Button
                     onClick={() => setShowSolanaCheckout(true)}
-                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 rounded-xl py-6 flex flex-col items-center gap-2"
+                    disabled={!sellerData?.solana_address}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 rounded-xl py-6 flex flex-col items-center gap-2 disabled:opacity-50"
                   >
                     <span className="text-2xl">◎</span>
                     <span className="text-sm font-semibold">Pay with Solana</span>
-                    <span className="text-xs opacity-80">${product.price}</span>
+                    <span className="text-xs opacity-80">{sellerData?.solana_address ? `$${product.price}` : 'Not Available'}</span>
                   </Button>
                 </div>
                 <Button
