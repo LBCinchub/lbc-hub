@@ -62,7 +62,7 @@ export default function Profile() {
   });
 
   const handleSave = () => {
-    updateProfileMutation.mutate({ bio, location });
+    updateProfileMutation.mutate({ bio, location, solana_address: solanaAddress });
   };
 
   const handleAvatarUpload = async (e) => {
@@ -126,7 +126,7 @@ export default function Profile() {
                    </Button>
                  ) : (
                    <div className="flex gap-2">
-                     <Button onClick={() => { setEditMode(false); setBio(user.bio || ''); setLocation(user.location || ''); }} variant="outline" className="gap-2 text-white">
+                     <Button onClick={() => { setEditMode(false); setBio(user.bio || ''); setLocation(user.location || ''); setSolanaAddress(user.solana_address || ''); }} variant="outline" className="gap-2 text-white">
                        <X className="w-4 h-4" />
                        Cancel
                      </Button>
@@ -156,6 +156,15 @@ export default function Profile() {
                       onChange={(e) => setBio(e.target.value)}
                       placeholder="Tell us about yourself..."
                       className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500 resize-none h-24"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-zinc-500 mb-1 block">Solana Address (for receiving marketplace payments)</label>
+                    <Input
+                      value={solanaAddress}
+                      onChange={(e) => setSolanaAddress(e.target.value)}
+                      placeholder="Your Solana wallet address"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500 font-mono text-xs"
                     />
                   </div>
                 </div>
