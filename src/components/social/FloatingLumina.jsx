@@ -89,14 +89,18 @@ User question: ${text}`,
       const aiMessage = { role: 'assistant', content: response };
       setMessages(prev => [...prev, aiMessage]);
 
-      try {
-        const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
-        if (usageRecords.length > 0) {
-          await base44.entities.AIUsage.update(usageRecords[0].id, { count: usageRecords[0].count + 1 });
-          setUsageCount(usageRecords[0].count + 1);
+      // Only track usage for non-founder users
+      const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
+      if (!isFounder) {
+        try {
+          const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
+          if (usageRecords.length > 0) {
+            await base44.entities.AIUsage.update(usageRecords[0].id, { count: usageRecords[0].count + 1 });
+            setUsageCount(usageRecords[0].count + 1);
+          }
+        } catch (err) {
+          console.error('Failed to update usage:', err);
         }
-      } catch (err) {
-        console.error('Failed to update usage:', err);
       }
     } catch (error) {
       console.error('Lumina AI Error:', error);
