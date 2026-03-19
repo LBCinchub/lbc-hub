@@ -205,7 +205,7 @@ User question: ${text}`,
                 <div>
                   <h3 className="font-semibold text-white text-sm">Lumina AI</h3>
                   <p className="text-xs text-white/70">
-                    {user?.email === 'mokhtartareksamara@gmail.com' ? '∞ Unlimited' : `${usageCount}/${usageLimit} requests used`}
+                    {user?.email === 'mokhtartareksamara@gmail.com' || user?.email === 'kiprocolloaj254@gmail.com' ? '∞ Unlimited' : `${usageCount}/${usageLimit} requests used`}
                   </p>
                 </div>
               </div>
