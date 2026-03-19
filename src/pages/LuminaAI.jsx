@@ -334,32 +334,15 @@ User question: ${text}`,
         </div>
         
         <div className="relative z-10 max-w-4xl mx-auto px-4 py-12 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600"
-            >
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-center mb-4"
+          >
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600">
               <Sparkles className="w-8 h-8 text-white" />
-            </motion.div>
-            <button
-              onClick={toggleVoiceChat}
-              className={`p-3 rounded-xl transition-colors ${voiceChatMode ? 'bg-green-500/20 text-green-400 animate-pulse' : 'bg-white/5 hover:bg-white/10'}`}
-              title={voiceChatMode ? 'Stop voice chat' : 'Start voice chat'}
-            >
-              {voiceChatMode ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
-            </button>
-            <button
-              onClick={() => {
-                setVoiceEnabled(!voiceEnabled);
-                if (isSpeaking) stopSpeaking();
-              }}
-              className="p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
-              title={voiceEnabled ? 'Disable voice output' : 'Enable voice output'}
-            >
-              {voiceEnabled ? <Volume2 className="w-6 h-6 text-white" /> : <VolumeX className="w-6 h-6 text-zinc-500" />}
-            </button>
-          </div>
+            </div>
+          </motion.div>
           
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -511,6 +494,7 @@ User question: ${text}`,
                `${usageCount} / ${usageLimit} requests used today`}
             </div>
           )}
+          
           {voiceChatMode ? (
             <div className="glass rounded-2xl p-6 border border-green-500/30 bg-green-500/10">
               <div className="flex items-center justify-center gap-3 text-green-400">
@@ -557,6 +541,29 @@ User question: ${text}`,
               </div>
             </form>
           )}
+
+          {/* Voice Controls */}
+          <div className="flex items-center justify-center gap-3 mt-3">
+            <button
+              onClick={toggleVoiceChat}
+              className={`p-2 rounded-lg transition-colors text-xs flex items-center gap-2 ${voiceChatMode ? 'bg-green-500/20 text-green-400 animate-pulse' : 'bg-white/5 hover:bg-white/10 text-zinc-400'}`}
+              title={voiceChatMode ? 'Stop voice chat' : 'Start voice chat'}
+            >
+              {voiceChatMode ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+              <span>{voiceChatMode ? 'Voice Chat On' : 'Voice Chat'}</span>
+            </button>
+            <button
+              onClick={() => {
+                setVoiceEnabled(!voiceEnabled);
+                if (isSpeaking) stopSpeaking();
+              }}
+              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-xs flex items-center gap-2 text-zinc-400"
+              title={voiceEnabled ? 'Disable voice output' : 'Enable voice output'}
+            >
+              {voiceEnabled ? <Volume2 className="w-4 h-4 text-white" /> : <VolumeX className="w-4 h-4 text-zinc-500" />}
+              <span>{voiceEnabled ? 'Speaker On' : 'Speaker Off'}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
