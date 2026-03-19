@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Settings as SettingsIcon, LogOut, Twitter, Linkedin, Facebook, Instagram, Video, MessageCircle, Github, Loader2, Check, Trash2, AlertCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import ManualAccountConnect from '@/components/social/ManualAccountConnect';
 
 const PLATFORMS = [
   { 
@@ -84,6 +85,7 @@ const PLATFORMS = [
 export default function Settings() {
   const [user, setUser] = useState(null);
   const [connecting, setConnecting] = useState(null);
+  const [showManualConnect, setShowManualConnect] = useState(null);
   const queryClient = useQueryClient();
 
   React.useEffect(() => {
@@ -107,33 +109,25 @@ export default function Settings() {
     },
   });
 
-  const handleConnectOAuth = async (platformId) => {
-    const platform = PLATFORMS.find(p => p.id === platformId);
-    setConnecting(platformId);
-
+  const handleManualConnect = async (platformId, credentials) => {
     try {
-      if (!user?.email) {
-        alert('You must be logged in to connect accounts');
-        return;
-      }
-
-      // Trigger OAuth flow via backend function
-      const result = await base44.functions.invoke('initiateOAuth', {
+      const result = await base44.functions.invoke('connectSocialManual', {
         platform: platformId,
-        scopes: platform.scopes,
-        user_email: user.email,
+        username: credentials.username,
+        password: credentials.password,
+        accessToken: credentials.accessToken
       });
 
-      if (result.data?.oauth_url) {
-        window.location.href = result.data.oauth_url;
-      } else if (result.data?.error) {
-        alert(result.data.error);
+      if (result.data?.success) {
+        queryClient.invalidateQueries({ queryKey: ['socialAccounts', user?.email] });
+        setShowManualConnect(null);
+        alert(`Successfully connected ${PLATFORMS.find(p => p.id === platformId)?.name}!`);
+      } else {
+        alert(result.data?.error || 'Connection failed');
       }
     } catch (error) {
-      console.error('OAuth initiation failed:', error);
-      alert(`Failed to connect ${platform.name}. ${error.message || 'Please try again.'}`);
-    } finally {
-      setConnecting(null);
+      console.error('Manual connection failed:', error);
+      alert(`Failed to connect: ${error.message}`);
     }
   };
 
@@ -260,18 +254,10 @@ export default function Settings() {
                     <span className="ml-4 px-4 py-2 text-sm text-zinc-500">Coming Soon</span>
                   ) : (
                     <button
-                      onClick={() => handleConnectOAuth(platform.id)}
-                      disabled={isConnecting}
-                      className="ml-4 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center gap-2 flex-shrink-0"
+                      onClick={() => setShowManualConnect(platform)}
+                      className="ml-4 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors flex-shrink-0"
                     >
-                      {isConnecting ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Connecting...
-                        </>
-                      ) : (
-                        'Connect'
-                      )}
+                      Connect
                     </button>
                   )}
                 </motion.div>
@@ -304,6 +290,15 @@ export default function Settings() {
             <li>Your content will automatically post to selected platforms</li>
           </ol>
         </motion.div>
+
+        {/* Manual Connection Modal */}
+        {showManualConnect && (
+          <ManualAccountConnect
+            platform={showManualConnect}
+            onConnect={(credentials) => handleManualConnect(showManualConnect.id, credentials)}
+            onClose={() => setShowManualConnect(null)}
+          />
+        )}
       </div>
     </div>
   );
