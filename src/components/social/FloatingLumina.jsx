@@ -181,15 +181,30 @@ export default function FloatingLumina({ user }) {
   const handleSend = async (text = input) => {
     if (!text.trim() || loading) return;
 
-    // Unlimited credits for founder
+    // Unlimited credits for founder, dev lead, and premium users
     const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
     const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
-    const hasUnlimitedAccess = isFounder || isDevLead;
+    const isPremium = user?.premium === true;
+    const hasUnlimitedAccess = isFounder || isDevLead || isPremium;
     
     if (!hasUnlimitedAccess && usageCount >= usageLimit) {
-      const errorMessage = { role: 'assistant', content: `⚠️ Daily limit reached (${usageLimit} requests/day). Resets in 24 hours.` };
+      const handleUpgrade = async () => {
+        try {
+          const { url } = await base44.functions.invoke('createPremiumCheckout', {});
+          if (url) window.location.href = url;
+        } catch (err) {
+          console.error('Checkout error:', err);
+        }
+      };
+      
+      const errorMessage = { 
+        role: 'assistant', 
+        content: `⚠️ Daily limit reached (${usageLimit} requests/day).\n\n🌟 Upgrade to LBC Hub Premium for $19.99/month to get unlimited access to Lumina AI!\n\nClick the upgrade button below.`,
+        showUpgrade: true,
+        onUpgrade: handleUpgrade
+      };
       setMessages(prev => [...prev, errorMessage]);
-      if (voiceEnabled) speakText(errorMessage.content);
+      if (voiceEnabled) speakText('Daily limit reached. Upgrade to Premium for unlimited access.');
       return;
     }
 
@@ -322,7 +337,7 @@ User question: ${text}`,
                 <div>
                   <h3 className="font-semibold text-white text-sm">Lumina AI</h3>
                   <p className="text-xs text-white/70">
-                    {user?.email === 'mokhtartareksamara@gmail.com' || user?.email === 'kiprocolloaj254@gmail.com' ? '∞ Unlimited' : `${usageCount}/${usageLimit} requests used`}
+                    {user?.email === 'mokhtartareksamara@gmail.com' || user?.email === 'kiprocolloaj254@gmail.com' || user?.premium ? '∞ Unlimited' : `${usageCount}/${usageLimit} requests used`}
                   </p>
                 </div>
               </div>
@@ -390,6 +405,14 @@ User question: ${text}`,
                             : 'bg-zinc-800 text-zinc-100'
                         }`}>
                           <p className="whitespace-pre-wrap">{msg.content}</p>
+                          {msg.showUpgrade && (
+                            <button
+                              onClick={msg.onUpgrade}
+                              className="mt-3 w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                            >
+                              🌟 Upgrade to Premium - $19.99/mo
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
