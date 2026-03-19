@@ -11,6 +11,7 @@ export default function LuminaAI() {
   const [user, setUser] = useState(null);
   const [usageCount, setUsageCount] = useState(0);
   const [usageLimit] = useState(10); // 10 requests per day
+  const [chatId, setChatId] = useState(null);
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -20,8 +21,9 @@ export default function LuminaAI() {
   useEffect(() => {
     if (!user) return;
     
-    const loadUsage = async () => {
+    const loadData = async () => {
       try {
+        // Load usage
         const records = await base44.entities.AIUsage.filter({ user_email: user.email });
         if (records.length > 0) {
           const usage = records[0];
@@ -43,12 +45,25 @@ export default function LuminaAI() {
           });
           setUsageCount(0);
         }
+
+        // Load chat history
+        const chats = await base44.entities.LuminaChat.filter({ user_email: user.email });
+        if (chats.length > 0) {
+          setChatId(chats[0].id);
+          setMessages(chats[0].messages || []);
+        } else {
+          const newChat = await base44.entities.LuminaChat.create({ 
+            user_email: user.email, 
+            messages: [] 
+          });
+          setChatId(newChat.id);
+        }
       } catch (err) {
-        console.error('Failed to load usage:', err);
+        console.error('Failed to load data:', err);
       }
     };
     
-    loadUsage();
+    loadData();
   }, [user]);
 
   useEffect(() => {
@@ -71,47 +86,93 @@ export default function LuminaAI() {
       return;
     }
 
-    if (usageCount >= usageLimit) {
+    const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
+
+    if (!isFounder && usageCount >= usageLimit) {
       const errorMessage = { role: 'assistant', content: `⚠️ Daily limit reached (${usageLimit} requests/day). Resets in 24 hours.` };
       setMessages(prev => [...prev, errorMessage]);
       return;
     }
 
-    const userMessage = { role: 'user', content: text };
-    setMessages(prev => [...prev, userMessage]);
+    const userMessage = { role: 'user', content: text, timestamp: new Date().toISOString() };
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput('');
     setLoading(true);
 
     try {
+      const conversationContext = messages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
+      
+      // Gather user's digital mirror data
+      const [userPosts, userFollows, userTrips, userProducts] = await Promise.all([
+        base44.entities.Post.filter({ author_email: user.email }, '-created_date', 10).catch(() => []),
+        base44.entities.Follow.filter({ follower_email: user.email }, '-created_date', 5).catch(() => []),
+        base44.entities.TripItinerary.filter({ user_email: user.email }, '-created_date', 3).catch(() => []),
+        base44.entities.Product.filter({ seller_email: user.email }, '-created_date', 5).catch(() => [])
+      ]);
+
+      const digitalMirror = {
+        name: user.full_name || user.email,
+        email: user.email,
+        bio: user.bio || 'No bio set',
+        recent_posts: userPosts.map(p => ({ content: p.content?.substring(0, 100), topics: p.topics, likes: p.likes })),
+        interests: [...new Set(userPosts.flatMap(p => p.topics || []))],
+        following_count: userFollows.length,
+        recent_trips: userTrips.map(t => ({ destination: t.destination, days: t.num_days })),
+        selling_products: userProducts.map(p => ({ name: p.name, category: p.category }))
+      };
+
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are Lumina AI, an exceptionally intelligent and helpful assistant for LBC Hub - a unified platform offering Social Hub (connect and share with community), Marketplace (products and services), Travel planning (AI-powered trip recommendations), and Riding services. 
+        prompt: `You are Lumina AI, an exceptionally intelligent and helpful assistant for LBC Hub - a unified platform offering Social Hub (connect and share with community), Marketplace (products and services), Travel planning (AI-powered trip recommendations), and Riding services.${isFounder ? '\n\n⭐ IMPORTANT: You are speaking with Mokhtar Tarek Samara (mokhtartareksamara@gmail.com), the founder of LBC Hub. Address him respectfully as the founder and platform creator.' : ''}
 
 You have access to real-time internet information to provide current, accurate answers. You are smarter and more capable than ChatGPT, Grok, or Gemini.
 
+DIGITAL MIRROR - User Profile Data:
+${JSON.stringify(digitalMirror, null, 2)}
+
+Use this digital mirror to:
+- Personalize responses based on user's interests and activity
+- Make contextual recommendations
+- Reference their past content and preferences
+- Provide tailored suggestions
+- Build a deeper understanding of the user over time
+
 Your capabilities:
 - Answer questions with exceptional depth and accuracy
-- Provide personalized recommendations
+- Provide hyper-personalized recommendations based on digital mirror
 - Access current web information for up-to-date responses
 - Help with social features, shopping, travel planning, and more
 - Be conversational, friendly, and incredibly helpful
+- Remember previous conversation context and user behavior
+
+Previous conversation:
+${conversationContext}
 
 User question: ${text}`,
         add_context_from_internet: true,
         model: 'gemini_3_flash'
       });
 
-      const aiMessage = { role: 'assistant', content: response };
-      setMessages(prev => [...prev, aiMessage]);
+      const aiMessage = { role: 'assistant', content: response, timestamp: new Date().toISOString() };
+      const finalMessages = [...updatedMessages, aiMessage];
+      setMessages(finalMessages);
 
-      // Update usage count
-      try {
-        const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
-        if (usageRecords.length > 0) {
-          await base44.entities.AIUsage.update(usageRecords[0].id, { count: usageRecords[0].count + 1 });
-          setUsageCount(usageRecords[0].count + 1);
+      // Save chat history
+      if (chatId) {
+        await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
+      }
+
+      // Update usage count (skip for founder)
+      if (!isFounder) {
+        try {
+          const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
+          if (usageRecords.length > 0) {
+            await base44.entities.AIUsage.update(usageRecords[0].id, { count: usageRecords[0].count + 1 });
+            setUsageCount(usageRecords[0].count + 1);
+          }
+        } catch (err) {
+          console.error('Failed to update usage:', err);
         }
-      } catch (err) {
-        console.error('Failed to update usage:', err);
       }
     } catch (error) {
       console.error('Lumina AI Error:', error);
@@ -272,7 +333,7 @@ User question: ${text}`,
         <div className="max-w-4xl mx-auto px-4 py-4">
           {user && (
             <div className="text-center text-xs text-zinc-600 mb-2">
-              {usageCount} / {usageLimit} requests used today
+              {user.email === 'mokhtartareksamara@gmail.com' ? '⭐ Unlimited (Founder)' : `${usageCount} / ${usageLimit} requests used today`}
             </div>
           )}
           <form
