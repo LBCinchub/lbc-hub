@@ -367,7 +367,7 @@ User question: ${text}`,
       {/* Chat Container */}
       <div className="flex-1 overflow-y-auto relative">
         {messages.length > 0 && (
-          <div className="fixed bottom-24 right-8 flex flex-col gap-2 z-30">
+          <div className="fixed left-8 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30">
             <button
               onClick={scrollToTop}
               className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
