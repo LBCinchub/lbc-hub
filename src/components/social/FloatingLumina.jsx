@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, Send, Loader2, Minimize2, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import SolanaPayment from '../payment/SolanaPayment';
 
 export default function FloatingLumina({ user }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,6 +17,7 @@ export default function FloatingLumina({ user }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [voiceChatMode, setVoiceChatMode] = useState(false);
+  const [showSolanaPayment, setShowSolanaPayment] = useState(false);
   const bottomRef = useRef(null);
   const recognitionRef = useRef(null);
 
@@ -188,20 +190,10 @@ export default function FloatingLumina({ user }) {
     const hasUnlimitedAccess = isFounder || isDevLead || isPremium;
     
     if (!hasUnlimitedAccess && usageCount >= usageLimit) {
-      const handleUpgrade = async () => {
-        try {
-          const { url } = await base44.functions.invoke('createPremiumCheckout', {});
-          if (url) window.location.href = url;
-        } catch (err) {
-          console.error('Checkout error:', err);
-        }
-      };
-      
       const errorMessage = { 
         role: 'assistant', 
-        content: `⚠️ Daily limit reached (${usageLimit} requests/day).\n\n🌟 Upgrade to LBC Hub Premium for $19.99/month to get unlimited access to Lumina AI!\n\nClick the upgrade button below.`,
-        showUpgrade: true,
-        onUpgrade: handleUpgrade
+        content: `⚠️ Daily limit reached (${usageLimit} requests/day).\n\n🌟 Upgrade to LBC Hub Premium for $19.99/month to get unlimited access to Lumina AI!\n\nChoose your payment method below.`,
+        showUpgrade: true
       };
       setMessages(prev => [...prev, errorMessage]);
       if (voiceEnabled) speakText('Daily limit reached. Upgrade to Premium for unlimited access.');
@@ -310,6 +302,14 @@ User question: ${text}`,
 
   return (
     <>
+      {/* Solana Payment Modal */}
+      {showSolanaPayment && (
+        <SolanaPayment
+          userEmail={user?.email}
+          onClose={() => setShowSolanaPayment(false)}
+        />
+      )}
+
       {/* Floating Button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
@@ -406,12 +406,27 @@ User question: ${text}`,
                         }`}>
                           <p className="whitespace-pre-wrap">{msg.content}</p>
                           {msg.showUpgrade && (
-                            <button
-                              onClick={msg.onUpgrade}
-                              className="mt-3 w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
-                            >
-                              🌟 Upgrade to Premium - $19.99/mo
-                            </button>
+                            <div className="mt-3 space-y-2">
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    const { url } = await base44.functions.invoke('createPremiumCheckout', {});
+                                    if (url) window.location.href = url;
+                                  } catch (err) {
+                                    console.error('Checkout error:', err);
+                                  }
+                                }}
+                                className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                              >
+                                💳 Pay with Card - $19.99/mo
+                              </button>
+                              <button
+                                onClick={() => setShowSolanaPayment(true)}
+                                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                              >
+                                ◎ Pay with Solana - $19.99/mo
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
