@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, Brain, Zap, Bot, Loader2 } from 'lucide-react';
+import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export default function LuminaAI() {
@@ -73,6 +73,73 @@ export default function LuminaAI() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+      const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(transcript);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert('Speech recognition not supported in this browser');
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
+
+  const speakText = (text) => {
+    if (!voiceEnabled || !text) return;
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeaking = () => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+  };
 
   const suggestions = [
     'What can you help me with?',
@@ -211,13 +278,25 @@ User question: ${text}`,
         </div>
         
         <div className="relative z-10 max-w-4xl mx-auto px-4 py-12 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-4"
-          >
-            <Sparkles className="w-8 h-8 text-white" />
-          </motion.div>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600"
+            >
+              <Sparkles className="w-8 h-8 text-white" />
+            </motion.div>
+            <button
+              onClick={() => {
+                setVoiceEnabled(!voiceEnabled);
+                if (isSpeaking) stopSpeaking();
+              }}
+              className="p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+              title={voiceEnabled ? 'Disable voice output' : 'Enable voice output'}
+            >
+              {voiceEnabled ? <Volume2 className="w-6 h-6 text-white" /> : <VolumeX className="w-6 h-6 text-zinc-500" />}
+            </button>
+          </div>
           
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -355,10 +434,23 @@ User question: ${text}`,
             className="relative"
           >
             <div className="flex items-center gap-3 glass rounded-2xl p-3 border border-white/10">
+              <button
+                type="button"
+                onClick={toggleListening}
+                disabled={loading}
+                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                  isListening 
+                    ? 'bg-red-500 animate-pulse' 
+                    : 'bg-zinc-700 hover:bg-zinc-600'
+                } disabled:opacity-40`}
+                title={isListening ? 'Stop listening' : 'Voice input'}
+              >
+                {isListening ? <MicOff className="w-5 h-5 text-white" /> : <Mic className="w-5 h-5 text-white" />}
+              </button>
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask Lumina anything..."
+                placeholder={isListening ? 'Listening...' : 'Ask Lumina or use voice...'}
                 disabled={loading}
                 className="flex-1 bg-transparent text-white placeholder:text-zinc-600 outline-none text-sm"
               />
