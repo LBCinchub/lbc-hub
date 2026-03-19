@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, ArrowUp, ArrowDown } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export default function LuminaAI() {
@@ -17,7 +17,16 @@ export default function LuminaAI() {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [voiceChatMode, setVoiceChatMode] = useState(false);
   const bottomRef = useRef(null);
+  const topRef = useRef(null);
   const recognitionRef = useRef(null);
+
+  const scrollToTop = () => {
+    topRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const scrollToBottom = () => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -72,7 +81,9 @@ export default function LuminaAI() {
   }, [user]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length > 0) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -371,8 +382,27 @@ User question: ${text}`,
       </div>
 
       {/* Chat Container */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto relative">
+        {messages.length > 0 && (
+          <div className="fixed bottom-24 right-8 flex flex-col gap-2 z-30">
+            <button
+              onClick={scrollToTop}
+              className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+              title="Scroll to top"
+            >
+              <ArrowUp className="w-5 h-5 text-white" />
+            </button>
+            <button
+              onClick={scrollToBottom}
+              className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+              title="Scroll to bottom"
+            >
+              <ArrowDown className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        )}
         <div className="max-w-4xl mx-auto px-4 py-8">
+          <div ref={topRef} />
           {messages.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
