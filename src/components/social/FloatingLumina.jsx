@@ -429,23 +429,24 @@ User question: ${text}`,
                                 </button>
                               </div>
                             )}
-                      </div>
-                    ))}
+                            </div>
+                            </div>
+                            </div>
+                            ))}
 
-                    {loading && (
-                      <div className="flex gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                          <Sparkles className="w-4 h-4 text-white" />
-                        </div>
-                        <div className="bg-zinc-800 rounded-xl px-3 py-2">
-                          <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-              </div>
+                            {loading && (
+                            <div className="flex gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                            <Sparkles className="w-4 h-4 text-white" />
+                            </div>
+                            <div className="bg-zinc-800 rounded-xl px-3 py-2">
+                            <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+                            </div>
+                            </div>
+                            )}
+                            </>
+                            )}
+                            </div>
 
             {/* Input */}
             {!voiceChatMode && (
