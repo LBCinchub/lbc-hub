@@ -1,4 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { createHmac } from 'node:crypto';
+
+// OAuth 1.0a signature generation for Twitter
+function generateOAuthSignature(method, url, params, consumerSecret, tokenSecret = '') {
+  const sortedParams = Object.keys(params)
+    .sort()
+    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+    .join('&');
+  
+  const signatureBase = `${method}&${encodeURIComponent(url)}&${encodeURIComponent(sortedParams)}`;
+  const signingKey = `${encodeURIComponent(consumerSecret)}&${encodeURIComponent(tokenSecret)}`;
+  
+  return createHmac('sha1', signingKey).update(signatureBase).digest('base64');
+}
 
 Deno.serve(async (req) => {
   try {
@@ -32,11 +46,38 @@ Deno.serve(async (req) => {
 
         switch (platformId) {
           case 'twitter':
-            // Twitter API v2
-            apiResult = await fetch('https://api.twitter.com/2/tweets', {
+            // Twitter API v2 with OAuth 1.0a
+            const twitterUrl = 'https://api.twitter.com/2/tweets';
+            const timestamp = Math.floor(Date.now() / 1000).toString();
+            const nonce = Math.random().toString(36).substring(2, 15);
+            
+            const oauthParams = {
+              oauth_consumer_key: Deno.env.get('TWITTER_CONSUMER_KEY'),
+              oauth_nonce: nonce,
+              oauth_signature_method: 'HMAC-SHA1',
+              oauth_timestamp: timestamp,
+              oauth_token: account.access_token || '',
+              oauth_version: '1.0'
+            };
+            
+            const signature = generateOAuthSignature(
+              'POST',
+              twitterUrl,
+              oauthParams,
+              Deno.env.get('TWITTER_CONSUMER_SECRET'),
+              account.refresh_token || ''
+            );
+            
+            oauthParams.oauth_signature = signature;
+            
+            const authHeader = 'OAuth ' + Object.keys(oauthParams)
+              .map(key => `${encodeURIComponent(key)}="${encodeURIComponent(oauthParams[key])}"`)
+              .join(', ');
+            
+            apiResult = await fetch(twitterUrl, {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${account.access_token}`,
+                'Authorization': authHeader,
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({ text: content })
