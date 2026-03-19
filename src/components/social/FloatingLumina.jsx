@@ -119,7 +119,6 @@ User question: ${text}`,
       }
 
       // Only track usage for non-founder users
-      const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
       if (!isFounder) {
         try {
           const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
