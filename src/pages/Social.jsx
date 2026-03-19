@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 
 import CreatePost from '../components/social/CreatePost';
 import PostCard from '../components/social/PostCard';
+import PostModal from '../components/social/PostModal';
 import NotificationBell from '../components/social/NotificationBell';
 import DirectMessages from '../components/social/DirectMessages';
 import GoLiveModal from '../components/social/GoLiveModal';
@@ -322,20 +323,18 @@ export default function Social() {
                     </motion.div>
                   ) : (
                     filteredPosts.map(post => (
-                        <PostCard
-                          key={post.id}
-                          post={post}
-                          user={user}
-                          onDmUser={handleDmUser}
-                          onViewProfile={handleViewProfile}
-                          onHashtagClick={(tag) => {
-                            setActiveTopic(tag);
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }}
-                          isSelected={post.id === selectedPostId}
-                          onSelect={() => setSelectedPostId(post.id)}
-                          onClose={() => setSelectedPostId(null)}
-                        />
+                        <div key={post.id}>
+                          <PostCard
+                            post={post}
+                            user={user}
+                            onDmUser={handleDmUser}
+                            onViewProfile={handleViewProfile}
+                            onHashtagClick={(tag) => {
+                              setActiveTopic(tag);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                          />
+                        </div>
                       ))
                   )}
                 </div>
@@ -470,6 +469,23 @@ export default function Social() {
           />
         )}
       </AnimatePresence>
+
+      {/* Post Modal */}
+      {selectedPostId && (
+        <PostModal
+          isOpen={!!selectedPostId}
+          post={posts.find(p => p.id === selectedPostId)}
+          onClose={() => setSelectedPostId(null)}
+          user={user}
+          onDmUser={handleDmUser}
+          onViewProfile={handleViewProfile}
+          onHashtagClick={(tag) => {
+            setActiveTopic(tag);
+            setSelectedPostId(null);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        />
+      )}
     </div>
   );
 }
