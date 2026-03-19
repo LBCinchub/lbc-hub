@@ -88,18 +88,47 @@ export default function FloatingLumina({ user }) {
       const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
       const conversationContext = messages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
       
+      // Gather user's digital mirror data
+      const [userPosts, userFollows, userTrips, userProducts] = await Promise.all([
+        base44.entities.Post.filter({ author_email: user.email }, '-created_date', 10).catch(() => []),
+        base44.entities.Follow.filter({ follower_email: user.email }, '-created_date', 5).catch(() => []),
+        base44.entities.TripItinerary.filter({ user_email: user.email }, '-created_date', 3).catch(() => []),
+        base44.entities.Product.filter({ seller_email: user.email }, '-created_date', 5).catch(() => [])
+      ]);
+
+      const digitalMirror = {
+        name: user.full_name || user.email,
+        email: user.email,
+        bio: user.bio || 'No bio set',
+        recent_posts: userPosts.map(p => ({ content: p.content?.substring(0, 100), topics: p.topics, likes: p.likes })),
+        interests: [...new Set(userPosts.flatMap(p => p.topics || []))],
+        following_count: userFollows.length,
+        recent_trips: userTrips.map(t => ({ destination: t.destination, days: t.num_days })),
+        selling_products: userProducts.map(p => ({ name: p.name, category: p.category }))
+      };
+      
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: `You are Lumina AI, an exceptionally intelligent and helpful assistant for LBC Hub - a unified platform offering Social Hub (connect and share with community), Marketplace (products and services), Travel planning (AI-powered trip recommendations), and Riding services.${isFounder ? '\n\n⭐ IMPORTANT: You are speaking with Mokhtar Tarek Samara (mokhtartareksamara@gmail.com), the founder of LBC Hub. Address him respectfully as the founder and platform creator.' : ''}
 
 You have access to real-time internet information to provide current, accurate answers.
 
+DIGITAL MIRROR - User Profile Data:
+${JSON.stringify(digitalMirror, null, 2)}
+
+Use this digital mirror to:
+- Personalize responses based on user's interests and activity
+- Make contextual recommendations
+- Reference their past content and preferences
+- Provide tailored suggestions
+- Build a deeper understanding of the user over time
+
 Your capabilities:
 - Answer questions with exceptional depth and accuracy
-- Provide personalized recommendations
+- Provide hyper-personalized recommendations based on digital mirror
 - Access current web information for up-to-date responses
 - Help with social features, shopping, travel planning, and more
 - Be conversational, friendly, and incredibly helpful
-- Remember previous conversation context
+- Remember previous conversation context and user behavior
 
 Previous conversation:
 ${conversationContext}
