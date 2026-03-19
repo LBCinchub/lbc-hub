@@ -24,7 +24,7 @@ const PLATFORMS = [
     color: 'from-blue-600 to-blue-800',
     scopes: ['w_member_social', 'r_liteprofile'],
     description: 'Share posts and articles on LinkedIn',
-    enabled: false
+    enabled: true
   },
   { 
     id: 'facebook', 
@@ -60,7 +60,7 @@ const PLATFORMS = [
     color: 'from-red-600 to-red-800',
     scopes: ['youtube.upload', 'youtube.readonly'],
     description: 'Upload videos to YouTube',
-    enabled: false
+    enabled: true
   },
   { 
     id: 'discord', 
@@ -69,7 +69,7 @@ const PLATFORMS = [
     color: 'from-indigo-600 to-indigo-800',
     scopes: ['identify', 'guilds'],
     description: 'Post announcements in your Discord server',
-    enabled: false
+    enabled: true
   },
   { 
     id: 'github', 
@@ -78,7 +78,7 @@ const PLATFORMS = [
     color: 'from-gray-700 to-gray-900',
     scopes: ['repo', 'gist'],
     description: 'Share updates on GitHub',
-    enabled: false
+    enabled: true
   },
 ];
 
