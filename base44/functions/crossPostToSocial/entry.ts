@@ -28,21 +28,99 @@ Deno.serve(async (req) => {
       }
 
       try {
-        // In production, you would call each platform's API here
-        // For example:
-        // - Twitter API: POST /2/tweets
-        // - Facebook API: POST /me/feed
-        // - Instagram API: POST /me/media (for business accounts)
-        // - LinkedIn API: POST /v2/ugcPosts
-        // - TikTok API: POST /v1/post/publish
+        let apiResult;
 
-        console.log(`[Cross-Post] Would post to ${platformId} for ${user_email}`);
+        switch (platformId) {
+          case 'twitter':
+            // Twitter API v2
+            apiResult = await fetch('https://api.twitter.com/2/tweets', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${account.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ text: content })
+            });
+            break;
+
+          case 'facebook':
+            // Facebook Graph API
+            apiResult = await fetch(`https://graph.facebook.com/v18.0/me/feed`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                message: content,
+                access_token: account.access_token
+              })
+            });
+            break;
+
+          case 'linkedin':
+            // LinkedIn API
+            apiResult = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${account.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                author: `urn:li:person:${account.platform_user_id}`,
+                lifecycleState: 'PUBLISHED',
+                specificContent: {
+                  'com.linkedin.ugc.ShareContent': {
+                    shareCommentary: { text: content },
+                    shareMediaCategory: 'NONE'
+                  }
+                },
+                visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' }
+              })
+            });
+            break;
+
+          case 'instagram':
+            // Instagram requires business account and container creation
+            apiResult = await fetch(`https://graph.facebook.com/v18.0/${account.platform_user_id}/media`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                caption: content,
+                image_url: media_urls?.[0] || '',
+                access_token: account.access_token
+              })
+            });
+            break;
+
+          case 'tiktok':
+            // TikTok API (simplified)
+            apiResult = await fetch('https://open-api.tiktok.com/v1/post/publish/', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${account.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                post_info: {
+                  title: content,
+                  privacy_level: 'PUBLIC_TO_EVERYONE'
+                }
+              })
+            });
+            break;
+
+          default:
+            results[platformId] = { success: false, error: 'Platform not supported' };
+            continue;
+        }
+
+        const data = await apiResult.json();
         
-        // Placeholder: in real implementation, integrate each platform's API
-        results[platformId] = {
-          success: true,
-          message: `Ready to post to ${platformId}`,
-        };
+        if (apiResult.ok) {
+          console.log(`[Cross-Post] Successfully posted to ${platformId}`);
+          results[platformId] = { success: true, platform_post_id: data.id || data.data?.id };
+        } else {
+          console.error(`[Cross-Post] API error for ${platformId}:`, data);
+          results[platformId] = { success: false, error: data.error?.message || 'API error' };
+        }
       } catch (error) {
         console.error(`[Cross-Post] Error posting to ${platformId}:`, error);
         results[platformId] = {
