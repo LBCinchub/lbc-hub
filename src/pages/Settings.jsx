@@ -15,7 +15,7 @@ const PLATFORMS = [
     color: 'from-blue-400 to-blue-600',
     scopes: ['tweet.read', 'tweet.write', 'users.read'],
     description: 'Post tweets directly from LBC Hub',
-    enabled: true
+    enabled: false
   },
   { 
     id: 'linkedin', 
@@ -24,7 +24,7 @@ const PLATFORMS = [
     color: 'from-blue-600 to-blue-800',
     scopes: ['w_member_social', 'r_liteprofile'],
     description: 'Share posts and articles on LinkedIn',
-    enabled: true
+    enabled: false
   },
   { 
     id: 'facebook', 
@@ -33,7 +33,7 @@ const PLATFORMS = [
     color: 'from-blue-500 to-blue-700',
     scopes: ['pages_manage_posts', 'pages_read_engagement'],
     description: 'Share updates on your Facebook page',
-    enabled: true
+    enabled: false
   },
   { 
     id: 'instagram', 
@@ -42,7 +42,7 @@ const PLATFORMS = [
     color: 'from-pink-500 to-purple-600',
     scopes: ['instagram_basic', 'instagram_content_publish'],
     description: 'Post content to your Instagram feed',
-    enabled: true
+    enabled: false
   },
   { 
     id: 'tiktok', 
@@ -51,7 +51,7 @@ const PLATFORMS = [
     color: 'from-black to-gray-800',
     scopes: ['user.info.basic', 'video.create'],
     description: 'Share videos on TikTok',
-    enabled: true
+    enabled: false
   },
   { 
     id: 'youtube', 
@@ -60,7 +60,7 @@ const PLATFORMS = [
     color: 'from-red-600 to-red-800',
     scopes: ['youtube.upload', 'youtube.readonly'],
     description: 'Upload videos to YouTube',
-    enabled: true
+    enabled: false
   },
   { 
     id: 'discord', 
@@ -69,7 +69,7 @@ const PLATFORMS = [
     color: 'from-indigo-600 to-indigo-800',
     scopes: ['identify', 'guilds'],
     description: 'Post announcements in your Discord server',
-    enabled: true
+    enabled: false
   },
   { 
     id: 'github', 
@@ -78,7 +78,7 @@ const PLATFORMS = [
     color: 'from-gray-700 to-gray-900',
     scopes: ['repo', 'gist'],
     description: 'Share updates on GitHub',
-    enabled: true
+    enabled: false
   },
 ];
 
