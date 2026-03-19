@@ -87,8 +87,10 @@ export default function LuminaAI() {
     }
 
     const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
+    const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
+    const hasUnlimitedAccess = isFounder || isDevLead;
 
-    if (!isFounder && usageCount >= usageLimit) {
+    if (!hasUnlimitedAccess && usageCount >= usageLimit) {
       const errorMessage = { role: 'assistant', content: `⚠️ Daily limit reached (${usageLimit} requests/day). Resets in 24 hours.` };
       setMessages(prev => [...prev, errorMessage]);
       return;
@@ -123,7 +125,7 @@ export default function LuminaAI() {
       };
 
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are Lumina AI, an exceptionally intelligent and helpful assistant for LBC Hub - a unified platform offering Social Hub (connect and share with community), Marketplace (products and services), Travel planning (AI-powered trip recommendations), and Riding services.${isFounder ? '\n\n⭐ IMPORTANT: You are speaking with Mokhtar Tarek Samara (mokhtartareksamara@gmail.com), the founder of LBC Hub. Address him respectfully as the founder and platform creator.' : ''}
+        prompt: `You are Lumina AI, an exceptionally intelligent and helpful assistant for LBC Hub - a unified platform offering Social Hub (connect and share with community), Marketplace (products and services), Travel planning (AI-powered trip recommendations), and Riding services.${isFounder ? '\n\n⭐ IMPORTANT: You are speaking with Mokhtar Tarek Samara (mokhtartareksamara@gmail.com), the founder of LBC Hub. Address him respectfully as the founder and platform creator.' : isDevLead ? '\n\n👨‍💻 IMPORTANT: You are speaking with the Development Lead (kiprocolloaj254@gmail.com) of LBC Hub. Address them respectfully as part of the core team.' : ''}
 
 You have access to real-time internet information to provide current, accurate answers. You are smarter and more capable than ChatGPT, Grok, or Gemini.
 
@@ -162,8 +164,8 @@ User question: ${text}`,
         await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
       }
 
-      // Update usage count (skip for founder)
-      if (!isFounder) {
+      // Update usage count (skip for unlimited access users)
+      if (!hasUnlimitedAccess) {
         try {
           const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
           if (usageRecords.length > 0) {
@@ -333,7 +335,9 @@ User question: ${text}`,
         <div className="max-w-4xl mx-auto px-4 py-4">
           {user && (
             <div className="text-center text-xs text-zinc-600 mb-2">
-              {user.email === 'mokhtartareksamara@gmail.com' ? '⭐ Unlimited (Founder)' : `${usageCount} / ${usageLimit} requests used today`}
+              {user.email === 'mokhtartareksamara@gmail.com' ? '⭐ Unlimited (Founder)' : 
+               user.email === 'kiprocolloaj254@gmail.com' ? '👨‍💻 Unlimited (Dev Lead)' : 
+               `${usageCount} / ${usageLimit} requests used today`}
             </div>
           )}
           <form

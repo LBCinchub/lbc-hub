@@ -86,6 +86,8 @@ export default function FloatingLumina({ user }) {
 
     try {
       const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
+      const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
+      const hasUnlimitedAccess = isFounder || isDevLead;
       const conversationContext = messages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
       
       // Gather user's digital mirror data
@@ -108,7 +110,7 @@ export default function FloatingLumina({ user }) {
       };
       
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are Lumina AI, an exceptionally intelligent and helpful assistant for LBC Hub - a unified platform offering Social Hub (connect and share with community), Marketplace (products and services), Travel planning (AI-powered trip recommendations), and Riding services.${isFounder ? '\n\n⭐ IMPORTANT: You are speaking with Mokhtar Tarek Samara (mokhtartareksamara@gmail.com), the founder of LBC Hub. Address him respectfully as the founder and platform creator.' : ''}
+        prompt: `You are Lumina AI, an exceptionally intelligent and helpful assistant for LBC Hub - a unified platform offering Social Hub (connect and share with community), Marketplace (products and services), Travel planning (AI-powered trip recommendations), and Riding services.${isFounder ? '\n\n⭐ IMPORTANT: You are speaking with Mokhtar Tarek Samara (mokhtartareksamara@gmail.com), the founder of LBC Hub. Address him respectfully as the founder and platform creator.' : isDevLead ? '\n\n👨‍💻 IMPORTANT: You are speaking with the Development Lead (kiprocolloaj254@gmail.com) of LBC Hub. Address them respectfully as part of the core team.' : ''}
 
 You have access to real-time internet information to provide current, accurate answers.
 
@@ -147,8 +149,8 @@ User question: ${text}`,
         await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
       }
 
-      // Only track usage for non-founder users
-      if (!isFounder) {
+      // Only track usage for users without unlimited access
+      if (!hasUnlimitedAccess) {
         try {
           const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
           if (usageRecords.length > 0) {
