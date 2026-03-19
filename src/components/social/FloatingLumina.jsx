@@ -399,81 +399,83 @@ User question: ${text}`,
                 </>
               )}
               <div ref={messagesContainerRef} className="overflow-y-auto h-full p-4 space-y-4 pl-12">
-              {messages.length === 0 ? (
-                <div className="text-center text-zinc-500 text-sm mt-8">
-                  <Sparkles className="w-8 h-8 mx-auto mb-2 text-indigo-400" />
-                  <p>Ask me anything!</p>
-                </div>
-              ) : (
-                  {messages.map((msg, i) => (
-                    <div
-                      key={i}
-                      className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        msg.role === 'user'
-                          ? 'bg-zinc-700'
-                          : 'bg-gradient-to-br from-indigo-500 to-purple-600'
-                      }`}>
-                        {msg.role === 'user' ? (
-                          <Avatar className="w-full h-full">
-                            <AvatarFallback className="bg-transparent text-white text-xs">
-                              {user?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                        ) : (
-                          <Sparkles className="w-4 h-4 text-white" />
-                        )}
-                      </div>
-
-                      <div className={`flex-1 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                        <div className={`inline-block rounded-xl px-3 py-2 text-sm ${
+                {messages.length === 0 ? (
+                  <div className="text-center text-zinc-500 text-sm mt-8">
+                    <Sparkles className="w-8 h-8 mx-auto mb-2 text-indigo-400" />
+                    <p>Ask me anything!</p>
+                  </div>
+                ) : (
+                  <>
+                    {messages.map((msg, i) => (
+                      <div
+                        key={i}
+                        className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                      >
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                           msg.role === 'user'
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-zinc-800 text-zinc-100'
+                            ? 'bg-zinc-700'
+                            : 'bg-gradient-to-br from-indigo-500 to-purple-600'
                         }`}>
-                          <p className="whitespace-pre-wrap">{msg.content}</p>
-                          {msg.showUpgrade && (
-                            <div className="mt-3 space-y-2">
-                              <button
-                                onClick={async () => {
-                                  try {
-                                    const { url } = await base44.functions.invoke('createPremiumCheckout', {});
-                                    if (url) window.location.href = url;
-                                  } catch (err) {
-                                    console.error('Checkout error:', err);
-                                  }
-                                }}
-                                className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
-                              >
-                                💳 Pay with Card - $19.99/mo
-                              </button>
-                              <button
-                                onClick={() => setShowSolanaPayment(true)}
-                                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
-                              >
-                                ◎ Pay with Solana - $19.99/mo
-                              </button>
-                            </div>
+                          {msg.role === 'user' ? (
+                            <Avatar className="w-full h-full">
+                              <AvatarFallback className="bg-transparent text-white text-xs">
+                                {user?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                          ) : (
+                            <Sparkles className="w-4 h-4 text-white" />
                           )}
                         </div>
-                      </div>
-                    </div>
-                  ))}
 
-                  {loading && (
-                     <div className="flex gap-2">
-                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                         <Sparkles className="w-4 h-4 text-white" />
-                       </div>
-                       <div className="bg-zinc-800 rounded-xl px-3 py-2">
-                         <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
-                       </div>
-                     </div>
-                   )}
-                  </div>
-                  </div>
-            </div>
+                        <div className={`flex-1 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
+                          <div className={`inline-block rounded-xl px-3 py-2 text-sm ${
+                            msg.role === 'user'
+                              ? 'bg-indigo-600 text-white'
+                              : 'bg-zinc-800 text-zinc-100'
+                          }`}>
+                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                            {msg.showUpgrade && (
+                              <div className="mt-3 space-y-2">
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const { url } = await base44.functions.invoke('createPremiumCheckout', {});
+                                      if (url) window.location.href = url;
+                                    } catch (err) {
+                                      console.error('Checkout error:', err);
+                                    }
+                                  }}
+                                  className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                                >
+                                  💳 Pay with Card - $19.99/mo
+                                </button>
+                                <button
+                                  onClick={() => setShowSolanaPayment(true)}
+                                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                                >
+                                  ◎ Pay with Solana - $19.99/mo
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {loading && (
+                      <div className="flex gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                          <Sparkles className="w-4 h-4 text-white" />
+                        </div>
+                        <div className="bg-zinc-800 rounded-xl px-3 py-2">
+                          <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+              </div>
 
             {/* Input */}
             {!voiceChatMode && (
