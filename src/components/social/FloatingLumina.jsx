@@ -262,12 +262,12 @@ User question: ${text}`,
       });
 
       const aiMessage = { role: 'assistant', content: response, timestamp: new Date().toISOString() };
-      const finalMessages = [...updatedMessages, aiMessage];
-      setMessages(finalMessages);
+       const finalMessages = [...updatedMessages, aiMessage];
+       setMessages(finalMessages);
 
-      if (voiceEnabled) {
-        speakText(response);
-      }
+       if (voiceEnabled && !isSpeaking) {
+         speakText(response);
+       }
 
       // Save chat history
       if (chatId) {
@@ -351,15 +351,16 @@ User question: ${text}`,
                   {voiceChatMode ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
                 </button>
                 <button
-                  onClick={() => {
-                    setVoiceEnabled(!voiceEnabled);
-                    if (isSpeaking) stopSpeaking();
-                  }}
-                  className="text-white/70 hover:text-white transition-colors"
-                  title={voiceEnabled ? 'Disable voice output' : 'Enable voice output'}
-                >
-                  {voiceEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-                </button>
+                   onClick={() => {
+                     const newState = !voiceEnabled;
+                     setVoiceEnabled(newState);
+                     if (!newState || isSpeaking) stopSpeaking();
+                   }}
+                   className="text-white/70 hover:text-white transition-colors"
+                   title={voiceEnabled ? 'Disable voice output' : 'Enable voice output'}
+                 >
+                   {voiceEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
                   className="text-white/70 hover:text-white transition-colors"
