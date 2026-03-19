@@ -199,7 +199,7 @@ export default function LuminaAI() {
     'What can you help me with?',
     'Tell me about LBC Hub features',
     'How does the marketplace work?',
-    'Plan a trip for me',
+    'Generate a photo of...',
   ];
 
   const handleSend = async (text = input) => {
@@ -215,8 +215,9 @@ export default function LuminaAI() {
     const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
     const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
     const hasUnlimitedAccess = isFounder || isDevLead;
+    const hasUnlimitedCredits = user?.unlimited_credits;
 
-    if (!hasUnlimitedAccess && usageCount >= usageLimit) {
+    if (!hasUnlimitedAccess && !hasUnlimitedCredits && usageCount >= usageLimit) {
       const errorMessage = { role: 'assistant', content: `⚠️ Daily limit reached (${usageLimit} requests/day). Resets in 24 hours.` };
       setMessages(prev => [...prev, errorMessage]);
       if (voiceEnabled) speakText(errorMessage.content);
@@ -230,6 +231,54 @@ export default function LuminaAI() {
     setLoading(true);
 
     try {
+      // Check if user wants to generate a photo
+      const isPhotoRequest = text.toLowerCase().includes('generate') && (text.toLowerCase().includes('photo') || text.toLowerCase().includes('image'));
+      
+      if (isPhotoRequest) {
+        const photoPrompt = text.replace(/generate\s+(a\s+)?photo\s+(of\s+)?/i, '').trim() || 'a beautiful landscape';
+        
+        try {
+          const imageResult = await base44.integrations.Core.GenerateImage({
+            prompt: photoPrompt
+          });
+          
+          const imageMessage = { 
+            role: 'assistant', 
+            content: `🎨 Generated image based on: "${photoPrompt}"`,
+            image_url: imageResult.url,
+            timestamp: new Date().toISOString()
+          };
+          const finalMessages = [...updatedMessages, imageMessage];
+          setMessages(finalMessages);
+
+          // Save chat history
+          if (chatId) {
+            await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
+          }
+
+          // Update usage count
+          if (!hasUnlimitedAccess && !hasUnlimitedCredits) {
+            try {
+              const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
+              if (usageRecords.length > 0) {
+                await base44.entities.AIUsage.update(usageRecords[0].id, { count: usageRecords[0].count + 1 });
+                setUsageCount(usageRecords[0].count + 1);
+              }
+            } catch (err) {
+              console.error('Failed to update usage:', err);
+            }
+          }
+          setLoading(false);
+          return;
+        } catch (imgError) {
+          console.error('Image generation error:', imgError);
+          const errorMessage = { role: 'assistant', content: '❌ Could not generate image. Please try again with a different description.' };
+          setMessages(prev => [...prev, errorMessage]);
+          setLoading(false);
+          return;
+        }
+      }
+
       const conversationContext = updatedMessages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
       
       // Gather user's digital mirror data
@@ -298,7 +347,7 @@ User question: ${text}`,
       }
 
       // Update usage count (skip for unlimited access users)
-      if (!hasUnlimitedAccess) {
+      if (!hasUnlimitedAccess && !hasUnlimitedCredits) {
         try {
           const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
           if (usageRecords.length > 0) {
@@ -452,13 +501,16 @@ User question: ${text}`,
                   </div>
 
                   <div className={`flex-1 max-w-2xl ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                    <div className={`inline-block rounded-2xl px-5 py-3 ${
-                      msg.role === 'user'
-                        ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
-                        : 'glass text-zinc-100'
-                    }`}>
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                    </div>
+                   <div className={`inline-block rounded-2xl px-5 py-3 ${
+                     msg.role === 'user'
+                       ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
+                       : 'glass text-zinc-100'
+                   }`}>
+                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                     {msg.image_url && (
+                       <img src={msg.image_url} alt="Generated" className="mt-3 rounded-lg max-w-full h-auto max-h-96" />
+                     )}
+                   </div>
                   </div>
                 </motion.div>
               ))}
