@@ -11,13 +11,15 @@ export default function FloatingLumina({ user }) {
   const [loading, setLoading] = useState(false);
   const [usageCount, setUsageCount] = useState(0);
   const [usageLimit] = useState(10);
+  const [chatId, setChatId] = useState(null);
   const bottomRef = useRef(null);
 
   useEffect(() => {
     if (!user) return;
     
-    const loadUsage = async () => {
+    const loadData = async () => {
       try {
+        // Load usage
         const records = await base44.entities.AIUsage.filter({ user_email: user.email });
         if (records.length > 0) {
           const usage = records[0];
@@ -39,12 +41,25 @@ export default function FloatingLumina({ user }) {
           });
           setUsageCount(0);
         }
+
+        // Load chat history
+        const chats = await base44.entities.LuminaChat.filter({ user_email: user.email });
+        if (chats.length > 0) {
+          setChatId(chats[0].id);
+          setMessages(chats[0].messages || []);
+        } else {
+          const newChat = await base44.entities.LuminaChat.create({ 
+            user_email: user.email, 
+            messages: [] 
+          });
+          setChatId(newChat.id);
+        }
       } catch (err) {
-        console.error('Failed to load usage:', err);
+        console.error('Failed to load data:', err);
       }
     };
     
-    loadUsage();
+    loadData();
   }, [user]);
 
   useEffect(() => {
@@ -63,14 +78,18 @@ export default function FloatingLumina({ user }) {
       return;
     }
 
-    const userMessage = { role: 'user', content: text };
-    setMessages(prev => [...prev, userMessage]);
+    const userMessage = { role: 'user', content: text, timestamp: new Date().toISOString() };
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput('');
     setLoading(true);
 
     try {
+      const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
+      const conversationContext = messages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
+      
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are Lumina AI, an exceptionally intelligent and helpful assistant for LBC Hub - a unified platform offering Social Hub (connect and share with community), Marketplace (products and services), Travel planning (AI-powered trip recommendations), and Riding services. 
+        prompt: `You are Lumina AI, an exceptionally intelligent and helpful assistant for LBC Hub - a unified platform offering Social Hub (connect and share with community), Marketplace (products and services), Travel planning (AI-powered trip recommendations), and Riding services.${isFounder ? '\n\n⭐ IMPORTANT: You are speaking with Mokhtar Tarek Samara (mokhtartareksamara@gmail.com), the founder of LBC Hub. Address him respectfully as the founder and platform creator.' : ''}
 
 You have access to real-time internet information to provide current, accurate answers.
 
@@ -80,14 +99,24 @@ Your capabilities:
 - Access current web information for up-to-date responses
 - Help with social features, shopping, travel planning, and more
 - Be conversational, friendly, and incredibly helpful
+- Remember previous conversation context
+
+Previous conversation:
+${conversationContext}
 
 User question: ${text}`,
         add_context_from_internet: true,
         model: 'gemini_3_flash'
       });
 
-      const aiMessage = { role: 'assistant', content: response };
-      setMessages(prev => [...prev, aiMessage]);
+      const aiMessage = { role: 'assistant', content: response, timestamp: new Date().toISOString() };
+      const finalMessages = [...updatedMessages, aiMessage];
+      setMessages(finalMessages);
+
+      // Save chat history
+      if (chatId) {
+        await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
+      }
 
       // Only track usage for non-founder users
       const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
