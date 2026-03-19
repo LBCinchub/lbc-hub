@@ -114,9 +114,9 @@ export default function LuminaAI() {
     };
   }, [voiceChatMode]);
 
-  const toggleListening = () => {
+  const toggleListening = async () => {
     if (!recognitionRef.current) {
-      alert('Speech recognition not supported in this browser');
+      alert('Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari.');
       return;
     }
 
@@ -124,14 +124,21 @@ export default function LuminaAI() {
       recognitionRef.current.stop();
       setIsListening(false);
     } else {
-      recognitionRef.current.start();
-      setIsListening(true);
+      try {
+        // Request microphone permission
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (error) {
+        alert('Microphone access denied. Please allow microphone permissions in your browser settings.');
+        console.error('Microphone error:', error);
+      }
     }
   };
 
-  const toggleVoiceChat = () => {
+  const toggleVoiceChat = async () => {
     if (!recognitionRef.current) {
-      alert('Speech recognition not supported in this browser');
+      alert('Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari.');
       return;
     }
 
@@ -142,10 +149,17 @@ export default function LuminaAI() {
       setIsListening(false);
       setIsSpeaking(false);
     } else {
-      setVoiceChatMode(true);
-      setVoiceEnabled(true);
-      recognitionRef.current.start();
-      setIsListening(true);
+      try {
+        // Request microphone permission
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        setVoiceChatMode(true);
+        setVoiceEnabled(true);
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (error) {
+        alert('Microphone access denied. Please allow microphone permissions in your browser settings.');
+        console.error('Microphone error:', error);
+      }
     }
   };
 
