@@ -16,6 +16,7 @@ export default function Profile() {
   const [editMode, setEditMode] = useState(false);
   const [bio, setBio] = useState('');
   const [location, setLocation] = useState('');
+  const [solanaAddress, setSolanaAddress] = useState('');
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('posts'); // 'posts' | 'trips' | 'saved'
   const queryClient = useQueryClient();
@@ -25,6 +26,7 @@ export default function Profile() {
       setUser(u);
       setBio(u.bio || '');
       setLocation(u.location || '');
+      setSolanaAddress(u.solana_address || '');
     }).catch(() => {});
   }, []);
 
