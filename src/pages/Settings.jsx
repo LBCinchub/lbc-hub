@@ -14,7 +14,7 @@ const PLATFORMS = [
     color: 'from-blue-400 to-blue-600',
     scopes: ['tweet.read', 'tweet.write', 'users.read'],
     description: 'Post tweets directly from LBC Hub',
-    enabled: false
+    enabled: true
   },
   { 
     id: 'linkedin', 
@@ -32,7 +32,7 @@ const PLATFORMS = [
     color: 'from-blue-500 to-blue-700',
     scopes: ['pages_manage_posts', 'pages_read_engagement'],
     description: 'Share updates on your Facebook page',
-    enabled: false
+    enabled: true
   },
   { 
     id: 'instagram', 
@@ -41,7 +41,7 @@ const PLATFORMS = [
     color: 'from-pink-500 to-purple-600',
     scopes: ['instagram_basic', 'instagram_content_publish'],
     description: 'Post content to your Instagram feed',
-    enabled: false
+    enabled: true
   },
   { 
     id: 'tiktok', 
@@ -50,7 +50,7 @@ const PLATFORMS = [
     color: 'from-black to-gray-800',
     scopes: ['user.info.basic', 'video.create'],
     description: 'Share videos on TikTok',
-    enabled: false
+    enabled: true
   },
   { 
     id: 'youtube', 
