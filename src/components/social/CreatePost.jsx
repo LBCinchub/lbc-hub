@@ -134,7 +134,16 @@ export default function CreatePost({ user, onGoLive }) {
           media_urls: mediaUrls,
           platforms: selectedPlatforms,
           user_email: user.email,
-        }).catch(() => {});
+        }).then(response => {
+          console.log('Cross-post result:', response.data);
+          const failed = Object.entries(response.data.results || {})
+            .filter(([_, result]) => !result.success);
+          if (failed.length > 0) {
+            console.warn('Some cross-posts failed:', failed);
+          }
+        }).catch(err => {
+          console.error('Cross-post error:', err);
+        });
       }
 
       return post;
