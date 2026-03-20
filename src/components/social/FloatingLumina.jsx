@@ -172,6 +172,12 @@ export default function FloatingLumina({ user }) {
   const speakText = (text) => {
     if (!voiceEnabled || !text) return;
 
+    // Stop listening while AI is speaking to prevent feedback
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
+
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
@@ -179,7 +185,18 @@ export default function FloatingLumina({ user }) {
     utterance.pitch = 1.0;
     
     utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      // Resume listening in voice chat mode after AI finishes speaking
+      if (voiceChatMode && recognitionRef.current) {
+        try {
+          recognitionRef.current.start();
+          setIsListening(true);
+        } catch (err) {
+          console.error('Failed to restart recognition:', err);
+        }
+      }
+    };
     utterance.onerror = () => setIsSpeaking(false);
 
     window.speechSynthesis.speak(utterance);
