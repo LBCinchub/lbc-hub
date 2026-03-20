@@ -259,24 +259,45 @@ export default function LuminaAI() {
 
     try {
       // Check if user wants to generate a photo
-      const isPhotoRequest = text.toLowerCase().includes('generate') && (text.toLowerCase().includes('photo') || text.toLowerCase().includes('image'));
+      const isPhotoRequest = text.toLowerCase().includes('generate') && (text.toLowerCase().includes('photo') || text.toLowerCase().includes('image') || text.toLowerCase().includes('picture') || text.toLowerCase().includes('art'));
       
       if (isPhotoRequest) {
-        const photoPrompt = text.replace(/generate\s+(a\s+)?photo\s+(of\s+)?/i, '').trim() || 'a beautiful landscape';
+        const photoPrompt = text.replace(/generate\s+(a\s+)?(photo|image|picture|art)\s+(of\s+)?/i, '').trim() || 'a beautiful landscape';
         
         try {
+          // Show generating message
+          const generatingMsg = { 
+            role: 'assistant', 
+            content: `🎨 Generating image... This may take 5-10 seconds.\n\n✨ Enhancing your prompt for better results...`,
+            timestamp: new Date().toISOString()
+          };
+          setMessages([...updatedMessages, generatingMsg]);
+
+          // Enhance the prompt with AI for better results
+          const enhancedPrompt = await base44.integrations.Core.InvokeLLM({
+            prompt: `Transform this image generation request into a detailed, artistic prompt for an AI image generator. Add vivid descriptions of style, lighting, composition, colors, mood, and quality. Keep it under 200 characters but very descriptive. Original: "${photoPrompt}". Return ONLY the enhanced prompt.`,
+          });
+
+          const finalPrompt = `${enhancedPrompt || photoPrompt}, high quality, detailed, professional, 4k, masterpiece`;
+          
           const imageResult = await base44.integrations.Core.GenerateImage({
-            prompt: photoPrompt
+            prompt: finalPrompt
           });
           
           const imageMessage = { 
             role: 'assistant', 
-            content: `🎨 Generated image based on: "${photoPrompt}"`,
+            content: `✅ **Image Generated Successfully!**\n\n📝 Enhanced Prompt:\n*"${enhancedPrompt || photoPrompt}"*\n\n🖼️ Here's your image:`,
             image_url: imageResult.url,
             timestamp: new Date().toISOString()
           };
+          
+          // Replace generating message with final result
           const finalMessages = [...updatedMessages, imageMessage];
           setMessages(finalMessages);
+
+          if (voiceEnabled) {
+            speakText('Your image has been generated successfully!');
+          }
 
           // Save chat history
           if (chatId) {
@@ -299,8 +320,15 @@ export default function LuminaAI() {
           return;
         } catch (imgError) {
           console.error('Image generation error:', imgError);
-          const errorMessage = { role: 'assistant', content: '❌ Could not generate image. Please try again with a different description.' };
-          setMessages(prev => [...prev, errorMessage]);
+          const errorMessage = { 
+            role: 'assistant', 
+            content: `❌ **Image Generation Failed**\n\n${imgError.message || 'Could not generate the image.'}\n\n💡 **Tips for better results:**\n• Be more specific with your description\n• Mention style (e.g., "photorealistic", "cartoon", "watercolor")\n• Include details about lighting and mood\n• Example: "a sunset over mountains with warm orange lighting, photorealistic style"`,
+            timestamp: new Date().toISOString()
+          };
+          setMessages([...updatedMessages, errorMessage]);
+          if (voiceEnabled) {
+            speakText('Image generation failed. Please try a different description.');
+          }
           setLoading(false);
           return;
         }
