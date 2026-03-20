@@ -70,6 +70,15 @@ export default function FloatingLumina({ user }) {
     loadData();
   }, [user]);
 
+  // Scroll to bottom when chat opens or messages change
+  useEffect(() => {
+    if (isOpen && messages.length > 0) {
+      setTimeout(() => {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [isOpen, messages]);
+
   // Removed auto-scroll to keep chat at top
 
   useEffect(() => {
