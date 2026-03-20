@@ -70,14 +70,14 @@ export default function FloatingLumina({ user }) {
     loadData();
   }, [user]);
 
-  // Scroll to bottom when chat opens or messages change
+  // Scroll to bottom when messages change (not on open)
   useEffect(() => {
-    if (isOpen && messages.length > 0) {
+    if (messages.length > 0) {
       setTimeout(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
     }
-  }, [isOpen, messages]);
+  }, [messages]);
 
   // Removed auto-scroll to keep chat at top
 
@@ -398,6 +398,7 @@ User question: ${text}`,
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div ref={bottomRef} />
                 {messages.length === 0 ? (
                   <div className="text-center text-zinc-500 text-sm mt-8">
                     <Sparkles className="w-8 h-8 mx-auto mb-2 text-indigo-400" />
@@ -473,6 +474,7 @@ User question: ${text}`,
                             )}
                             </>
                             )}
+                            <div ref={bottomRef} />
                             </div>
 
             {/* Input */}
