@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Send, Loader2, Minimize2, Mic, MicOff, Volume2, VolumeX, Image, Download, Save } from 'lucide-react';
+import { Sparkles, X, Send, Loader2, Minimize2, Mic, MicOff, Volume2, VolumeX, Image, Download, Save, Upload } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import SolanaPayment from '../payment/SolanaPayment';
@@ -19,9 +19,12 @@ export default function FloatingLumina({ user }) {
   const [voiceChatMode, setVoiceChatMode] = useState(false);
   const [showSolanaPayment, setShowSolanaPayment] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const bottomRef = useRef(null);
   const topRef = useRef(null);
   const recognitionRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!user) return;
@@ -355,6 +358,31 @@ export default function FloatingLumina({ user }) {
     }
   };
 
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setUploadingImage(true);
+    try {
+      const newImages = [];
+      for (const file of files) {
+        const result = await base44.integrations.Core.UploadFile({ file });
+        newImages.push(result.file_url);
+      }
+      setUploadedImages(prev => [...prev, ...newImages]);
+    } catch (err) {
+      console.error('Image upload error:', err);
+      alert('Failed to upload images');
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const removeUploadedImage = (index) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSend = async (text = input) => {
     if (!text.trim() || loading) return;
 
@@ -432,8 +460,12 @@ ${conversationContext}
 
 User question: ${text}`,
         add_context_from_internet: true,
+        file_urls: uploadedImages.length > 0 ? uploadedImages : undefined,
         model: 'gemini_3_flash'
       });
+
+      // Clear uploaded images after sending
+      setUploadedImages([]);
 
       const aiMessage = { role: 'assistant', content: response, timestamp: new Date().toISOString() };
        const finalMessages = [...updatedMessages, aiMessage];
@@ -667,8 +699,24 @@ User question: ${text}`,
             {!voiceChatMode && (
               <form
                 onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-                className="p-3 border-t border-white/5"
+                className="p-3 border-t border-white/5 space-y-2"
               >
+                {uploadedImages.length > 0 && (
+                  <div className="flex gap-2 flex-wrap px-2">
+                    {uploadedImages.map((imgUrl, idx) => (
+                      <div key={idx} className="relative inline-block">
+                        <img src={imgUrl} alt="Uploaded" className="h-16 w-16 object-cover rounded-lg border border-white/10" />
+                        <button
+                          type="button"
+                          onClick={() => removeUploadedImage(idx)}
+                          className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors"
+                        >
+                          <X className="w-3 h-3 text-white" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="flex items-center gap-2 bg-zinc-800 rounded-xl p-2">
                   <button
                     type="button"
@@ -682,6 +730,24 @@ User question: ${text}`,
                     title={isListening ? 'Stop listening' : 'Voice input'}
                   >
                     {isListening ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4 text-white" />}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={loading || uploadingImage}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={loading || uploadingImage}
+                    className="w-8 h-8 rounded-lg bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center disabled:opacity-40 transition-all"
+                    title="Upload photos from gallery"
+                  >
+                    {uploadingImage ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Upload className="w-4 h-4 text-white" />}
                   </button>
                   <input
                     value={input}
