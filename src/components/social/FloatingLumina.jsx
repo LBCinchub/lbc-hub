@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Send, Loader2, Minimize2, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { Sparkles, X, Send, Loader2, Minimize2, Mic, MicOff, Volume2, VolumeX, Image, Download, Save } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import SolanaPayment from '../payment/SolanaPayment';
@@ -18,6 +18,7 @@ export default function FloatingLumina({ user }) {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [voiceChatMode, setVoiceChatMode] = useState(false);
   const [showSolanaPayment, setShowSolanaPayment] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
   const bottomRef = useRef(null);
   const topRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -231,6 +232,129 @@ export default function FloatingLumina({ user }) {
     setIsSpeaking(false);
   };
 
+  const handleGenerateImage = async () => {
+    if (generatingImage) return;
+
+    const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
+    const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
+    const isPremium = user?.premium === true;
+    const hasUnlimitedAccess = isFounder || isDevLead || isPremium;
+    
+    if (!hasUnlimitedAccess && usageCount >= usageLimit) {
+      const errorMessage = { 
+        role: 'assistant', 
+        content: `⚠️ Daily limit reached (${usageLimit} requests/day).\n\n🌟 Upgrade to LBC Hub Premium for $19.99/month to get unlimited access!`,
+        showUpgrade: true
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      if (voiceEnabled) speakText('Daily limit reached. Upgrade to Premium for unlimited access.');
+      return;
+    }
+
+    const conversationContext = messages.slice(-5).map(m => m.content).join(' ');
+    const imagePromptContext = conversationContext || 'creative artistic image';
+
+    setGeneratingImage(true);
+    const loadingMessage = { role: 'assistant', content: '🎨 Generating image...', isImageLoading: true };
+    setMessages(prev => [...prev, loadingMessage]);
+
+    try {
+      // Enhance the prompt with AI
+      const enhancedPromptResponse = await base44.integrations.Core.InvokeLLM({
+        prompt: `Based on this conversation context: "${imagePromptContext}", create a detailed, vivid image generation prompt (max 200 words) that describes a beautiful, high-quality image. Be creative and specific about colors, lighting, composition, and style.`,
+        model: 'gemini_3_flash'
+      });
+
+      const imageUrl = await base44.integrations.Core.GenerateImage({
+        prompt: enhancedPromptResponse
+      });
+
+      const imageMessage = { 
+        role: 'assistant', 
+        content: `✨ Here's your generated image!`, 
+        imageUrl: imageUrl.url,
+        imagePrompt: enhancedPromptResponse
+      };
+      
+      setMessages(prev => [...prev.filter(m => !m.isImageLoading), imageMessage]);
+      
+      if (voiceEnabled) speakText('Your image is ready!');
+
+      // Save to chat history
+      const finalMessages = [...messages, imageMessage];
+      if (chatId) {
+        await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
+      }
+
+      // Track usage
+      if (!hasUnlimitedAccess) {
+        try {
+          const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
+          if (usageRecords.length > 0) {
+            await base44.entities.AIUsage.update(usageRecords[0].id, { count: usageRecords[0].count + 1 });
+            setUsageCount(usageRecords[0].count + 1);
+          }
+        } catch (err) {
+          console.error('Failed to update usage:', err);
+        }
+      }
+    } catch (error) {
+      console.error('Image generation error:', error);
+      const errorMsg = { 
+        role: 'assistant', 
+        content: `❌ Image generation failed: ${error.message || 'Please try again.'}` 
+      };
+      setMessages(prev => [...prev.filter(m => !m.isImageLoading), errorMsg]);
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
+
+  const downloadImage = async (imageUrl, filename = 'lumina-image.png') => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download image');
+    }
+  };
+
+  const saveToGallery = async (imageUrl) => {
+    try {
+      // Upload to user's gallery
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `lumina-${Date.now()}.png`, { type: 'image/png' });
+      
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      
+      // Create a post with the image
+      await base44.entities.Post.create({
+        content: '🎨 AI-generated image by Lumina AI',
+        media_urls: [file_url],
+        media_type: 'image',
+        author_name: user.full_name || user.email,
+        author_email: user.email,
+        author_avatar: user.avatar_url,
+        topics: ['ai-art', 'lumina']
+      });
+
+      alert('✅ Saved to your gallery and posted!');
+    } catch (error) {
+      console.error('Save to gallery failed:', error);
+      alert('Failed to save to gallery');
+    }
+  };
+
   const handleSend = async (text = input) => {
     if (!text.trim() || loading) return;
 
@@ -394,6 +518,14 @@ User question: ${text}`,
               </div>
               <div className="flex items-center gap-2">
                 <button
+                  onClick={handleGenerateImage}
+                  disabled={generatingImage}
+                  className={`transition-colors ${generatingImage ? 'text-purple-400 animate-pulse' : 'text-white/70 hover:text-white'} disabled:opacity-50`}
+                  title="Generate AI image"
+                >
+                  <Image className="w-5 h-5" />
+                </button>
+                <button
                   onClick={toggleVoiceChat}
                   className={`transition-colors ${voiceChatMode ? 'text-green-400 animate-pulse' : 'text-white/70 hover:text-white'}`}
                   title={voiceChatMode ? 'Stop voice chat' : 'Start voice chat'}
@@ -458,6 +590,36 @@ User question: ${text}`,
                               : 'bg-zinc-800 text-zinc-100'
                           }`}>
                             <p className="whitespace-pre-wrap">{msg.content}</p>
+                            
+                            {msg.imageUrl && (
+                              <div className="mt-3 space-y-2">
+                                <img 
+                                  src={msg.imageUrl} 
+                                  alt="AI Generated" 
+                                  className="rounded-lg max-w-full h-auto"
+                                />
+                                <div className="flex gap-2 mt-2">
+                                  <button
+                                    onClick={() => downloadImage(msg.imageUrl)}
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs font-medium transition-colors"
+                                  >
+                                    <Download className="w-3 h-3" />
+                                    Download
+                                  </button>
+                                  <button
+                                    onClick={() => saveToGallery(msg.imageUrl)}
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium transition-colors"
+                                  >
+                                    <Save className="w-3 h-3" />
+                                    Save to Gallery
+                                  </button>
+                                </div>
+                                {msg.imagePrompt && (
+                                  <p className="text-xs text-zinc-400 mt-2">Prompt: {msg.imagePrompt}</p>
+                                )}
+                              </div>
+                            )}
+                            
                             {msg.showUpgrade && (
                               <div className="mt-3 space-y-2">
                                 <button
