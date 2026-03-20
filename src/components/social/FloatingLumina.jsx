@@ -104,8 +104,13 @@ export default function FloatingLumina({ user }) {
       };
 
       recognitionRef.current.onend = () => {
-        if (voiceChatMode) {
-          recognitionRef.current.start();
+        if (voiceChatMode && !isSpeaking) {
+          try {
+            recognitionRef.current.start();
+            setIsListening(true);
+          } catch (err) {
+            console.error('Recognition restart error:', err);
+          }
         } else {
           setIsListening(false);
         }
@@ -174,7 +179,11 @@ export default function FloatingLumina({ user }) {
 
     // Stop listening while AI is speaking to prevent feedback
     if (isListening && recognitionRef.current) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.stop();
+      } catch (err) {
+        console.error('Stop recognition error:', err);
+      }
       setIsListening(false);
     }
 
@@ -189,15 +198,30 @@ export default function FloatingLumina({ user }) {
       setIsSpeaking(false);
       // Resume listening in voice chat mode after AI finishes speaking
       if (voiceChatMode && recognitionRef.current) {
-        try {
-          recognitionRef.current.start();
-          setIsListening(true);
-        } catch (err) {
-          console.error('Failed to restart recognition:', err);
-        }
+        setTimeout(() => {
+          try {
+            recognitionRef.current.start();
+            setIsListening(true);
+          } catch (err) {
+            console.error('Failed to restart recognition:', err);
+          }
+        }, 500);
       }
     };
-    utterance.onerror = () => setIsSpeaking(false);
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      // Resume listening even if speech errors
+      if (voiceChatMode && recognitionRef.current) {
+        setTimeout(() => {
+          try {
+            recognitionRef.current.start();
+            setIsListening(true);
+          } catch (err) {
+            console.error('Failed to restart recognition:', err);
+          }
+        }, 500);
+      }
+    };
 
     window.speechSynthesis.speak(utterance);
   };
