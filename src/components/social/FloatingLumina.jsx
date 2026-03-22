@@ -283,6 +283,21 @@ export default function FloatingLumina({ user }) {
       
       if (voiceEnabled) speakText('Your image is ready!');
 
+      // Auto-post to social feed
+      try {
+        await base44.entities.Post.create({
+          content: `🎨 AI-generated image by Lumina AI\n\n"${enhancedPromptResponse}"`,
+          media_urls: [imageUrl.url],
+          media_type: 'image',
+          author_name: user.full_name || user.email,
+          author_email: user.email,
+          author_avatar: user.avatar_url,
+          topics: ['ai-art', 'lumina-ai']
+        });
+      } catch (err) {
+        console.error('Failed to post to feed:', err);
+      }
+
       // Save to chat history
       const finalMessages = [...messages, imageMessage];
       if (chatId) {
