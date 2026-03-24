@@ -374,80 +374,47 @@ export default function LuminaAI() {
     setLoading(true);
 
     try {
-      // Check if user wants to generate a photo
-      const isPhotoRequest = text.toLowerCase().includes('generate') && (text.toLowerCase().includes('photo') || text.toLowerCase().includes('image') || text.toLowerCase().includes('picture') || text.toLowerCase().includes('art'));
-      
+      // Detect image generation request
+      const imageKeywords = /\b(generate|create|make|draw|paint|design)\b[^.!?]*\b(image|photo|picture|pic|art|illustration|drawing|painting)\b/i;
+      const isPhotoRequest = imageKeywords.test(text);
+
       if (isPhotoRequest) {
-        const photoPrompt = text.replace(/generate\s+(a\s+)?(photo|image|picture|art)\s+(of\s+)?/i, '').trim() || 'a beautiful landscape';
+        // Use exact user description as prompt
+        const subject = text
+          .replace(/^(please\s+)?(can you\s+)?(generate|create|make|draw|paint|design)\s+(me\s+)?(a\s+|an\s+)?/i, '')
+          .replace(/^(image|photo|picture|pic|art|illustration|drawing|painting)\s+(of\s+)?/i, '')
+          .trim() || text;
+
+        const generatingMsg = { 
+          role: 'assistant', 
+          content: `🎨 Generating your image...`,
+          isImageLoading: true,
+          timestamp: new Date().toISOString()
+        };
+        setMessages([...updatedMessages, generatingMsg]);
+
+        const imageResult = await base44.integrations.Core.GenerateImage({ prompt: subject });
         
-        try {
-          // Show generating message
-          const generatingMsg = { 
-            role: 'assistant', 
-            content: `🎨 Generating image... This may take 5-10 seconds.\n\n✨ Enhancing your prompt for better results...`,
-            timestamp: new Date().toISOString()
-          };
-          setMessages([...updatedMessages, generatingMsg]);
-
-          // Enhance the prompt with AI for better results
-          const enhancedPrompt = await base44.integrations.Core.InvokeLLM({
-            prompt: `Transform this image generation request into a detailed, artistic prompt for an AI image generator. Add vivid descriptions of style, lighting, composition, colors, mood, and quality. Keep it under 200 characters but very descriptive. Original: "${photoPrompt}". Return ONLY the enhanced prompt.`,
-          });
-
-          const finalPrompt = `${enhancedPrompt || photoPrompt}, high quality, detailed, professional, 4k, masterpiece`;
-          
-          const imageResult = await base44.integrations.Core.GenerateImage({
-            prompt: finalPrompt
-          });
-          
-          const imageMessage = { 
-            role: 'assistant', 
-            content: `✅ **Image Generated Successfully!**\n\n📝 Enhanced Prompt:\n*"${enhancedPrompt || photoPrompt}"*\n\n🖼️ Here's your image:`,
-            image_url: imageResult.url,
-            timestamp: new Date().toISOString()
-          };
-          
-          // Replace generating message with final result
-          const finalMessages = [...updatedMessages, imageMessage];
-          setMessages(finalMessages);
-
-          if (voiceEnabled) {
-            speakText('Your image has been generated successfully!');
+        const imageMessage = { 
+          role: 'assistant', 
+          content: `✨ Here's your image:`,
+          image_url: imageResult.url,
+          timestamp: new Date().toISOString()
+        };
+        
+        const finalMessages = [...updatedMessages, imageMessage];
+        setMessages(finalMessages);
+        if (voiceEnabled) speakText('Your image is ready!');
+        if (chatId) await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
+        if (!hasUnlimitedAccess && !hasUnlimitedCredits) {
+          const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email }).catch(() => []);
+          if (usageRecords.length > 0) {
+            await base44.entities.AIUsage.update(usageRecords[0].id, { count: usageRecords[0].count + 1 });
+            setUsageCount(usageRecords[0].count + 1);
           }
-
-          // Save chat history
-          if (chatId) {
-            await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
-          }
-
-          // Update usage count
-          if (!hasUnlimitedAccess && !hasUnlimitedCredits) {
-            try {
-              const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
-              if (usageRecords.length > 0) {
-                await base44.entities.AIUsage.update(usageRecords[0].id, { count: usageRecords[0].count + 1 });
-                setUsageCount(usageRecords[0].count + 1);
-              }
-            } catch (err) {
-              console.error('Failed to update usage:', err);
-            }
-          }
-          setLoading(false);
-          return;
-        } catch (imgError) {
-          console.error('Image generation error:', imgError);
-          const errorMessage = { 
-            role: 'assistant', 
-            content: `❌ **Image Generation Failed**\n\n${imgError.message || 'Could not generate the image.'}\n\n💡 **Tips for better results:**\n• Be more specific with your description\n• Mention style (e.g., "photorealistic", "cartoon", "watercolor")\n• Include details about lighting and mood\n• Example: "a sunset over mountains with warm orange lighting, photorealistic style"`,
-            timestamp: new Date().toISOString()
-          };
-          setMessages([...updatedMessages, errorMessage]);
-          if (voiceEnabled) {
-            speakText('Image generation failed. Please try a different description.');
-          }
-          setLoading(false);
-          return;
         }
+        setLoading(false);
+        return;
       }
 
       const conversationContext = updatedMessages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
@@ -472,34 +439,28 @@ export default function LuminaAI() {
       };
 
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are Lumina AI, an exceptionally intelligent and helpful assistant for LBC Hub - a unified platform offering Social Hub (connect and share with community), Marketplace (products and services), Travel planning (AI-powered trip recommendations), and Riding services.${isFounder ? '\n\n⭐ IMPORTANT: You are speaking with Mokhtar Tarek Samara (mokhtartareksamara@gmail.com), the founder of LBC Hub. Address him respectfully as the founder and platform creator.' : isDevLead ? '\n\n👨‍💻 IMPORTANT: You are speaking with the Development Lead (kiprocolloaj254@gmail.com) of LBC Hub. Address them respectfully as part of the core team.' : ''}
+        prompt: `You are Lumina AI, a smart, friendly, and knowledgeable AI assistant.${user?.email === 'mokhtartareksamara@gmail.com' ? '\n\n⭐ You are speaking with Mokhtar Tarek Samara, the founder of LBC Hub.' : user?.email === 'kiprocolloaj254@gmail.com' ? '\n\n👨‍💻 You are speaking with the Development Lead of LBC Hub.' : ''}
 
-You have access to real-time internet information.
+You are a GENERAL-PURPOSE assistant. Answer questions on ANY topic — science, history, cooking, sports, technology, health, jokes, advice, and more.
 
-DIGITAL MIRROR - User Profile Data:
-${JSON.stringify(digitalMirror, null, 2)}
+Do NOT mention LBC Hub features (marketplace, travel, social, riding, jobs) unless the user explicitly asks about the platform.
 
 Previous conversation:
 ${conversationContext}
 
-User question: ${text}
-
-IMPORTANT: In your response JSON:
-- "text": your full helpful answer with emojis
-- "image_urls": if the user is asking about something visual (places, food, products, people, nature, art, how-to, etc.), provide 2-4 real direct image URLs from the web that best illustrate your answer. Use high-quality sources like Wikipedia, Unsplash, or official sites. If not visual, return empty array.`,
+User question: ${text}`,
         add_context_from_internet: true,
         file_urls: uploadedImages.length > 0 ? uploadedImages : undefined,
         model: 'gemini_3_flash',
         response_json_schema: {
           type: 'object',
           properties: {
-            text: { type: 'string' },
-            image_urls: { type: 'array', items: { type: 'string' } }
+            text: { type: 'string' }
           }
         }
       });
 
-      const aiMessage = { role: 'assistant', content: response.text || response, image_urls: response.image_urls || [], timestamp: new Date().toISOString() };
+      const aiMessage = { role: 'assistant', content: response.text || response, timestamp: new Date().toISOString() };
       const finalMessages = [...updatedMessages, aiMessage];
       setMessages(finalMessages);
 
