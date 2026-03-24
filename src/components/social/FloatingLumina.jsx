@@ -469,8 +469,40 @@ export default function FloatingLumina({ user }) {
       }
 
       const conversationContext = updatedMessages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
-      
-      // Gather user's digital mirror data
+
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `You are Lumina AI, a smart, friendly, and knowledgeable AI assistant.${isFounder ? '\n\n⭐ You are speaking with Mokhtar Tarek Samara, the founder of LBC Hub.' : isDevLead ? '\n\n👨‍💻 You are speaking with the Development Lead of LBC Hub.' : ''}
+
+You are a GENERAL-PURPOSE assistant. Answer questions on ANY topic — science, history, cooking, sports, technology, health, jokes, advice, and more — like a helpful smart friend.
+
+IMPORTANT: Do NOT mention or suggest LBC Hub features (marketplace, travel, social, riding, jobs) unless the user is explicitly asking about the platform.
+
+Previous conversation:
+${conversationContext}
+
+User question: ${text}
+
+In your response JSON:
+- "text": your full helpful answer with emojis where natural
+- "image_urls": ONLY if user is asking about something visual (places, food, animals, art, etc.), provide 2-4 real direct image URLs. Otherwise return empty array.`,
+        add_context_from_internet: true,
+        file_urls: uploadedImages.length > 0 ? uploadedImages : undefined,
+        model: 'gemini_3_flash',
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            text: { type: 'string' },
+            image_urls: { type: 'array', items: { type: 'string' } }
+          }
+        }
+      });
+
+      const aiMessage = { role: 'assistant', content: response.text || response, image_urls: response.image_urls || [], timestamp: new Date().toISOString() };
+      const finalMessages = [...updatedMessages, aiMessage];
+      setMessages(finalMessages);
+      setUploadedImages([]);
+      if (voiceEnabled && !isSpeaking) speakText(response.text || response);
+      if (chatId) await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
 
       // Only track usage for users without unlimited access
       if (!hasUnlimitedAccess) {
