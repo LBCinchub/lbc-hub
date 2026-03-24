@@ -402,8 +402,8 @@ export default function LuminaAI() {
           timestamp: new Date().toISOString()
         };
         
+        setMessages(prev => [...prev.filter(m => !m.isImageLoading), imageMessage]);
         const finalMessages = [...updatedMessages, imageMessage];
-        setMessages(finalMessages);
         if (voiceEnabled) speakText('Your image is ready!');
         if (chatId) await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
         if (!hasUnlimitedAccess && !hasUnlimitedCredits) {
