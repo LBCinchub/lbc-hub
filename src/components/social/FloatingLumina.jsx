@@ -426,68 +426,51 @@ export default function FloatingLumina({ user }) {
     setLoading(true);
 
     try {
+      // Detect image generation request
+      const imageKeywords = /\b(generate|create|make|draw|show|paint|design)\b.{0,30}\b(image|photo|picture|pic|art|illustration|drawing|painting)\b|\b(image|photo|picture|pic)\b.{0,20}\b(of|showing|depicting)\b/i;
+      const isImageRequest = imageKeywords.test(text);
+
+      if (isImageRequest) {
+        // Extract the subject from the request
+        const subject = text
+          .replace(/^(please\s+)?(generate|create|make|draw|show|paint|design)\s+(a\s+|an\s+|me\s+a\s+|me\s+an\s+)?/i, '')
+          .replace(/\b(image|photo|picture|pic|art|illustration|drawing|painting)\s+(of\s+)?/i, '')
+          .trim() || text;
+
+        const loadingMsg = { role: 'assistant', content: '🎨 Generating your image...', isImageLoading: true };
+        setMessages(prev => [...prev, loadingMsg]);
+
+        const imageResult = await base44.integrations.Core.GenerateImage({
+          prompt: `${subject}, high quality, detailed, professional, 4k`
+        });
+
+        const imageMsg = {
+          role: 'assistant',
+          content: `✨ Here's your image of: *${subject}*`,
+          imageUrl: imageResult.url,
+          imagePrompt: subject,
+          timestamp: new Date().toISOString()
+        };
+
+        const finalMessages = [...updatedMessages, imageMsg];
+        setMessages(prev => [...prev.filter(m => !m.isImageLoading), imageMsg]);
+        setUploadedImages([]);
+        if (voiceEnabled && !isSpeaking) speakText('Your image is ready!');
+        if (chatId) await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
+        if (!hasUnlimitedAccess) {
+          const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email }).catch(() => []);
+          if (usageRecords.length > 0) {
+            await base44.entities.AIUsage.update(usageRecords[0].id, { count: usageRecords[0].count + 1 });
+            setUsageCount(usageRecords[0].count + 1);
+          }
+        }
+        setLoading(false);
+        return;
+      }
+
       const conversationContext = updatedMessages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
       
       // Gather user's digital mirror data
-      const [userPosts, userFollows, userTrips, userProducts] = await Promise.all([
-        base44.entities.Post.filter({ author_email: user.email }, '-created_date', 10).catch(() => []),
-        base44.entities.Follow.filter({ follower_email: user.email }, '-created_date', 5).catch(() => []),
-        base44.entities.TripItinerary.filter({ user_email: user.email }, '-created_date', 3).catch(() => []),
-        base44.entities.Product.filter({ seller_email: user.email }, '-created_date', 5).catch(() => [])
-      ]);
-
-      const digitalMirror = {
-        name: user.full_name || user.email,
-        email: user.email,
-        bio: user.bio || 'No bio set',
-        recent_posts: userPosts.map(p => ({ content: p.content?.substring(0, 100), topics: p.topics, likes: p.likes })),
-        interests: [...new Set(userPosts.flatMap(p => p.topics || []))],
-        following_count: userFollows.length,
-        recent_trips: userTrips.map(t => ({ destination: t.destination, days: t.num_days })),
-        selling_products: userProducts.map(p => ({ name: p.name, category: p.category }))
-      };
-      
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are Lumina AI, an exceptionally intelligent and helpful assistant for LBC Hub.${isFounder ? '\n\n⭐ You are speaking with Mokhtar Tarek Samara, the founder of LBC Hub.' : isDevLead ? '\n\n👨‍💻 You are speaking with the Development Lead of LBC Hub.' : ''}
-
-DIGITAL MIRROR:
-${JSON.stringify(digitalMirror, null, 2)}
-
-Previous conversation:
-${conversationContext}
-
-User question: ${text}
-
-IMPORTANT: In your response JSON:
-- "text": your full helpful answer with emojis
-- "image_urls": if the user is asking about something visual (places, food, products, people, nature, art, etc.), provide 2-4 real direct image URLs from the web. If not visual, return empty array.`,
-        add_context_from_internet: true,
-        file_urls: uploadedImages.length > 0 ? uploadedImages : undefined,
-        model: 'gemini_3_flash',
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            text: { type: 'string' },
-            image_urls: { type: 'array', items: { type: 'string' } }
-          }
-        }
-      });
-
-      const aiMessage = { role: 'assistant', content: response.text || response, image_urls: response.image_urls || [], timestamp: new Date().toISOString() };
-      const finalMessages = [...updatedMessages, aiMessage];
-      setMessages(finalMessages);
-
-      // Clear uploaded images after sending
-      setUploadedImages([]);
-
-      if (voiceEnabled && !isSpeaking) {
-        speakText(response.text || response);
-      }
-
-      // Save chat history
-      if (chatId) {
-        await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
-      }
 
       // Only track usage for users without unlimited access
       if (!hasUnlimitedAccess) {
