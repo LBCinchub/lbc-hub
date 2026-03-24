@@ -427,26 +427,24 @@ export default function FloatingLumina({ user }) {
 
     try {
       // Detect image generation request
-      const imageKeywords = /\b(generate|create|make|draw|show|paint|design)\b.{0,30}\b(image|photo|picture|pic|art|illustration|drawing|painting)\b|\b(image|photo|picture|pic)\b.{0,20}\b(of|showing|depicting)\b/i;
+      const imageKeywords = /\b(generate|create|make|draw|paint|design)\b[^.!?]*\b(image|photo|picture|pic|art|illustration|drawing|painting)\b/i;
       const isImageRequest = imageKeywords.test(text);
 
       if (isImageRequest) {
-        // Extract the subject from the request
+        // Use the full user text as the prompt — strip only the leading verb phrase
         const subject = text
-          .replace(/^(please\s+)?(generate|create|make|draw|show|paint|design)\s+(a\s+|an\s+|me\s+a\s+|me\s+an\s+)?/i, '')
-          .replace(/\b(image|photo|picture|pic|art|illustration|drawing|painting)\s+(of\s+)?/i, '')
+          .replace(/^(please\s+)?(can you\s+)?(generate|create|make|draw|paint|design)\s+(me\s+)?(a\s+|an\s+)?/i, '')
+          .replace(/^(image|photo|picture|pic|art|illustration|drawing|painting)\s+(of\s+)?/i, '')
           .trim() || text;
 
         const loadingMsg = { role: 'assistant', content: '🎨 Generating your image...', isImageLoading: true };
         setMessages(prev => [...prev, loadingMsg]);
 
-        const imageResult = await base44.integrations.Core.GenerateImage({
-          prompt: `${subject}, high quality, detailed, professional, 4k`
-        });
+        const imageResult = await base44.integrations.Core.GenerateImage({ prompt: subject });
 
         const imageMsg = {
           role: 'assistant',
-          content: `✨ Here's your image of: *${subject}*`,
+          content: `✨ Here's your image:`,
           imageUrl: imageResult.url,
           imagePrompt: subject,
           timestamp: new Date().toISOString()
@@ -484,20 +482,19 @@ User question: ${text}
 
 In your response JSON:
 - "text": your full helpful answer with emojis where natural
-- "image_urls": ONLY if user is asking about something visual (places, food, animals, art, etc.), provide 2-4 real direct image URLs. Otherwise return empty array.`,
+- "text": your full helpful answer only. No image URLs needed here.`,
         add_context_from_internet: true,
         file_urls: uploadedImages.length > 0 ? uploadedImages : undefined,
         model: 'gemini_3_flash',
         response_json_schema: {
           type: 'object',
           properties: {
-            text: { type: 'string' },
-            image_urls: { type: 'array', items: { type: 'string' } }
+            text: { type: 'string' }
           }
         }
       });
 
-      const aiMessage = { role: 'assistant', content: response.text || response, image_urls: response.image_urls || [], timestamp: new Date().toISOString() };
+      const aiMessage = { role: 'assistant', content: response.text || response, timestamp: new Date().toISOString() };
       const finalMessages = [...updatedMessages, aiMessage];
       setMessages(finalMessages);
       setUploadedImages([]);
