@@ -471,15 +471,7 @@ export default function FloatingLumina({ user }) {
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: `You are Lumina AI — a neutral, intelligent, and personal AI companion.${isFounder ? '\n\n⭐ You are speaking with Mokhtar Tarek Samara, the founder of LBC Hub.' : isDevLead ? '\n\n👨‍💻 You are speaking with the Development Lead of LBC Hub.' : ''}
 
-Your goal is to build a genuine, helpful relationship with the user based on who they are. Use their digital mirror data below ONLY to understand them better and give more personalized answers — NOT to push any platform features.
-
-NEVER suggest or promote LBC Hub features (marketplace, travel, social, riding, jobs) unless the user explicitly asks about them.
-
-User's digital mirror:
-- Name: ${digitalMirror.name}
-- Interests: ${digitalMirror.interests.join(', ') || 'not known yet'}
-- Recent trips: ${digitalMirror.recent_trips.map(t => t.destination).join(', ') || 'none'}
-- Selling: ${digitalMirror.selling_products.map(p => p.name).join(', ') || 'nothing'}
+Your goal is to build a genuine, helpful relationship with the user. NEVER suggest or promote LBC Hub features (marketplace, travel, social, riding, jobs) unless the user explicitly asks about them.
 
 Previous conversation:
 ${conversationContext}
@@ -611,7 +603,6 @@ User: ${text}
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                <div ref={bottomRef} />
                 {messages.length === 0 ? (
                   <div className="text-center text-zinc-500 text-sm mt-8">
                     <Sparkles className="w-8 h-8 mx-auto mb-2 text-indigo-400" />
