@@ -473,6 +473,10 @@ IMPORTANT: In your response JSON:
         }
       });
 
+      const aiMessage = { role: 'assistant', content: response.text || response, image_urls: response.image_urls || [], timestamp: new Date().toISOString() };
+      const finalMessages = [...updatedMessages, aiMessage];
+      setMessages(finalMessages);
+
       // Clear uploaded images after sending
       setUploadedImages([]);
 
