@@ -261,7 +261,7 @@ export default function LuminaAI() {
       const imageMessage = { 
         role: 'assistant', 
         content: `✨ Here's your generated image!`, 
-        imageUrl: imageUrl.url,
+        image_url: imageUrl.url,
         imagePrompt: enhancedPromptResponse
       };
       
@@ -641,18 +641,27 @@ User: ${text}`,
                        : 'glass text-zinc-100'
                    }`}>
                      <LinkText text={msg.content} className="text-sm leading-relaxed" />
-                     {msg.image_urls && msg.image_urls.length > 0 && (
-                       <div className="mt-3 grid grid-cols-2 gap-2">
-                         {msg.image_urls.map((url, idx) => (
-                           <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
-                             <img
-                               src={url}
-                               alt={`Result ${idx + 1}`}
-                               className="rounded-lg w-full h-32 object-cover hover:opacity-90 transition-opacity border border-white/10"
-                               onError={(e) => { e.target.style.display = 'none'; }}
-                             />
-                           </a>
-                         ))}
+                     {msg.image_url && (
+                       <div className="mt-3">
+                         <img
+                           src={msg.image_url}
+                           alt="AI Generated"
+                           className="rounded-xl w-full max-w-md h-auto border border-white/10"
+                         />
+                         <div className="flex gap-2 mt-2">
+                           <button
+                             onClick={() => downloadImage(msg.image_url)}
+                             className="flex items-center gap-1 px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs font-medium transition-colors"
+                           >
+                             <Download className="w-3 h-3" /> Download
+                           </button>
+                           <button
+                             onClick={() => saveToGallery(msg.image_url)}
+                             className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium transition-colors"
+                           >
+                             <Save className="w-3 h-3" /> Save to Gallery
+                           </button>
+                         </div>
                        </div>
                      )}
                    </div>
