@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, ArrowUp, ArrowDown, Image as ImageIcon, X, Download, Save } from 'lucide-react';
+import LinkText from '../components/ui/LinkText';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export default function LuminaAI() {
@@ -680,7 +681,7 @@ User question: ${text}`,
                        ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
                        : 'glass text-zinc-100'
                    }`}>
-                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                     <LinkText text={msg.content} className="text-sm leading-relaxed" />
 
                      {(msg.image_url || msg.imageUrl) && (
                        <div className="mt-3 space-y-2">

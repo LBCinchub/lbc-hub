@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, Send, Loader2, Minimize2, Mic, MicOff, Volume2, VolumeX, Image, Download, Save, Upload } from 'lucide-react';
+import LinkText from '../ui/LinkText';
 import { base44 } from '@/api/base44Client';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import SolanaPayment from '../payment/SolanaPayment';
@@ -636,7 +637,7 @@ User question: ${text}`,
                               ? 'bg-indigo-600 text-white'
                               : 'bg-zinc-800 text-zinc-100'
                           }`}>
-                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                            <LinkText text={msg.content} />
                             
                             {msg.imageUrl && (
                               <div className="mt-3 space-y-2">
