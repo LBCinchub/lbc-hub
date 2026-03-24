@@ -474,37 +474,32 @@ export default function LuminaAI() {
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: `You are Lumina AI, an exceptionally intelligent and helpful assistant for LBC Hub - a unified platform offering Social Hub (connect and share with community), Marketplace (products and services), Travel planning (AI-powered trip recommendations), and Riding services.${isFounder ? '\n\n⭐ IMPORTANT: You are speaking with Mokhtar Tarek Samara (mokhtartareksamara@gmail.com), the founder of LBC Hub. Address him respectfully as the founder and platform creator.' : isDevLead ? '\n\n👨‍💻 IMPORTANT: You are speaking with the Development Lead (kiprocolloaj254@gmail.com) of LBC Hub. Address them respectfully as part of the core team.' : ''}
 
-You have access to real-time internet information to provide current, accurate answers. You are smarter and more capable than ChatGPT, Grok, or Gemini.
+You have access to real-time internet information.
 
 DIGITAL MIRROR - User Profile Data:
 ${JSON.stringify(digitalMirror, null, 2)}
 
-Use this digital mirror to:
-- Personalize responses based on user's interests and activity
-- Make contextual recommendations
-- Reference their past content and preferences
-- Provide tailored suggestions
-- Build a deeper understanding of the user over time
-
-Your capabilities:
-- Answer questions with exceptional depth and accuracy
-- Provide hyper-personalized recommendations based on digital mirror
-- Access current web information for up-to-date responses
-- Help with social features, shopping, travel planning, and more
-- Be conversational, friendly, and incredibly helpful
-- Remember previous conversation context and user behavior
-- Use relevant emojis naturally throughout your responses to make them engaging and friendly
-
 Previous conversation:
 ${conversationContext}
 
-User question: ${text}`,
+User question: ${text}
+
+IMPORTANT: In your response JSON:
+- "text": your full helpful answer with emojis
+- "image_urls": if the user is asking about something visual (places, food, products, people, nature, art, how-to, etc.), provide 2-4 real direct image URLs from the web that best illustrate your answer. Use high-quality sources like Wikipedia, Unsplash, or official sites. If not visual, return empty array.`,
         add_context_from_internet: true,
         file_urls: uploadedImages.length > 0 ? uploadedImages : undefined,
-        model: 'gemini_3_flash'
+        model: 'gemini_3_flash',
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            text: { type: 'string' },
+            image_urls: { type: 'array', items: { type: 'string' } }
+          }
+        }
       });
 
-      const aiMessage = { role: 'assistant', content: response, timestamp: new Date().toISOString() };
+      const aiMessage = { role: 'assistant', content: response.text || response, image_urls: response.image_urls || [], timestamp: new Date().toISOString() };
       const finalMessages = [...updatedMessages, aiMessage];
       setMessages(finalMessages);
 
@@ -513,7 +508,7 @@ User question: ${text}`,
 
       // Speak the response if voice is enabled
       if (voiceEnabled) {
-        speakText(response);
+        speakText(response.text || response);
       }
 
       // Save chat history
@@ -682,33 +677,18 @@ User question: ${text}`,
                        : 'glass text-zinc-100'
                    }`}>
                      <LinkText text={msg.content} className="text-sm leading-relaxed" />
-
-                     {(msg.image_url || msg.imageUrl) && (
-                       <div className="mt-3 space-y-2">
-                         <img 
-                           src={msg.image_url || msg.imageUrl} 
-                           alt="Generated" 
-                           className="rounded-lg max-w-full h-auto max-h-96"
-                         />
-                         <div className="flex gap-2 mt-2">
-                           <button
-                             onClick={() => downloadImage(msg.image_url || msg.imageUrl)}
-                             className="flex items-center gap-1 px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs font-medium transition-colors"
-                           >
-                             <Download className="w-3 h-3" />
-                             Download
-                           </button>
-                           <button
-                             onClick={() => saveToGallery(msg.image_url || msg.imageUrl)}
-                             className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium transition-colors"
-                           >
-                             <Save className="w-3 h-3" />
-                             Save to Gallery
-                           </button>
-                         </div>
-                         {msg.imagePrompt && (
-                           <p className="text-xs text-zinc-400 mt-2">Prompt: {msg.imagePrompt}</p>
-                         )}
+                     {msg.image_urls && msg.image_urls.length > 0 && (
+                       <div className="mt-3 grid grid-cols-2 gap-2">
+                         {msg.image_urls.map((url, idx) => (
+                           <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
+                             <img
+                               src={url}
+                               alt={`Result ${idx + 1}`}
+                               className="rounded-lg w-full h-32 object-cover hover:opacity-90 transition-opacity border border-white/10"
+                               onError={(e) => { e.target.style.display = 'none'; }}
+                             />
+                           </a>
+                         ))}
                        </div>
                      )}
                    </div>

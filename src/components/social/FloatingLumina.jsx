@@ -448,48 +448,37 @@ export default function FloatingLumina({ user }) {
       };
       
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are Lumina AI, an exceptionally intelligent and helpful assistant for LBC Hub - a unified platform offering Social Hub (connect and share with community), Marketplace (products and services), Travel planning (AI-powered trip recommendations), and Riding services.${isFounder ? '\n\n⭐ IMPORTANT: You are speaking with Mokhtar Tarek Samara (mokhtartareksamara@gmail.com), the founder of LBC Hub. Address him respectfully as the founder and platform creator.' : isDevLead ? '\n\n👨‍💻 IMPORTANT: You are speaking with the Development Lead (kiprocolloaj254@gmail.com) of LBC Hub. Address them respectfully as part of the core team.' : ''}
+        prompt: `You are Lumina AI, an exceptionally intelligent and helpful assistant for LBC Hub.${isFounder ? '\n\n⭐ You are speaking with Mokhtar Tarek Samara, the founder of LBC Hub.' : isDevLead ? '\n\n👨‍💻 You are speaking with the Development Lead of LBC Hub.' : ''}
 
-You have access to real-time internet information to provide current, accurate answers.
-
-DIGITAL MIRROR - User Profile Data:
+DIGITAL MIRROR:
 ${JSON.stringify(digitalMirror, null, 2)}
-
-Use this digital mirror to:
-- Personalize responses based on user's interests and activity
-- Make contextual recommendations
-- Reference their past content and preferences
-- Provide tailored suggestions
-- Build a deeper understanding of the user over time
-
-Your capabilities:
-- Answer questions with exceptional depth and accuracy
-- Provide hyper-personalized recommendations based on digital mirror
-- Access current web information for up-to-date responses
-- Help with social features, shopping, travel planning, and more
-- Be conversational, friendly, and incredibly helpful
-- Remember previous conversation context and user behavior
-- Use relevant emojis naturally throughout your responses to make them engaging and friendly
 
 Previous conversation:
 ${conversationContext}
 
-User question: ${text}`,
+User question: ${text}
+
+IMPORTANT: In your response JSON:
+- "text": your full helpful answer with emojis
+- "image_urls": if the user is asking about something visual (places, food, products, people, nature, art, etc.), provide 2-4 real direct image URLs from the web. If not visual, return empty array.`,
         add_context_from_internet: true,
         file_urls: uploadedImages.length > 0 ? uploadedImages : undefined,
-        model: 'gemini_3_flash'
+        model: 'gemini_3_flash',
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            text: { type: 'string' },
+            image_urls: { type: 'array', items: { type: 'string' } }
+          }
+        }
       });
 
       // Clear uploaded images after sending
       setUploadedImages([]);
 
-      const aiMessage = { role: 'assistant', content: response, timestamp: new Date().toISOString() };
-       const finalMessages = [...updatedMessages, aiMessage];
-       setMessages(finalMessages);
-
-       if (voiceEnabled && !isSpeaking) {
-         speakText(response);
-       }
+      if (voiceEnabled && !isSpeaking) {
+        speakText(response.text || response);
+      }
 
       // Save chat history
       if (chatId) {
@@ -638,7 +627,20 @@ User question: ${text}`,
                               : 'bg-zinc-800 text-zinc-100'
                           }`}>
                             <LinkText text={msg.content} />
-                            
+                            {msg.image_urls && msg.image_urls.length > 0 && (
+                              <div className="mt-2 grid grid-cols-2 gap-1">
+                                {msg.image_urls.map((url, idx) => (
+                                  <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
+                                    <img
+                                      src={url}
+                                      alt={`Result ${idx + 1}`}
+                                      className="rounded-lg w-full h-20 object-cover hover:opacity-90 transition-opacity border border-white/10"
+                                      onError={(e) => { e.target.style.display = 'none'; }}
+                                    />
+                                  </a>
+                                ))}
+                              </div>
+                            )}
                             {msg.imageUrl && (
                               <div className="mt-3 space-y-2">
                                 <img 
