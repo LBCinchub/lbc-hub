@@ -195,7 +195,7 @@ export default function Marketplace() {
                     {product.name}
                   </h3>
                   {product.seller_name && (
-                    <button onClick={(e) => { e.stopPropagation(); setSelectedSeller(product.seller_name); }} className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors mb-2 block">by {product.seller_name}</button>
+                    <button onClick={(e) => { e.stopPropagation(); setSelectedProduct(null); setSelectedSeller(product.seller_name); }} className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors mb-2 block">by {product.seller_name}</button>
                   )}
                   {(product.avg_rating > 0 || product.review_count > 0) && (
                     <div className="flex items-center gap-1.5 mb-2">
