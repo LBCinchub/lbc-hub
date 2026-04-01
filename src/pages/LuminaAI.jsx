@@ -452,7 +452,6 @@ Previous conversation:
 ${conversationContext}
 
 User: ${text}`,
-        add_context_from_internet: true,
         file_urls: uploadedImages.length > 0 ? uploadedImages : undefined,
         model: 'gemini_3_flash',
         response_json_schema: {
