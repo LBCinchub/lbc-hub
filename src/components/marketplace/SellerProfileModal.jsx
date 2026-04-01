@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { X, Package, Star, ShoppingBag, User } from 'lucide-react';
@@ -6,13 +7,12 @@ import { base44 } from '@/api/base44Client';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import UserProfileModal from '../social/UserProfileModal';
+
 import ProductModal from './ProductModal';
 
 export default function SellerProfileModal({ sellerEmail, sellerName, currentUser, onClose }) {
-  const [showUserProfile, setShowUserProfile] = useState(false);
-  const [sellerUser, setSellerUser] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const navigate = useNavigate();
 
   const { data: products = [] } = useQuery({
     queryKey: ['sellerProducts', sellerEmail],
@@ -34,12 +34,11 @@ export default function SellerProfileModal({ sellerEmail, sellerName, currentUse
     : null;
   const totalRevenue = sales.filter(s => s.status === 'completed').reduce((sum, s) => sum + (s.amount || 0), 0);
 
-  const handleSeeProfile = async () => {
-    const users = await base44.entities.User.filter({ email: sellerEmail }, '-created_date', 1).catch(() => []);
-    if (users[0]) {
-      setSellerUser(users[0]);
-      setShowUserProfile(true);
-    }
+
+
+  const handleSeeProfile = () => {
+    onClose();
+    navigate(`/Profile?email=${encodeURIComponent(sellerEmail)}`);
   };
 
   if (selectedProduct) {
@@ -48,16 +47,6 @@ export default function SellerProfileModal({ sellerEmail, sellerName, currentUse
         product={selectedProduct}
         user={currentUser}
         onClose={() => setSelectedProduct(null)}
-      />
-    );
-  }
-
-  if (showUserProfile && sellerUser) {
-    return (
-      <UserProfileModal
-        targetUser={sellerUser}
-        currentUser={currentUser}
-        onClose={() => { setShowUserProfile(false); setSellerUser(null); }}
       />
     );
   }

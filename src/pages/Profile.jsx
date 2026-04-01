@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,7 +13,11 @@ import { Textarea } from "@/components/ui/textarea";
 import PostCard from '../components/social/PostCard';
 
 export default function Profile() {
+  const [searchParams] = useSearchParams();
+  const viewEmail = searchParams.get('email');
   const [user, setUser] = useState(null);
+  const [viewUser, setViewUser] = useState(null);
+  const isViewingOther = !!viewEmail;
   const [editMode, setEditMode] = useState(false);
   const [bio, setBio] = useState('');
   const [location, setLocation] = useState('');
@@ -30,28 +35,38 @@ export default function Profile() {
     }).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (viewEmail) {
+      base44.entities.User.filter({ email: viewEmail }, '-created_date', 1)
+        .then(users => setViewUser(users[0] || null))
+        .catch(() => {});
+    }
+  }, [viewEmail]);
+
+  const profileUser = isViewingOther ? viewUser : user;
+
   const { data: myPosts = [] } = useQuery({
-    queryKey: ['myPosts', user?.email],
-    queryFn: () => base44.entities.Post.filter({ author_email: user.email }, '-created_date', 50),
-    enabled: !!user,
+    queryKey: ['myPosts', profileUser?.email],
+    queryFn: () => base44.entities.Post.filter({ author_email: profileUser.email }, '-created_date', 50),
+    enabled: !!profileUser,
   });
 
   const { data: myTrips = [] } = useQuery({
-    queryKey: ['myTrips', user?.email],
-    queryFn: () => base44.entities.TripItinerary.filter({ user_email: user.email }, '-created_date', 50),
-    enabled: !!user,
+    queryKey: ['myTrips', profileUser?.email],
+    queryFn: () => base44.entities.TripItinerary.filter({ user_email: profileUser.email }, '-created_date', 50),
+    enabled: !!profileUser,
   });
 
   const { data: savedPosts = [] } = useQuery({
-    queryKey: ['savedPosts', user?.email],
+    queryKey: ['savedPosts', profileUser?.email],
     queryFn: async () => {
-      const followed = await base44.entities.FollowedPost.filter({ user_email: user.email });
+      const followed = await base44.entities.FollowedPost.filter({ user_email: profileUser.email });
       const postIds = followed.map(f => f.post_id);
       if (postIds.length === 0) return [];
       const allPosts = await base44.entities.Post.list('-created_date', 100);
       return allPosts.filter(p => postIds.includes(p.id));
     },
-    enabled: !!user,
+    enabled: !!profileUser,
   });
 
   const updateProfileMutation = useMutation({
@@ -83,7 +98,7 @@ export default function Profile() {
     setUploading(false);
   };
 
-  if (!user) {
+  if (!profileUser) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -118,10 +133,10 @@ export default function Profile() {
             <div className="flex-1">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h1 className="text-3xl font-bold">{user.full_name || 'User'}</h1>
-                  <p className="text-zinc-400 text-sm">{user.email}</p>
+                  <h1 className="text-3xl font-bold">{profileUser.full_name || 'User'}</h1>
+                  <p className="text-zinc-400 text-sm">{profileUser.email}</p>
                 </div>
-                {!editMode ? (
+                {!isViewingOther && (!editMode ? (
                    <Button onClick={() => setEditMode(true)} variant="outline" className="gap-2">
                      <Edit2 className="w-4 h-4" />
                      Edit Profile
@@ -137,49 +152,34 @@ export default function Profile() {
                        Save
                      </Button>
                    </div>
-                 )}
+                 ))}
               </div>
 
-              {editMode ? (
+              {editMode && !isViewingOther ? (
                 <div className="space-y-3">
                   <div>
                     <label className="text-xs text-zinc-500 mb-1 block">Location</label>
-                    <Input
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      placeholder="City, Country"
-                      className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500"
-                    />
+                    <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, Country" className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500" />
                   </div>
                   <div>
                     <label className="text-xs text-zinc-500 mb-1 block">Bio</label>
-                    <Textarea
-                      value={bio}
-                      onChange={(e) => setBio(e.target.value)}
-                      placeholder="Tell us about yourself..."
-                      className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500 resize-none h-24"
-                    />
+                    <Textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell us about yourself..." className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500 resize-none h-24" />
                   </div>
                   <div>
                     <label className="text-xs text-zinc-500 mb-1 block">Solana Address (for receiving marketplace payments)</label>
-                    <Input
-                      value={solanaAddress}
-                      onChange={(e) => setSolanaAddress(e.target.value)}
-                      placeholder="Your Solana wallet address"
-                      className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500 font-mono text-xs"
-                    />
+                    <Input value={solanaAddress} onChange={(e) => setSolanaAddress(e.target.value)} placeholder="Your Solana wallet address" className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500 font-mono text-xs" />
                   </div>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {location && (
+                  {profileUser.location && (
                     <p className="flex items-center gap-2 text-zinc-300">
                       <MapPin className="w-4 h-4 text-indigo-400" />
-                      {location}
+                      {profileUser.location}
                     </p>
                   )}
-                  {bio && <p className="text-zinc-300 leading-relaxed">{bio}</p>}
-                  {!bio && !location && <p className="text-zinc-500 italic">No bio yet. Click "Edit Profile" to add one!</p>}
+                  {profileUser.bio && <p className="text-zinc-300 leading-relaxed">{profileUser.bio}</p>}
+                  {!isViewingOther && !bio && !location && <p className="text-zinc-500 italic">No bio yet. Click "Edit Profile" to add one!</p>}
                 </div>
               )}
 
