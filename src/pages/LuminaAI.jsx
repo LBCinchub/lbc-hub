@@ -974,14 +974,7 @@ User: ${text}`,
               <ImageIcon className="w-4 h-4" />
               <span>{generatingImage ? 'Generating...' : 'Generate Image'}</span>
             </button>
-            <button
-              onClick={toggleVoiceChat}
-              className={`p-2 rounded-lg transition-colors text-xs flex items-center gap-2 ${voiceChatMode ? 'bg-green-500/20 text-green-400 animate-pulse' : 'bg-white/5 hover:bg-white/10 text-zinc-400'}`}
-              title={voiceChatMode ? 'Stop voice chat' : 'Start voice chat'}
-            >
-              {voiceChatMode ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-              <span>{voiceChatMode ? 'Voice Chat On' : 'Voice Chat'}</span>
-            </button>
+
             <button
               onClick={() => {
                 setVoiceEnabled(!voiceEnabled);
