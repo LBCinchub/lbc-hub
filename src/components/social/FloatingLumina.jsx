@@ -638,24 +638,7 @@ User: ${text}
                 >
                   <Code className="w-5 h-5" />
                 </button>
-                <button
-                  onClick={toggleVoiceChat}
-                  className={`transition-colors ${voiceChatMode ? 'text-green-400 animate-pulse' : 'text-white/70 hover:text-white'}`}
-                  title={voiceChatMode ? 'Stop voice chat' : 'Start voice chat'}
-                >
-                  {voiceChatMode ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-                </button>
-                <button
-                   onClick={() => {
-                      const newState = !voiceEnabled;
-                      setVoiceEnabled(newState);
-                      if (!newState || isSpeaking) stopSpeaking();
-                    }}
-                    className="text-white/70 hover:text-white transition-colors"
-                    title={voiceEnabled ? 'Disable voice output' : 'Enable voice output'}
-                  >
-                    {voiceEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-                  </button>
+
                 <button
                   onClick={() => setIsOpen(false)}
                   className="text-white/70 hover:text-white transition-colors"
