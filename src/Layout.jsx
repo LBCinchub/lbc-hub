@@ -226,8 +226,8 @@ export default function Layout({ children, currentPageName }) {
       {/* Floating DM */}
       {user && <FloatingDM user={user} />}
 
-      {/* Floating Lumina AI */}
-      {user && <FloatingLumina user={user} />}
+      {/* Floating Lumina AI - Disabled in favor of full LuminaAI page */}
+      {/* {user && <FloatingLumina user={user} />} */}
 
       {/* WebRTC Call Manager */}
       {user && <CallManager user={user} />}
