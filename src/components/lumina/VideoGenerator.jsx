@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Sparkles, Download, Share2 } from 'lucide-react';
+import { Loader2, Sparkles, Download, Share2, X } from 'lucide-react';
 import VideoPlayer from './VideoPlayer';
 
-export default function VideoGenerator() {
+export default function VideoGenerator({ onClose }) {
   const [prompt, setPrompt] = useState('');
   const [video, setVideo] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -50,11 +50,22 @@ export default function VideoGenerator() {
 
   return (
     <div className="space-y-6 p-6 bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl">
-      <div>
-        <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-purple-400" /> AI Video Generator
-        </h3>
-        <p className="text-slate-400 text-sm">Describe your video. Claude Sonnet creates a script with AI-generated scenes.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-purple-400" /> AI Video Generator
+          </h3>
+          <p className="text-slate-400 text-sm">Describe your video. Claude Sonnet creates a script with AI-generated scenes.</p>
+        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white transition-colors p-1"
+            title="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       <div className="space-y-3">
