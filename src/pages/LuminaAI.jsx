@@ -866,7 +866,7 @@ User: ${text}`,
             </div>
           )}
           
-          {voiceChatMode ? (
+          {voiceChatMode && (
             <div className="glass rounded-2xl p-6 border border-green-500/30 bg-green-500/10">
               <div className="flex items-center justify-center gap-3 text-green-400">
                 <Mic className="w-6 h-6 animate-pulse" />
@@ -876,7 +876,9 @@ User: ${text}`,
                 </div>
               </div>
             </div>
-          ) : (
+          )}
+          
+          {!voiceChatMode && (
             <form
               onSubmit={(e) => { e.preventDefault(); handleSend(); }}
               className="relative space-y-3"
