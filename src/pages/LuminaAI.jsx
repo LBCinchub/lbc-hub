@@ -250,10 +250,7 @@ export default function LuminaAI() {
     setUploadedImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const stopSpeaking = () => {
-    window.speechSynthesis.cancel();
-    setIsSpeaking(false);
-  };
+
 
   const handleGenerateImage = async () => {
     if (generatingImage || !user) return;
@@ -447,7 +444,6 @@ Create something that would impress a professional photographer or art director.
     if (!hasUnlimitedAccess && !hasUnlimitedCredits && usageCount >= usageLimit) {
       const errorMessage = { role: 'assistant', content: `⚠️ Daily limit reached (${usageLimit} requests/day). Resets in 24 hours.` };
       setMessages(prev => [...prev, errorMessage]);
-      if (voiceEnabled) speakText(errorMessage.content);
       return;
     }
 
@@ -490,7 +486,6 @@ Create something that would impress a professional photographer or art director.
         
         setMessages(prev => [...prev.filter(m => !m.isImageLoading), imageMessage]);
         const finalMessages = [...updatedMessages, imageMessage];
-        if (voiceEnabled) speakText('Your image is ready!');
         if (chatId) await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
         if (!hasUnlimitedAccess && !hasUnlimitedCredits) {
           const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email }).catch(() => []);
@@ -986,12 +981,12 @@ User: ${text}`,
                   {uploadingImage ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <ImageIcon className="w-5 h-5 text-white" />}
                 </button>
                 <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder={isListening ? 'Listening...' : 'Ask Lumina or use voice...'}
-                  disabled={loading}
-                  className="flex-1 bg-transparent text-white placeholder:text-zinc-600 outline-none text-sm"
-                />
+                   value={input}
+                   onChange={(e) => setInput(e.target.value)}
+                   placeholder="Ask Lumina..."
+                   disabled={loading}
+                   className="flex-1 bg-transparent text-white placeholder:text-zinc-600 outline-none text-sm"
+                 />
                 <button
                   type="submit"
                   disabled={!input.trim() || loading}
