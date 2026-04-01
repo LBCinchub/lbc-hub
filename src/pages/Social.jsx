@@ -36,6 +36,7 @@ export default function Social() {
   const [feedTab, setFeedTab] = useState('forYou'); // 'forYou' | 'following' | 'videos' | 'photos'
   const [showMemberSearch, setShowMemberSearch] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState(null);
+  const [selectedPost, setSelectedPost] = useState(null);
   const [searchParams] = useSearchParams();
 
   const { data: follows = [] } = useQuery({
@@ -55,6 +56,10 @@ export default function Social() {
     const postId = searchParams.get('post');
     if (postId) {
       setSelectedPostId(postId);
+      // Fetch the post directly in case it's not in the feed
+      base44.entities.Post.filter({ id: postId }).then(res => {
+        if (res.length > 0) setSelectedPost(res[0]);
+      }).catch(() => {});
     }
   }, [searchParams]);
 
@@ -474,8 +479,8 @@ export default function Social() {
       {selectedPostId && (
         <PostModal
           isOpen={!!selectedPostId}
-          post={posts.find(p => p.id === selectedPostId)}
-          onClose={() => setSelectedPostId(null)}
+          post={posts.find(p => p.id === selectedPostId) || selectedPost}
+          onClose={() => { setSelectedPostId(null); setSelectedPost(null); }}
           user={user}
           onDmUser={handleDmUser}
           onViewProfile={handleViewProfile}
