@@ -493,14 +493,12 @@ export default function SellerDashboard({ user, onClose, openAddListing = false 
       </motion.div>
     </motion.div>
 
-    <AnimatePresence>
-      {analyticsProduct && (
-        <ProductSalesAnalytics
-          product={analyticsProduct}
-          onClose={() => setAnalyticsProduct(null)}
-        />
-      )}
-    </AnimatePresence>
+    {analyticsProduct && (
+      <ProductSalesAnalytics
+        product={analyticsProduct}
+        onClose={() => setAnalyticsProduct(null)}
+      />
+    )}
     </>
   );
 }
