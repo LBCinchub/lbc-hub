@@ -18,7 +18,7 @@ export default function LuminaAI() {
   const [chatId, setChatId] = useState(null);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [voiceChatMode, setVoiceChatMode] = useState(false);
   const [uploadedImages, setUploadedImages] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -436,7 +436,6 @@ Create something that would impress a professional photographer or art director.
     if (!user) {
       const errorMessage = { role: 'assistant', content: '🔒 Please sign in to use Lumina AI.' };
       setMessages(prev => [...prev, errorMessage]);
-      if (voiceEnabled) speakText(errorMessage.content);
       return;
     }
 
@@ -455,7 +454,7 @@ Create something that would impress a professional photographer or art director.
     const userMessage = { role: 'user', content: text, timestamp: new Date().toISOString() };
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
-    if (!voiceChatMode) setInput('');
+    setInput('');
     setLoading(true);
 
     try {
@@ -582,10 +581,7 @@ User: ${text}`,
       // Clear uploaded images after sending
       setUploadedImages([]);
 
-      // Speak the response if voice is enabled
-      if (voiceEnabled) {
-        speakText(response.text || response);
-      }
+      // Voice disabled for Lumina
 
       // Save chat history
       if (chatId) {
@@ -970,18 +966,7 @@ User: ${text}`,
                 </div>
               )}
               <div className="flex items-center gap-3 glass rounded-2xl p-3 border border-white/10">
-                <button
-                  type="button"
-                  onClick={toggleVoiceChat}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                    voiceChatMode
-                      ? 'bg-green-500 animate-pulse'
-                      : 'bg-zinc-700 hover:bg-zinc-600'
-                  }`}
-                  title={voiceChatMode ? 'Stop voice chat' : 'Start live voice chat'}
-                >
-                  {voiceChatMode ? <Mic className="w-5 h-5 text-white" /> : <Mic className="w-5 h-5 text-white" />}
-                </button>
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -1018,7 +1003,7 @@ User: ${text}`,
             </form>
           )}
 
-          {/* Video & Voice Controls */}
+          {/* Video & Code Controls */}
           <div className="flex items-center justify-center gap-3 mt-3">
            <button
              onClick={() => setShowVideoGenerator(!showVideoGenerator)}
@@ -1045,8 +1030,6 @@ User: ${text}`,
               <ImageIcon className="w-4 h-4" />
               <span>{generatingImage ? 'Generating...' : 'Generate Image'}</span>
             </button>
-
-
           </div>
         </div>
       </div>
