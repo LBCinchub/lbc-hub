@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { X, Package, Star, ShoppingBag, ExternalLink, User } from 'lucide-react';
+import { X, Package, Star, ShoppingBag, User } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import UserProfileModal from '../social/UserProfileModal';
+import ProductModal from './ProductModal';
 
 export default function SellerProfileModal({ sellerEmail, sellerName, currentUser, onClose }) {
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [sellerUser, setSellerUser] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   const { data: products = [] } = useQuery({
     queryKey: ['sellerProducts', sellerEmail],
@@ -39,6 +41,16 @@ export default function SellerProfileModal({ sellerEmail, sellerName, currentUse
       setShowUserProfile(true);
     }
   };
+
+  if (selectedProduct) {
+    return (
+      <ProductModal
+        product={selectedProduct}
+        user={currentUser}
+        onClose={() => setSelectedProduct(null)}
+      />
+    );
+  }
 
   if (showUserProfile && sellerUser) {
     return (
@@ -113,7 +125,11 @@ export default function SellerProfileModal({ sellerEmail, sellerName, currentUse
             </div>
           ) : (
             products.map(product => (
-              <div key={product.id} className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl hover:bg-white/8 transition-colors">
+              <div
+                key={product.id}
+                onClick={() => setSelectedProduct(product)}
+                className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl hover:bg-white/8 transition-colors cursor-pointer hover:ring-1 hover:ring-indigo-500/40"
+              >
                 {product.image_url ? (
                   <img src={product.image_url} alt={product.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
                 ) : (
