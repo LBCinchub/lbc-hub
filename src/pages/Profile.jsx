@@ -16,6 +16,7 @@ export default function Profile() {
   const [searchParams] = useSearchParams();
   const viewEmail = searchParams.get('email');
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [viewUser, setViewUser] = useState(null);
   const isViewingOther = !!viewEmail;
   const [editMode, setEditMode] = useState(false);
@@ -32,7 +33,7 @@ export default function Profile() {
       setBio(u.bio || '');
       setLocation(u.location || '');
       setSolanaAddress(u.solana_address || '');
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => setAuthLoading(false));
   }, []);
 
   useEffect(() => {
@@ -98,12 +99,26 @@ export default function Profile() {
     setUploading(false);
   };
 
-  if (!profileUser) {
+  if (authLoading || (isViewingOther && !viewUser && viewEmail)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-indigo-500/30 border-t-indigo-500 animate-spin" />
           <p className="text-zinc-400">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profileUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center glass rounded-2xl p-12 max-w-md mx-auto">
+          <h2 className="text-2xl font-bold mb-3">Sign in to view your profile</h2>
+          <p className="text-zinc-400 mb-6">You need to be signed in to access your profile page.</p>
+          <Button onClick={() => base44.auth.redirectToLogin()} className="btn-primary">
+            Sign In
+          </Button>
         </div>
       </div>
     );
