@@ -776,6 +776,26 @@ User: ${text}
               <div ref={bottomRef} />
             </div>
 
+            {voiceChatMode && (
+              <div className="glass rounded-xl p-2 border border-green-500/30 bg-green-500/10 mx-2 mt-2">
+                <div className="flex items-center justify-between gap-2 text-green-400">
+                  <div className="flex items-center gap-2">
+                    <Mic className="w-4 h-4 animate-pulse" />
+                    <div className="text-xs">
+                      <p className="font-semibold">Voice Chat Active</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={toggleVoiceChat}
+                    className="flex-shrink-0 w-6 h-6 rounded-lg bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
+                    title="Stop voice chat"
+                  >
+                    <X className="w-3 h-3 text-white" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             <form
               onSubmit={(e) => { e.preventDefault(); handleSend(); }}
               className="p-3 border-t border-white/5 space-y-2"
@@ -799,16 +819,15 @@ User: ${text}
                 <div className="flex items-center gap-2 bg-zinc-800 rounded-xl p-2">
                   <button
                     type="button"
-                    onClick={toggleListening}
-                    disabled={loading}
+                    onClick={toggleVoiceChat}
                     className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-                      isListening 
-                        ? 'bg-red-500 animate-pulse' 
+                      voiceChatMode
+                        ? 'bg-green-500 animate-pulse'
                         : 'bg-zinc-700 hover:bg-zinc-600'
-                    } disabled:opacity-40`}
-                    title={isListening ? 'Stop listening' : 'Voice input'}
+                    }`}
+                    title={voiceChatMode ? 'Stop voice chat' : 'Start live voice chat'}
                   >
-                    {isListening ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4 text-white" />}
+                    <Mic className="w-4 h-4 text-white" />
                   </button>
                   <input
                     ref={fileInputRef}
