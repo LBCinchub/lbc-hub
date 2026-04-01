@@ -205,6 +205,17 @@ export default function ProductModal({ product, user, onClose }) {
   const isSeller = user && product.seller_email === user.email;
 
   React.useEffect(() => {
+    // Reset internal state when product changes
+    setActiveSection(null);
+    setDone(null);
+    setCheckingOut(false);
+    setShowPaymentOptions(false);
+    setShowSolanaCheckout(false);
+    setShowAnalytics(false);
+    setShowSellerProfile(false);
+  }, [product.id]);
+
+  React.useEffect(() => {
     if (product.seller_email) {
       base44.entities.User.filter({ email: product.seller_email }, '-created_date', 1)
         .then(users => setSellerData(users[0]))
