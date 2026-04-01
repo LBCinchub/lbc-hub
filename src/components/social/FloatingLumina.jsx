@@ -638,7 +638,6 @@ User: ${text}
                 >
                   <Code className="w-5 h-5" />
                 </button>
-
                 <button
                   onClick={() => setIsOpen(false)}
                   className="text-white/70 hover:text-white transition-colors"
@@ -777,11 +776,10 @@ User: ${text}
               <div ref={bottomRef} />
             </div>
 
-            {!voiceChatMode && (
-              <form
-                onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-                className="p-3 border-t border-white/5 space-y-2"
-              >
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+              className="p-3 border-t border-white/5 space-y-2"
+            >
                 {uploadedImages.length > 0 && (
                   <div className="flex gap-2 flex-wrap px-2">
                     {uploadedImages.map((imgUrl, idx) => (
@@ -846,16 +844,6 @@ User: ${text}
                   </button>
                 </div>
               </form>
-            )}
-            
-            {voiceChatMode && (
-              <div className="p-3 border-t border-white/5 bg-green-500/10">
-                <div className="flex items-center justify-center gap-2 text-green-400 text-sm">
-                  <Mic className="w-4 h-4 animate-pulse" />
-                  <span className="font-medium">Voice Chat Active - Speak to chat with Lumina</span>
-                </div>
-              </div>
-            )}
           </motion.div>
         )}
       </AnimatePresence>
