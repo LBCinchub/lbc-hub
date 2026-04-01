@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import PostCard from '../components/social/PostCard';
+import LuminaStreakBadge from '../components/social/LuminaStreakBadge';
 
 export default function Profile() {
   const [searchParams] = useSearchParams();
@@ -25,6 +26,7 @@ export default function Profile() {
   const [solanaAddress, setSolanaAddress] = useState('');
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('posts'); // 'posts' | 'trips' | 'saved'
+  const [streakData, setStreakData] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -33,6 +35,10 @@ export default function Profile() {
       setBio(u.bio || '');
       setLocation(u.location || '');
       setSolanaAddress(u.solana_address || '');
+      // Load streak
+      base44.entities.LuminaStreak.filter({ user_email: u.email }).then(records => {
+        if (records.length > 0) setStreakData(records[0]);
+      }).catch(() => {});
     }).catch(() => {}).finally(() => setAuthLoading(false));
   }, []);
 
@@ -150,6 +156,7 @@ export default function Profile() {
                 <div>
                   <h1 className="text-3xl font-bold">{profileUser.full_name || 'User'}</h1>
                   <p className="text-zinc-400 text-sm">{profileUser.email}</p>
+                  {streakData && <div className="mt-2"><LuminaStreakBadge streak={streakData.current_streak} sparks={streakData.total_sparks} compact /></div>}
                 </div>
                 {!isViewingOther && (!editMode ? (
                    <Button onClick={() => setEditMode(true)} variant="outline" className="gap-2">

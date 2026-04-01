@@ -24,6 +24,7 @@ import MemberSearch from '../components/social/MemberSearch';
 import { Loader2 } from 'lucide-react';
 import { TOPICS } from '../components/social/TopicSelector';
 import { Settings as SettingsIcon } from 'lucide-react';
+import LuminaStreakBadge from '../components/social/LuminaStreakBadge';
 
 export default function Social() {
   const [user, setUser] = useState(null);
@@ -35,6 +36,7 @@ export default function Social() {
   const [activeTopic, setActiveTopic] = useState(null);
   const [feedTab, setFeedTab] = useState('forYou'); // 'forYou' | 'following' | 'videos' | 'photos'
   const [showMemberSearch, setShowMemberSearch] = useState(false);
+  const [streakData, setStreakData] = useState(null);
   const [selectedPostId, setSelectedPostId] = useState(null);
   const [selectedPost, setSelectedPost] = useState(null);
   const [searchParams] = useSearchParams();
@@ -51,12 +53,16 @@ export default function Social() {
   const chatEndRef = useRef(null);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me().then(u => {
+      setUser(u);
+      base44.entities.LuminaStreak.filter({ user_email: u.email }).then(records => {
+        if (records.length > 0) setStreakData(records[0]);
+      }).catch(() => {});
+    }).catch(() => {});
     window.scrollTo(0, 0);
     const postId = searchParams.get('post');
     if (postId) {
       setSelectedPostId(postId);
-      // Fetch the post directly in case it's not in the feed
       base44.entities.Post.filter({ id: postId }).then(res => {
         if (res.length > 0) setSelectedPost(res[0]);
       }).catch(() => {});
@@ -155,6 +161,7 @@ export default function Social() {
           <div className="flex-1 min-w-0">
             <h1 className="text-xl sm:text-4xl font-bold mb-1 truncate">Social Hub</h1>
             <p className="text-xs sm:text-base text-zinc-400 hidden sm:block truncate">Connect, share, and engage with the community</p>
+            {streakData && <div className="mt-1"><LuminaStreakBadge streak={streakData.current_streak} sparks={streakData.total_sparks} compact /></div>}
           </div>
           {user && (
             <div className="flex items-center gap-1.5 sm:gap-2">
