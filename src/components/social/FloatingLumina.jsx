@@ -363,8 +363,7 @@ export default function FloatingLumina({ user }) {
       const tags = hashtags.split(/\s+/).filter(Boolean).map(t => t.startsWith('#') ? t : '#' + t).join(' ');
       const locationSuffix = location ? `\n📍 ${location}` : '';
       const tagsSuffix = tags ? `\n${tags}` : '';
-      const baseText = postCaption.trim() || '🎨 AI-generated image by Lumina AI';
-      const postContent = baseText + locationSuffix + tagsSuffix;
+      const postContent = (postCaption.trim() + locationSuffix + tagsSuffix).trim();
 
       await base44.entities.Post.create({
         content: postContent,
