@@ -33,9 +33,18 @@ export default function FloatingDM({ user }) {
       return [...sent, ...received].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
     },
     enabled: !!user?.email,
-    refetchInterval: 15000,
+    refetchInterval: 5000,
     retry: false,
   });
+
+  // Real-time subscription for instant message delivery
+  useEffect(() => {
+    if (!user?.email) return;
+    const unsub = base44.entities.DirectMessage.subscribe(() => {
+      queryClient.invalidateQueries({ queryKey: ['dms', user.email] });
+    });
+    return unsub;
+  }, [user?.email]);
 
   const { data: communityMessages = [] } = useQuery({
     queryKey: ['chatMessages'],
@@ -171,6 +180,19 @@ export default function FloatingDM({ user }) {
   const handleButtonClick = () => {
     if (!hasDragged.current) setOpen(true);
   };
+
+  // Expose global opener for other components (e.g. ProductModal)
+  useEffect(() => {
+    window.__openDM = (email, name) => {
+      setOpen(true);
+      setMinimized(false);
+      setActiveTab('direct');
+      setActiveConvo(email);
+      setActiveName(name || email);
+      setComposing(false);
+    };
+    return () => { delete window.__openDM; };
+  }, []);
 
   useEffect(() => {
     if (!open) return;

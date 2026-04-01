@@ -193,7 +193,7 @@ function InquiryForm({ product, user, onDone }) {
 }
 
 export default function ProductModal({ product, user, onClose }) {
-  const [activeSection, setActiveSection] = useState(null); // 'review' | 'inquiry'
+  const [activeSection, setActiveSection] = useState(null); // 'review'
   const [done, setDone] = useState(null);
   const [checkingOut, setCheckingOut] = useState(false);
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
@@ -359,10 +359,15 @@ export default function ProductModal({ product, user, onClose }) {
                 <>
                   <Button
                     variant="outline"
-                    onClick={() => setActiveSection(activeSection === 'inquiry' ? null : 'inquiry')}
+                    onClick={() => {
+                      if (product.seller_email && product.seller_name) {
+                        window.__openDM?.(product.seller_email, product.seller_name);
+                        onClose();
+                      }
+                    }}
                     className="border-white/20 bg-transparent hover:bg-white/10 rounded-xl"
                   >
-                    <MessageSquare className="w-4 h-4 mr-2" /> Ask Seller
+                    <MessageSquare className="w-4 h-4 mr-2" /> Message Seller
                   </Button>
                   <Button
                     variant="outline"
@@ -416,11 +421,7 @@ export default function ProductModal({ product, user, onClose }) {
                   <CheckCircle className="w-5 h-5" /> Review submitted! Thank you.
                 </motion.div>
               )}
-              {done === 'inquiry' && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 p-4 rounded-xl bg-emerald-500/20 text-emerald-400">
-                  <CheckCircle className="w-5 h-5" /> Inquiry sent! The seller will reply soon.
-                </motion.div>
-              )}
+
               {activeSection === 'review' && !done && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                   <div className="glass rounded-2xl p-5 border border-amber-500/20">
@@ -429,14 +430,7 @@ export default function ProductModal({ product, user, onClose }) {
                   </div>
                 </motion.div>
               )}
-              {activeSection === 'inquiry' && !done && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                  <div className="glass rounded-2xl p-5 border border-indigo-500/20">
-                    <h3 className="font-semibold mb-4">Ask the Seller</h3>
-                    <InquiryForm product={product} user={user} onDone={() => { setDone('inquiry'); setActiveSection(null); }} />
-                  </div>
-                </motion.div>
-              )}
+
             </AnimatePresence>
 
             {/* Reviews Section */}
