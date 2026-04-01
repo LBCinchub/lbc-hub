@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Download, Save, Type, Loader2 } from 'lucide-react';
+import { X, Download, Save, Type, Loader2, MapPin, Hash } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 const COLORS = ['#ffffff', '#000000', '#ff4444', '#ffcc00', '#44ff88', '#44aaff', '#cc44ff', '#ff8844'];
 
 export default function ImageEditor({ imageUrl, user, onClose, onUseInPost }) {
   const [text, setText] = useState('');
+  const [hashtags, setHashtags] = useState('');
+  const [location, setLocation] = useState('');
   const [textColor, setTextColor] = useState('#ffffff');
   const [fontSize, setFontSize] = useState(32);
   const [textX, setTextX] = useState(50);
@@ -70,8 +72,13 @@ export default function ImageEditor({ imageUrl, user, onClose, onUseInPost }) {
       const file = new File([blob], `lumina-${Date.now()}.png`, { type: 'image/png' });
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
+      const tags = hashtags.split(/\s+/).filter(Boolean).map(t => t.startsWith('#') ? t : '#' + t).join(' ');
+      const locationSuffix = location ? `\n📍 ${location}` : '';
+      const tagsSuffix = tags ? `\n${tags}` : '';
+      const postContent = (text ? `🎨 "${text}"` : '🎨 AI-generated image by Lumina AI') + locationSuffix + tagsSuffix;
+
       await base44.entities.Post.create({
-        content: text ? `🎨 AI-generated image by Lumina AI\n\n"${text}"` : '🎨 AI-generated image by Lumina AI',
+        content: postContent,
         media_urls: [file_url],
         media_type: 'image',
         author_name: user.full_name || user.email,
@@ -126,6 +133,36 @@ export default function ImageEditor({ imageUrl, user, onClose, onUseInPost }) {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Type something..."
+              className="w-full bg-zinc-800 border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-zinc-600 outline-none text-sm focus:border-indigo-500"
+            />
+          </div>
+
+          {/* Hashtags */}
+          <div>
+            <label className="text-xs text-zinc-400 mb-1 flex items-center gap-1"><Hash className="w-3 h-3" /> Hashtags (for post caption)</label>
+            <input
+              value={hashtags}
+              onChange={(e) => setHashtags(e.target.value)}
+              placeholder="#travel #art #lumina ..."
+              className="w-full bg-zinc-800 border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-zinc-600 outline-none text-sm focus:border-indigo-500"
+            />
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {['#travel', '#art', '#vibes', '#photography', '#lumina', '#lifestyle'].map(tag => (
+                <button key={tag} onClick={() => setHashtags(prev => (prev + ' ' + tag).trim())}
+                  className="px-2 py-0.5 rounded-full bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs transition-colors">
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Location */}
+          <div>
+            <label className="text-xs text-zinc-400 mb-1 flex items-center gap-1"><MapPin className="w-3 h-3 text-rose-400" /> Location (for post caption)</label>
+            <input
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="e.g. Paris, France"
               className="w-full bg-zinc-800 border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-zinc-600 outline-none text-sm focus:border-indigo-500"
             />
           </div>
