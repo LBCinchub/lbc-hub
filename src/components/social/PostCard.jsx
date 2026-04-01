@@ -14,6 +14,10 @@ import RichText from './RichText';
 export default function PostCard({ post, user, onDmUser, onViewProfile, onHashtagClick }) {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editText, setEditText] = useState('');
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState('');
   const [summary, setSummary] = useState('');
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -25,10 +29,6 @@ export default function PostCard({ post, user, onDmUser, onViewProfile, onHashta
   const [luminaLoading, setLuminaLoading] = useState(false);
   const [showLumina, setShowLumina] = useState(false);
   const [showPostMenu, setShowPostMenu] = useState(false);
-  const [editingCommentId, setEditingCommentId] = useState(null);
-  const [editText, setEditText] = useState('');
-  const [replyingTo, setReplyingTo] = useState(null); // { id, name }
-  const [replyText, setReplyText] = useState('');
   const queryClient = useQueryClient();
   const videoRef = useRef(null);
 
@@ -238,9 +238,7 @@ Provide a brief analysis in JSON format:
 
   const deleteCommentMutation = useMutation({
     mutationFn: (commentId) => base44.entities.Comment.delete(commentId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments', post.id] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['comments', post.id] }),
   });
 
   const editCommentMutation = useMutation({

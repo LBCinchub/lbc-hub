@@ -22,11 +22,11 @@
     },
     "parent_id": {
       "type": "string",
-      "description": "Parent comment ID for replies"
+      "description": "ID of parent comment for replies"
     },
     "reply_to_name": {
       "type": "string",
-      "description": "Name of the user being replied to"
+      "description": "Name of the person being replied to"
     }
   },
   "required": [

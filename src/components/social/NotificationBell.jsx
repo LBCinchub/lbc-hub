@@ -92,9 +92,9 @@ export default function NotificationBell({ user }) {
                     
                     const handleClick = () => {
                       if (!notif.read) markReadMutation.mutate(notif.id);
+                      setOpen(false);
                       if (notif.post_id) {
-                        setOpen(false);
-                        navigate(createPageUrl('Social') + '?post=' + notif.post_id);
+                        navigate('/Social?post=' + notif.post_id);
                       }
                     };
                     
