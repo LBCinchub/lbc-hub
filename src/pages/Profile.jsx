@@ -45,7 +45,14 @@ export default function Profile() {
   useEffect(() => {
     if (viewEmail) {
       base44.entities.User.filter({ email: viewEmail }, '-created_date', 1)
-        .then(users => setViewUser(users[0] || null))
+        .then(users => {
+          setViewUser(users[0] || null);
+          if (users[0]) {
+            base44.entities.LuminaStreak.filter({ user_email: users[0].email }).then(records => {
+              if (records.length > 0) setStreakData(records[0]);
+            }).catch(() => {});
+          }
+        })
         .catch(() => {});
     }
   }, [viewEmail]);
