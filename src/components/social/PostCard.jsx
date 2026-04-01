@@ -44,7 +44,7 @@ export default function PostCard({ post, user, onDmUser, onViewProfile, onHashta
   const isFollowing = follows.some(f => f.following_email === post.author_email);
 
   useEffect(() => {
-    if (!videoRef.current || post.media_type !== 'video') return;
+    if (!videoRef.current || !post || post.media_type !== 'video') return;
 
     const handlePlay = () => {
       document.querySelectorAll('video').forEach(v => {
