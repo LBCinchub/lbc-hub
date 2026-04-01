@@ -37,14 +37,7 @@ export default function FloatingDM({ user }) {
     retry: false,
   });
 
-  // Real-time subscription for instant message delivery
-  useEffect(() => {
-    if (!user?.email) return;
-    const unsub = base44.entities.DirectMessage.subscribe(() => {
-      queryClient.invalidateQueries({ queryKey: ['dms', user.email] });
-    });
-    return unsub;
-  }, [user?.email]);
+
 
   const { data: communityMessages = [] } = useQuery({
     queryKey: ['chatMessages'],
