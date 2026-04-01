@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 
 const COLORS = ['#ffffff', '#000000', '#ff4444', '#ffcc00', '#44ff88', '#44aaff', '#cc44ff', '#ff8844'];
 
-export default function ImageEditor({ imageUrl, user, onClose }) {
+export default function ImageEditor({ imageUrl, user, onClose, onUseInPost }) {
   const [text, setText] = useState('');
   const [textColor, setTextColor] = useState('#ffffff');
   const [fontSize, setFontSize] = useState(32);
@@ -164,14 +164,36 @@ export default function ImageEditor({ imageUrl, user, onClose }) {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-2 flex-wrap">
             <button
               onClick={handleDownload}
               className="flex-1 flex items-center justify-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-white py-2.5 rounded-xl text-sm font-medium transition-colors"
             >
               <Download className="w-4 h-4" /> Save to Device
             </button>
-            {user && (
+            {onUseInPost && (
+              <button
+                onClick={async () => {
+                  const blob = await getBlob();
+                  onUseInPost(blob);
+                  onClose();
+                }}
+                className="flex-1 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white py-2.5 rounded-xl text-sm font-medium transition-colors"
+              >
+                <Type className="w-4 h-4" /> Use in Post
+              </button>
+            )}
+            {user && !onUseInPost && (
+              <button
+                onClick={handlePost}
+                disabled={saving}
+                className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {saving ? 'Posting...' : 'Post to Gallery'}
+              </button>
+            )}
+            {user && onUseInPost && (
               <button
                 onClick={handlePost}
                 disabled={saving}

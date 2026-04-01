@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ImageIcon, Video, Radio, X, Loader2, Tag, Plane, MapPin, Calendar, FolderOpen, Share2 } from 'lucide-react';
+import { ImageIcon, Video, Radio, X, Loader2, Tag, Plane, MapPin, Calendar, FolderOpen, Share2, PenLine } from 'lucide-react';
+import ImageEditor from './ImageEditor';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import TopicSelector from './TopicSelector';
@@ -44,6 +45,7 @@ export default function CreatePost({ user, onGoLive }) {
   const videoInputRef = useRef(null);
   const [showGallery, setShowGallery] = useState(false);
   const [showSocialModal, setShowSocialModal] = useState(false);
+  const [editingImageUrl, setEditingImageUrl] = useState(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState([]);
 
   // Auto-focus textarea when trip is pre-loaded from share
@@ -228,12 +230,22 @@ export default function CreatePost({ user, onGoLive }) {
                   <video src={mediaPreviews[0]} className="w-full rounded-xl max-h-48 object-cover" controls />
                 ) : (
                   <div className={`grid gap-1 ${mediaPreviews.length > 1 ? 'grid-cols-2' : ''}`}>
-                    {mediaPreviews.map((src, i) => (
-                      <img key={i} src={src} alt="" className="w-full rounded-xl object-cover max-h-48" />
-                    ))}
-                  </div>
-                )}
-              </motion.div>
+                      {mediaPreviews.map((src, i) => (
+                        <div key={i} className="relative group">
+                          <img src={src} alt="" className="w-full rounded-xl object-cover max-h-48" />
+                          {mediaType === 'image' && (
+                            <button
+                              onClick={() => setEditingImageUrl(src)}
+                              className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white px-2 py-1 rounded-lg text-xs flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <PenLine className="w-3 h-3" /> Edit
+                            </button>
+                          )}
+                          </div>
+                          ))}
+                          </div>
+                          )}
+                          </motion.div>
             )}
           </AnimatePresence>
 
@@ -302,6 +314,33 @@ export default function CreatePost({ user, onGoLive }) {
       </div>
 
       <UserGallery isOpen={showGallery} onClose={() => setShowGallery(false)} onSelectMedia={handleGallerySelect} />
+
+      {editingImageUrl && (
+        <ImageEditor
+          imageUrl={editingImageUrl}
+          user={user}
+          onClose={() => setEditingImageUrl(null)}
+          onUseInPost={(blob) => {
+            const file = new File([blob], `edited-${Date.now()}.png`, { type: 'image/png' });
+            const previewUrl = URL.createObjectURL(blob);
+            // Replace the edited preview
+            const idx = mediaPreviews.indexOf(editingImageUrl);
+            if (idx !== -1) {
+              const newFiles = [...mediaFiles];
+              const newPreviews = [...mediaPreviews];
+              newFiles[idx] = file;
+              newPreviews[idx] = previewUrl;
+              setMediaFiles(newFiles);
+              setMediaPreviews(newPreviews);
+            } else {
+              setMediaFiles([file]);
+              setMediaPreviews([previewUrl]);
+              setMediaType('image');
+            }
+            setEditingImageUrl(null);
+          }}
+        />
+      )}
 
       {showSocialModal && (
         <SocialAccountsModal
