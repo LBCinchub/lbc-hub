@@ -719,7 +719,7 @@ User: ${text}`,
                         ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
                         : 'glass text-zinc-100'
                     }`}>
-                      {codingMode && msg.role === 'assistant' ? (
+                      {codingMode && msg.role === 'assistant' && msg.content ? (
                         <div className="space-y-2">
                           {msg.content.split(/```[a-z]*\n/).map((block, idx) => {
                             const isCode = idx % 2 === 1;
