@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Send, Loader2, Minimize2, Mic, MicOff, Volume2, VolumeX, Image, PenLine, Upload, MapPin, Hash, Share2 } from 'lucide-react';
+import { Sparkles, X, Send, Loader2, Minimize2, Mic, MicOff, Volume2, VolumeX, Image, PenLine, Upload, MapPin, Hash, Share2, Code, Copy, Check } from 'lucide-react';
 import LuminaStreakBadge from './LuminaStreakBadge';
 import ImageEditor from '../social/ImageEditor';
 import LinkText from '../ui/LinkText';
@@ -31,6 +31,8 @@ export default function FloatingLumina({ user }) {
   const [postHashtags, setPostHashtags] = useState('');
   const [postLocation, setPostLocation] = useState('');
   const [postingToGallery, setPostingToGallery] = useState(false);
+  const [codingMode, setCodingMode] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState(null);
   const bottomRef = useRef(null);
   const topRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -126,8 +128,6 @@ export default function FloatingLumina({ user }) {
     }
   }, [messages]);
 
-  // Removed auto-scroll to keep chat at top
-
   useEffect(() => {
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
       const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
@@ -183,7 +183,6 @@ export default function FloatingLumina({ user }) {
       setIsListening(false);
     } else {
       try {
-        // Request microphone permission
         await navigator.mediaDevices.getUserMedia({ audio: true });
         recognitionRef.current.start();
         setIsListening(true);
@@ -208,7 +207,6 @@ export default function FloatingLumina({ user }) {
       setIsSpeaking(false);
     } else {
       try {
-        // Request microphone permission
         await navigator.mediaDevices.getUserMedia({ audio: true });
         setVoiceChatMode(true);
         setVoiceEnabled(true);
@@ -224,7 +222,6 @@ export default function FloatingLumina({ user }) {
   const speakText = (text) => {
     if (!voiceEnabled || !text) return;
 
-    // Stop listening while AI is speaking to prevent feedback
     if (isListening && recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -243,7 +240,6 @@ export default function FloatingLumina({ user }) {
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => {
       setIsSpeaking(false);
-      // Resume listening in voice chat mode after AI finishes speaking
       if (voiceChatMode && recognitionRef.current) {
         setTimeout(() => {
           try {
@@ -257,7 +253,6 @@ export default function FloatingLumina({ user }) {
     };
     utterance.onerror = () => {
       setIsSpeaking(false);
-      // Resume listening even if speech errors
       if (voiceChatMode && recognitionRef.current) {
         setTimeout(() => {
           try {
@@ -305,7 +300,6 @@ export default function FloatingLumina({ user }) {
     setMessages(prev => [...prev, loadingMessage]);
 
     try {
-      // Enhance the prompt with AI
       const enhancedPromptResponse = await base44.integrations.Core.InvokeLLM({
         prompt: `Based on this conversation context: "${imagePromptContext}", create a detailed, vivid image generation prompt (max 200 words) that describes a beautiful, high-quality image. Be creative and specific about colors, lighting, composition, and style.`,
         model: 'gemini_3_flash'
@@ -324,7 +318,6 @@ export default function FloatingLumina({ user }) {
       
       setMessages(prev => [...prev.filter(m => !m.isImageLoading), imageMessage]);
       
-      // Auto-post to social feed
       try {
         await base44.entities.Post.create({
           content: `🎨 AI-generated image by Lumina AI\n\n"${enhancedPromptResponse}"`,
@@ -339,13 +332,11 @@ export default function FloatingLumina({ user }) {
         console.error('Failed to post to feed:', err);
       }
 
-      // Save to chat history
       const finalMessages = [...messages, imageMessage];
       if (chatId) {
         await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
       }
 
-      // Track usage
       if (!hasUnlimitedAccess) {
         try {
           const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
@@ -451,7 +442,6 @@ export default function FloatingLumina({ user }) {
   const handleSend = async (text = input) => {
     if (!text.trim() || loading) return;
 
-    // Unlimited credits for founder, dev lead, and premium users
     const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
     const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
     const isPremium = user?.premium === true;
@@ -475,12 +465,10 @@ export default function FloatingLumina({ user }) {
     setLoading(true);
 
     try {
-      // Detect image generation request
       const imageKeywords = /\b(generate|create|make|draw|paint|design)\b[^.!?]*\b(image|photo|picture|pic|art|illustration|drawing|painting)\b/i;
       const isImageRequest = imageKeywords.test(text);
 
       if (isImageRequest) {
-        // Use the full user text as the prompt — strip only the leading verb phrase
         const subject = text
           .replace(/^(please\s+)?(can you\s+)?(generate|create|make|draw|paint|design)\s+(me\s+)?(a\s+|an\s+)?/i, '')
           .replace(/^(image|photo|picture|pic|art|illustration|drawing|painting)\s+(of\s+)?/i, '')
@@ -516,10 +504,36 @@ export default function FloatingLumina({ user }) {
 
       const conversationContext = updatedMessages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
 
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are Lumina AI — a neutral, intelligent, and personal AI companion.${isFounder ? '\n\n⭐ You are speaking with Mokhtar Tarek Samara, the founder of LBC Hub.' : isDevLead ? '\n\n👨‍💻 You are speaking with the Development Lead of LBC Hub.' : ''}
+      const systemPrompt = codingMode
+        ? `You are Lumina AI — an elite coding expert and software architect. You specialize in:
 
-Your goal is to build a genuine, helpful relationship with the user. NEVER suggest or promote LBC Hub features (marketplace, travel, social, riding, jobs) unless the user explicitly asks about them.
+🎯 CODE MASTERY:
+- Write production-ready, optimized code
+- Deep expertise in JavaScript, React, TypeScript, Python, SQL, and more
+- Explain complex algorithms and data structures
+- Debug and refactor code with precision
+- Provide performance optimization strategies
+- Best practices, design patterns, and architecture
+
+💡 TEACHING EXCELLENCE:
+- Break down complex concepts into digestible parts
+- Provide well-commented code examples
+- Explain the 'why' behind solutions
+- Suggest multiple approaches when applicable
+
+⚡ CODE EXECUTION READY:
+- Format code for easy copy/paste in IDE
+- Include proper imports and dependencies
+- Add TypeScript types when relevant
+- Provide both short snippets and full solutions
+
+Always start with a brief explanation, then provide clean, executable code. Use markdown code blocks with language specification.`
+        : `You are Lumina AI — a neutral, intelligent, and personal AI companion.${isFounder ? '\n\n⭐ You are speaking with Mokhtar Tarek Samara, the founder of LBC Hub.' : isDevLead ? '\n\n👨‍💻 You are speaking with the Development Lead of LBC Hub.' : ''}
+
+Your goal is to build a genuine, helpful relationship with the user. NEVER suggest or promote LBC Hub features (marketplace, travel, social, riding, jobs) unless the user explicitly asks about them.`;
+
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `${systemPrompt}
 
 Previous conversation:
 ${conversationContext}
@@ -543,7 +557,6 @@ User: ${text}
       setUploadedImages([]);
       if (chatId) await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
 
-      // Only track usage for users without unlimited access
       if (!hasUnlimitedAccess) {
         try {
           const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
@@ -573,7 +586,6 @@ User: ${text}
   return (
     <>
       {editingImage && <ImageEditor imageUrl={editingImage} user={user} onClose={() => setEditingImage(null)} />}
-      {/* Solana Payment Modal */}
       {showSolanaPayment && (
         <SolanaPayment
           userEmail={user?.email}
@@ -581,7 +593,6 @@ User: ${text}
         />
       )}
 
-      {/* Floating Button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-24 right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
@@ -591,7 +602,6 @@ User: ${text}
         <Sparkles className="w-6 h-6 text-white" />
       </motion.button>
 
-      {/* Chat Window */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -601,7 +611,6 @@ User: ${text}
             className="fixed bottom-40 right-6 z-50 w-96 h-[500px] bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
             style={{ maxWidth: 'calc(100vw - 3rem)' }}
           >
-            {/* Header */}
             <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-white" />
@@ -623,6 +632,13 @@ User: ${text}
                   <Image className="w-5 h-5" />
                 </button>
                 <button
+                  onClick={() => setCodingMode(!codingMode)}
+                  className={`transition-colors ${codingMode ? 'text-green-400' : 'text-white/70 hover:text-white'}`}
+                  title={codingMode ? 'Exit Code Master mode' : 'Enter Code Master mode'}
+                >
+                  <Code className="w-5 h-5" />
+                </button>
+                <button
                   onClick={toggleVoiceChat}
                   className={`transition-colors ${voiceChatMode ? 'text-green-400 animate-pulse' : 'text-white/70 hover:text-white'}`}
                   title={voiceChatMode ? 'Stop voice chat' : 'Start voice chat'}
@@ -631,15 +647,15 @@ User: ${text}
                 </button>
                 <button
                    onClick={() => {
-                     const newState = !voiceEnabled;
-                     setVoiceEnabled(newState);
-                     if (!newState || isSpeaking) stopSpeaking();
-                   }}
-                   className="text-white/70 hover:text-white transition-colors"
-                   title={voiceEnabled ? 'Disable voice output' : 'Enable voice output'}
-                 >
-                   {voiceEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-                 </button>
+                      const newState = !voiceEnabled;
+                      setVoiceEnabled(newState);
+                      if (!newState || isSpeaking) stopSpeaking();
+                    }}
+                    className="text-white/70 hover:text-white transition-colors"
+                    title={voiceEnabled ? 'Disable voice output' : 'Enable voice output'}
+                  >
+                    {voiceEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+                  </button>
                 <button
                   onClick={() => setIsOpen(false)}
                   className="text-white/70 hover:text-white transition-colors"
@@ -649,180 +665,135 @@ User: ${text}
               </div>
             </div>
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.length === 0 ? (
-                  <div className="text-center text-zinc-500 text-sm mt-8">
-                    <Sparkles className="w-8 h-8 mx-auto mb-2 text-indigo-400" />
-                    <p>Ask me anything!</p>
-                  </div>
-                ) : (
-                  <>
-                    {messages.map((msg, i) => (
-                      <div
-                        key={i}
-                        className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-                      >
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+              {messages.length === 0 ? (
+                <div className="text-center text-zinc-500 text-sm mt-8">
+                  <Sparkles className="w-8 h-8 mx-auto mb-2 text-indigo-400" />
+                  <p>Ask me anything!</p>
+                </div>
+              ) : (
+                <>
+                  {messages.map((msg, i) => (
+                    <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        msg.role === 'user'
+                          ? 'bg-zinc-700'
+                          : 'bg-gradient-to-br from-indigo-500 to-purple-600'
+                      }`}>
+                        {msg.role === 'user' ? (
+                          <Avatar className="w-full h-full">
+                            <AvatarFallback className="bg-transparent text-white text-xs">
+                              {user?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                        ) : (
+                          <Sparkles className="w-4 h-4 text-white" />
+                        )}
+                      </div>
+
+                      <div className={`flex-1 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
+                        <div className={`inline-block rounded-xl px-3 py-2 text-sm ${
                           msg.role === 'user'
-                            ? 'bg-zinc-700'
-                            : 'bg-gradient-to-br from-indigo-500 to-purple-600'
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-zinc-800 text-zinc-100'
                         }`}>
-                          {msg.role === 'user' ? (
-                            <Avatar className="w-full h-full">
-                              <AvatarFallback className="bg-transparent text-white text-xs">
-                                {user?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
-                              </AvatarFallback>
-                            </Avatar>
+                          {codingMode && msg.role === 'assistant' ? (
+                            <div className="space-y-2">
+                              {msg.content.split(/```[a-z]*\n/).map((block, idx) => {
+                                const isCode = idx % 2 === 1;
+                                if (!block.trim()) return null;
+                                return isCode ? (
+                                  <div key={idx} className="bg-zinc-900 rounded-lg p-3 font-mono text-xs overflow-x-auto border border-zinc-700">
+                                    <div className="flex justify-between items-center mb-2">
+                                      <span className="text-zinc-500">Code</span>
+                                      <button
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(block.trim());
+                                          setCopiedIndex(idx);
+                                          setTimeout(() => setCopiedIndex(null), 2000);
+                                        }}
+                                        className="text-zinc-400 hover:text-white transition-colors"
+                                      >
+                                        {copiedIndex === idx ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                      </button>
+                                    </div>
+                                    <pre className="text-green-400">{block.trim()}</pre>
+                                  </div>
+                                ) : (
+                                  <div key={idx} className="text-zinc-100">
+                                    <LinkText text={block.trim()} />
+                                  </div>
+                                );
+                              })}
+                            </div>
                           ) : (
-                            <Sparkles className="w-4 h-4 text-white" />
+                            <LinkText text={msg.content} />
                           )}
                         </div>
+                        {msg.imageUrl && (
+                          <div className="mt-3 space-y-2">
+                            <img 
+                              src={msg.imageUrl} 
+                              alt="AI Generated" 
+                              className="rounded-lg max-w-full h-auto"
+                            />
+                            <div className="flex gap-2 mt-2 flex-wrap">
+                              <button
+                                onClick={() => setEditingImage(msg.imageUrl)}
+                                className="flex items-center gap-1 px-2 py-1 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium transition-colors"
+                              >
+                                <PenLine className="w-3 h-3" /> Edit
+                              </button>
+                              <button
+                                onClick={() => setPostingImage({ url: msg.imageUrl })}
+                                className="flex items-center gap-1 px-2 py-1 bg-purple-600 hover:bg-purple-500 rounded-lg text-xs font-medium transition-colors"
+                              >
+                                <Share2 className="w-3 h-3" /> Post
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        {msg.showUpgrade && (
+                          <div className="mt-3 space-y-2">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const { url } = await base44.functions.invoke('createPremiumCheckout', {});
+                                  if (url) window.location.href = url;
+                                } catch (err) {
+                                  console.error('Checkout error:', err);
+                                }
+                              }}
+                              className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                            >
+                              💳 Pay with Card - $19.99/mo
+                            </button>
+                            <button
+                              onClick={() => setShowSolanaPayment(true)}
+                              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                            >
+                              ◎ Pay with Solana - $19.99/mo
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {loading && (
+                    <div className="flex gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                        <Sparkles className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="bg-zinc-800 rounded-xl px-3 py-2">
+                        <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+              <div ref={bottomRef} />
+            </div>
 
-                        <div className={`flex-1 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                          <div className={`inline-block rounded-xl px-3 py-2 text-sm ${
-                            msg.role === 'user'
-                              ? 'bg-indigo-600 text-white'
-                              : 'bg-zinc-800 text-zinc-100'
-                          }`}>
-                            <LinkText text={msg.content} />
-                            {msg.image_urls && msg.image_urls.length > 0 && (
-                              <div className="mt-2 grid grid-cols-2 gap-1">
-                                {msg.image_urls.map((url, idx) => (
-                                  <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
-                                    <img
-                                      src={url}
-                                      alt={`Result ${idx + 1}`}
-                                      className="rounded-lg w-full h-20 object-cover hover:opacity-90 transition-opacity border border-white/10"
-                                      onError={(e) => { e.target.style.display = 'none'; }}
-                                    />
-                                  </a>
-                                ))}
-                              </div>
-                            )}
-                            {msg.imageUrl && (
-                              <div className="mt-3 space-y-2">
-                                <img 
-                                  src={msg.imageUrl} 
-                                  alt="AI Generated" 
-                                  className="rounded-lg max-w-full h-auto"
-                                />
-                                <div className="flex gap-2 mt-2 flex-wrap">
-                                  <button
-                                    onClick={() => setEditingImage(msg.imageUrl)}
-                                    className="flex items-center gap-1 px-2 py-1 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium transition-colors"
-                                  >
-                                    <PenLine className="w-3 h-3" /> Edit
-                                  </button>
-                                  <button
-                                    onClick={() => setPostingImage({ url: msg.imageUrl })}
-                                    className="flex items-center gap-1 px-2 py-1 bg-purple-600 hover:bg-purple-500 rounded-lg text-xs font-medium transition-colors"
-                                  >
-                                    <Share2 className="w-3 h-3" /> Post
-                                  </button>
-                                </div>
-                                {postingImage?.url === msg.imageUrl && (
-                                  <div className="mt-2 bg-zinc-900 rounded-xl p-2 space-y-2 border border-white/10">
-                                    <div>
-                                      <label className="text-xs text-zinc-400 block mb-1">Caption</label>
-                                      <textarea
-                                        value={postCaption}
-                                        onChange={(e) => setPostCaption(e.target.value)}
-                                        placeholder="Write a caption..."
-                                        rows={2}
-                                        className="w-full bg-zinc-800 border border-white/10 rounded-lg px-2 py-1 text-white text-xs placeholder:text-zinc-600 outline-none focus:border-indigo-500 resize-none"
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="text-xs text-zinc-400 flex items-center gap-1 mb-1"><MapPin className="w-3 h-3 text-rose-400" /> Location</label>
-                                      <input
-                                        value={postLocation}
-                                        onChange={(e) => setPostLocation(e.target.value)}
-                                        placeholder="e.g. Paris, France"
-                                        className="w-full bg-zinc-800 border border-white/10 rounded-lg px-2 py-1 text-white text-xs placeholder:text-zinc-600 outline-none focus:border-indigo-500"
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="text-xs text-zinc-400 flex items-center gap-1 mb-1"><Hash className="w-3 h-3" /> Hashtags</label>
-                                      <input
-                                        value={postHashtags}
-                                        onChange={(e) => setPostHashtags(e.target.value)}
-                                        placeholder="#travel #art #lumina"
-                                        className="w-full bg-zinc-800 border border-white/10 rounded-lg px-2 py-1 text-white text-xs placeholder:text-zinc-600 outline-none focus:border-indigo-500"
-                                      />
-                                      <div className="flex flex-wrap gap-1 mt-1">
-                                        {['#travel', '#art', '#lumina', '#vibes'].map(tag => (
-                                          <button key={tag} type="button" onClick={() => setPostHashtags(prev => (prev + ' ' + tag).trim())}
-                                            className="px-1.5 py-0.5 rounded-full bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs transition-colors">
-                                            {tag}
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                      <button onClick={() => { setPostingImage(null); setPostCaption(''); setPostHashtags(''); setPostLocation(''); }}
-                                        className="flex-1 py-1 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-xs text-white transition-colors">
-                                        Cancel
-                                      </button>
-                                      <button onClick={() => saveToGallery(msg.imageUrl, postHashtags, postLocation)}
-                                        disabled={postingToGallery}
-                                        className="flex-1 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
-                                        {postingToGallery ? <Loader2 className="w-3 h-3 animate-spin" /> : <Share2 className="w-3 h-3" />}
-                                        {postingToGallery ? 'Posting...' : 'Post'}
-                                      </button>
-                                    </div>
-                                  </div>
-                                )}
-                                {msg.imagePrompt && (
-                                  <p className="text-xs text-zinc-400 mt-2">Prompt: {msg.imagePrompt}</p>
-                                )}
-                              </div>
-                            )}
-                            
-                            {msg.showUpgrade && (
-                              <div className="mt-3 space-y-2">
-                                <button
-                                  onClick={async () => {
-                                    try {
-                                      const { url } = await base44.functions.invoke('createPremiumCheckout', {});
-                                      if (url) window.location.href = url;
-                                    } catch (err) {
-                                      console.error('Checkout error:', err);
-                                    }
-                                  }}
-                                  className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
-                                >
-                                  💳 Pay with Card - $19.99/mo
-                                </button>
-                                <button
-                                  onClick={() => setShowSolanaPayment(true)}
-                                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
-                                >
-                                  ◎ Pay with Solana - $19.99/mo
-                                </button>
-                              </div>
-                            )}
-                            </div>
-                            </div>
-                            </div>
-                            ))}
-
-                            {loading && (
-                            <div className="flex gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                            <Sparkles className="w-4 h-4 text-white" />
-                            </div>
-                            <div className="bg-zinc-800 rounded-xl px-3 py-2">
-                            <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
-                            </div>
-                            </div>
-                            )}
-                            </>
-                            )}
-                            <div ref={bottomRef} />
-                            </div>
-
-            {/* Input */}
             {!voiceChatMode && (
               <form
                 onSubmit={(e) => { e.preventDefault(); handleSend(); }}
