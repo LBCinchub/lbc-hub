@@ -10,9 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format } from 'date-fns';
 import RichText from './RichText';
+import LuminaStreakBadge from './LuminaStreakBadge';
 
 export default function PostCard({ post, user, onDmUser, onViewProfile, onHashtagClick }) {
   const [showComments, setShowComments] = useState(false);
+  const [authorStreak, setAuthorStreak] = useState(null);
   const [commentText, setCommentText] = useState('');
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editText, setEditText] = useState('');
@@ -68,6 +70,14 @@ export default function PostCard({ post, user, onDmUser, onViewProfile, onHashta
       observer.disconnect();
     };
   }, [post.media_type]);
+
+  useEffect(() => {
+    if (post.author_email) {
+      base44.entities.LuminaStreak.filter({ user_email: post.author_email }).then(records => {
+        if (records.length > 0) setAuthorStreak(records[0]);
+      }).catch(() => {});
+    }
+  }, [post.author_email]);
 
   const postUrl = `${window.location.origin}${createPageUrl('Social')}`;
 
@@ -328,12 +338,13 @@ Provide a brief analysis in JSON format:
             <div className="flex items-center justify-between mb-2">
               <div className="flex-1 min-w-0">
                 <button
-                  onClick={() => onViewProfile?.({ email: post.author_email, full_name: post.author_name, avatar_url: post.author_avatar })}
-                  className="text-sm sm:text-base font-semibold hover:text-indigo-400 transition-colors truncate block"
-                >
-                  {post.author_name || 'Anonymous'}
-                </button>
-                <p className="text-[10px] sm:text-xs text-zinc-500">{format(new Date(post.created_date), 'MMM d, h:mm a')}</p>
+                   onClick={() => onViewProfile?.({ email: post.author_email, full_name: post.author_name, avatar_url: post.author_avatar })}
+                   className="text-sm sm:text-base font-semibold hover:text-indigo-400 transition-colors truncate block"
+                 >
+                   {post.author_name || 'Anonymous'}
+                 </button>
+                 {authorStreak && <div className="mt-1"><LuminaStreakBadge streak={authorStreak.current_streak} sparks={authorStreak.total_sparks} compact /></div>}
+                 <p className="text-[10px] sm:text-xs text-zinc-500">{format(new Date(post.created_date), 'MMM d, h:mm a')}</p>
               </div>
               {user && post.author_email !== user.email && (
                 <Button
