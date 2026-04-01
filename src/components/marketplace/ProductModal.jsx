@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import SolanaCheckout from './SolanaCheckout';
 import ProductSalesAnalytics from './ProductSalesAnalytics';
+import SellerProfileModal from './SellerProfileModal';
 
 function StarPicker({ value, onChange }) {
   const [hovered, setHovered] = useState(0);
@@ -198,6 +199,7 @@ export default function ProductModal({ product, user, onClose }) {
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
   const [showSolanaCheckout, setShowSolanaCheckout] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showSellerProfile, setShowSellerProfile] = useState(false);
   const [sellerData, setSellerData] = useState(null);
 
   const isSeller = user && product.seller_email === user.email;
@@ -255,6 +257,14 @@ export default function ProductModal({ product, user, onClose }) {
       {showAnalytics && (
         <ProductSalesAnalytics product={product} onClose={() => setShowAnalytics(false)} />
       )}
+      {showSellerProfile && (
+        <SellerProfileModal
+          sellerEmail={product.seller_email}
+          sellerName={product.seller_name}
+          currentUser={user}
+          onClose={() => setShowSellerProfile(false)}
+        />
+      )}
       <AnimatePresence>
       {showSolanaCheckout && user && (
         <SolanaCheckout
@@ -303,7 +313,17 @@ export default function ProductModal({ product, user, onClose }) {
                 <h2 className="text-2xl font-bold">{product.name}</h2>
                 <span className="text-2xl font-bold gradient-text flex-shrink-0">${product.price}</span>
               </div>
-              {product.seller_name && <p className="text-sm text-zinc-400">Sold by <span className="text-indigo-400">{product.seller_name}</span></p>}
+              {product.seller_name && (
+                <p className="text-sm text-zinc-400">
+                  Sold by{' '}
+                  <button
+                    onClick={() => setShowSellerProfile(true)}
+                    className="text-indigo-400 hover:text-indigo-300 hover:underline transition-colors cursor-pointer"
+                  >
+                    {product.seller_name}
+                  </button>
+                </p>
+              )}
               {avgRating && (
                 <div className="flex items-center gap-2 mt-2">
                   <div className="flex gap-0.5">
