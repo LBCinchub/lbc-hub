@@ -465,25 +465,71 @@ export default function FloatingLumina({ user }) {
     setLoading(true);
 
     try {
-      const imageKeywords = /\b(generate|create|make|draw|paint|design)\b[^.!?]*\b(image|photo|picture|pic|art|illustration|drawing|painting)\b/i;
+      const imageKeywords = /\b(generate|create|make|draw|paint|design|improve|enhance|better|upgrade|refine)\b[^.!?]*\b(image|photo|picture|pic|art|illustration|drawing|painting)\b/i;
+      const enhanceKeywords = /\b(improve|enhance|better|upgrade|refine|fix|higher quality|better quality|make better|edit)\b/i;
       const isImageRequest = imageKeywords.test(text);
+      const isEnhanceRequest = enhanceKeywords.test(text) && uploadedImages.length > 0;
 
       if (isImageRequest) {
         const subject = text
-          .replace(/^(please\s+)?(can you\s+)?(generate|create|make|draw|paint|design)\s+(me\s+)?(a\s+|an\s+)?/i, '')
+          .replace(/^(please\s+)?(can you\s+)?(generate|create|make|draw|paint|design|improve|enhance|better|upgrade)\s+(me\s+)?(a\s+|an\s+)?/i, '')
           .replace(/^(image|photo|picture|pic|art|illustration|drawing|painting)\s+(of\s+)?/i, '')
           .trim() || text;
 
         const loadingMsg = { role: 'assistant', content: '🎨 Generating your image...', isImageLoading: true };
         setMessages(prev => [...prev, loadingMsg]);
 
-        const imageResult = await base44.integrations.Core.GenerateImage({ prompt: subject });
+        let finalPrompt = '';
+
+        if (isEnhanceRequest && uploadedImages.length > 0) {
+          // Professional image enhancement prompt
+          finalPrompt = await base44.integrations.Core.InvokeLLM({
+            prompt: `You are an expert image enhancement specialist. Create a hyper-detailed, professional image enhancement prompt that improves the uploaded reference image while maintaining its exact same angle, perspective, and composition. 
+
+User request: "${subject}"
+
+Create a prompt that:
+1. Maintains the EXACT SAME camera angle, perspective, and framing
+2. Enhances quality, detail, lighting, and clarity
+3. Improves color grading and professional finishing
+4. Preserves the original scene's recognizable elements
+5. Uses professional photography/cinematography terminology
+
+Make it extremely detailed and specific (200-300 words). Start with the exact perspective and composition details.`,
+            file_urls: uploadedImages,
+            model: 'gemini_3_flash'
+          });
+        } else {
+          // Advanced creative image generation prompt
+          finalPrompt = await base44.integrations.Core.InvokeLLM({
+            prompt: `You are an elite AI art director. Create an exceptionally detailed, vivid, and sophisticated image generation prompt (250-300 words) based on: "${subject}"
+
+Your prompt should:
+1. Include specific camera angles, lens types, and cinematography techniques
+2. Detail professional lighting setups (key light, fill light, backlighting)
+3. Specify color grading, mood, and atmosphere with emotional depth
+4. Describe textures, materials, and fine details
+5. Use art direction terminology (golden hour, rule of thirds, depth of field, etc.)
+6. Include quality descriptors (award-winning, museum-quality, professional, cinematic)
+7. Reference artistic styles or photographers when relevant
+
+Create something that would impress a professional photographer or art director.`,
+            model: 'gemini_3_flash'
+          });
+        }
+
+        const imageResult = await base44.integrations.Core.GenerateImage({ 
+          prompt: finalPrompt,
+          existing_image_urls: uploadedImages.length > 0 ? uploadedImages : undefined
+        });
 
         const imageMsg = {
           role: 'assistant',
-          content: `✨ Here's your image:`,
+          content: isEnhanceRequest ? `✨ Here's your enhanced image (same view)!` : `✨ Here's your generated image:`,
           imageUrl: imageResult.url,
-          imagePrompt: subject,
+          imagePrompt: finalPrompt,
+          isEnhanced: isEnhanceRequest,
+          isAIGenerated: true,
           timestamp: new Date().toISOString()
         };
 
@@ -714,11 +760,25 @@ User: ${text}
                         </div>
                         {msg.imageUrl && (
                           <div className="mt-3 space-y-2">
-                            <img 
-                              src={msg.imageUrl} 
-                              alt="AI Generated" 
-                              className="rounded-lg max-w-full h-auto"
-                            />
+                            <div className="relative inline-block">
+                              <img 
+                                src={msg.imageUrl} 
+                                alt="AI Generated" 
+                                className="rounded-lg max-w-full h-auto border border-white/10"
+                              />
+                              <div className="absolute top-2 right-2 flex gap-1">
+                                {msg.isEnhanced && (
+                                  <span className="px-2 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full flex items-center gap-1">
+                                    ✨ Enhanced
+                                  </span>
+                                )}
+                                {msg.isAIGenerated && (
+                                  <span className="px-2 py-1 bg-purple-600 text-white text-xs font-semibold rounded-full flex items-center gap-1">
+                                    🤖 AI Generated
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                             <div className="flex gap-2 mt-2 flex-wrap">
                               <button
                                 onClick={() => setEditingImage(msg.imageUrl)}
