@@ -900,16 +900,15 @@ User: ${text}`,
               <div className="flex items-center gap-3 glass rounded-2xl p-3 border border-white/10">
                 <button
                   type="button"
-                  onClick={toggleListening}
-                  disabled={loading}
+                  onClick={toggleVoiceChat}
                   className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                    isListening 
-                      ? 'bg-red-500 animate-pulse' 
+                    voiceChatMode
+                      ? 'bg-green-500 animate-pulse'
                       : 'bg-zinc-700 hover:bg-zinc-600'
-                  } disabled:opacity-40`}
-                  title={isListening ? 'Stop listening' : 'Voice input'}
+                  }`}
+                  title={voiceChatMode ? 'Stop voice chat' : 'Start live voice chat'}
                 >
-                  {isListening ? <MicOff className="w-5 h-5 text-white" /> : <Mic className="w-5 h-5 text-white" />}
+                  {voiceChatMode ? <Mic className="w-5 h-5 text-white" /> : <Mic className="w-5 h-5 text-white" />}
                 </button>
                 <input
                   ref={fileInputRef}
