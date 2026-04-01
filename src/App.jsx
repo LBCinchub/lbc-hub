@@ -12,6 +12,7 @@ import LuminaAI from './pages/LuminaAI';
 import Settings from './pages/Settings';
 import Challenges from './pages/Challenges';
 import Analytics from './pages/Analytics';
+import Gallery from './pages/Gallery';
 import { useEffect } from 'react';
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -92,6 +93,11 @@ const AuthenticatedApp = () => {
       <Route path="/Analytics" element={
         <LayoutWrapper currentPageName="Analytics">
           <Analytics />
+        </LayoutWrapper>
+      } />
+      <Route path="/Gallery" element={
+        <LayoutWrapper currentPageName="Gallery">
+          <Gallery />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />
