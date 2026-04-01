@@ -101,7 +101,7 @@ export default function CreatePost({ user, onGoLive }) {
   };
 
   const createMutation = useMutation({
-    mutationFn: async ({ text, mediaType }) => {
+    mutationFn: async ({ text, mediaType, mood, location }) => {
       let mediaUrls = [];
       if (mediaFiles.length > 0) {
         setUploading(true);
@@ -109,7 +109,9 @@ export default function CreatePost({ user, onGoLive }) {
         mediaUrls = uploads.map(u => u.file_url);
         setUploading(false);
       }
-      const fullText = text + (mood ? ` — feeling ${mood.emoji} ${mood.label}` : '') + (location ? ` 📍 ${location}` : '');
+      const moodSuffix = mood ? ` — feeling ${mood.emoji} ${mood.label}` : '';
+      const locationSuffix = location ? ` 📍 ${location}` : '';
+      const fullText = text + moodSuffix + locationSuffix;
       const post = await base44.entities.Post.create({
         content: fullText,
         trip_id: tripPreview?.id || undefined,
@@ -147,7 +149,7 @@ export default function CreatePost({ user, onGoLive }) {
 
   const handlePost = () => {
     if (!text.trim() && mediaFiles.length === 0) return;
-    createMutation.mutate({ text, mediaType });
+    createMutation.mutate({ text, mediaType, mood, location });
   };
 
   const handleGallerySelect = (selectedItems) => {
