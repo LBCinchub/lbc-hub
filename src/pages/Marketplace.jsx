@@ -35,6 +35,7 @@ export default function Marketplace() {
   const [showDashboard, setShowDashboard] = useState(false);
   const [openAddListing, setOpenAddListing] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedSeller, setSelectedSeller] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -47,13 +48,15 @@ export default function Marketplace() {
 
   const allProducts = products.length > 0 ? products : demoProducts;
 
-  const displayProducts = allProducts.filter(p => {
-    const matchesCategory = activeCategory === 'all' || p.category === activeCategory;
-    const matchesSearch = !searchQuery ||
-      p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const displayProducts = selectedSeller 
+    ? allProducts.filter(p => p.seller_name === selectedSeller)
+    : allProducts.filter(p => {
+        const matchesCategory = activeCategory === 'all' || p.category === activeCategory;
+        const matchesSearch = !searchQuery ||
+          p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.description?.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesSearch;
+      });
 
   return (
     <div className="min-h-screen bg-zinc-950 py-8 px-4">
@@ -122,8 +125,19 @@ export default function Marketplace() {
           </div>
         </motion.div>
 
+        {/* Seller Header */}
+        {selectedSeller && (
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-2xl p-6 mb-8 flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">{selectedSeller}'s Storefront</h2>
+              <p className="text-zinc-400 mt-1">{displayProducts.length} item{displayProducts.length !== 1 ? 's' : ''}</p>
+            </div>
+            <Button onClick={() => setSelectedSeller(null)} variant="outline" className="border-white/20">Back to All</Button>
+          </motion.div>
+        )}
+
         {/* Products Grid */}
-        {isLoading ? (
+         {isLoading ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="glass rounded-2xl overflow-hidden animate-pulse">
@@ -181,7 +195,7 @@ export default function Marketplace() {
                     {product.name}
                   </h3>
                   {product.seller_name && (
-                    <p className="text-xs text-zinc-500 mb-2">by {product.seller_name}</p>
+                    <button onClick={(e) => { e.stopPropagation(); setSelectedSeller(product.seller_name); }} className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors mb-2 block">by {product.seller_name}</button>
                   )}
                   {(product.avg_rating > 0 || product.review_count > 0) && (
                     <div className="flex items-center gap-1.5 mb-2">
