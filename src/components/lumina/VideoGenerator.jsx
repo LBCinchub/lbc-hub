@@ -68,19 +68,22 @@ export default function VideoGenerator({ onClose }) {
         )}
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 opacity-50">
+        <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-yellow-500/20 border border-yellow-500/50 rounded-lg px-4 py-2 text-yellow-300 text-sm font-medium whitespace-nowrap">
+          Coming Soon
+        </div>
         <Input
           placeholder="e.g., 'A cinematic journey through Tokyo neon streets at night'..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleGenerate()}
           className="bg-slate-700 border-slate-600 text-white placeholder-slate-500"
-          disabled={loading}
+          disabled={true}
         />
         
         <Button
           onClick={handleGenerate}
-          disabled={loading}
+          disabled={true}
           className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
         >
           {loading ? (
