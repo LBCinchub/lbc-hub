@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
+import ProductSalesAnalytics from './ProductSalesAnalytics';
+import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Package, MessageSquare, TrendingUp,
   Plus, Pencil, Trash2, X, Star, DollarSign, ShoppingBag,
@@ -118,6 +120,7 @@ export default function SellerDashboard({ user, onClose, openAddListing = false 
   const [editingProduct, setEditingProduct] = useState(null);
   const [creatingNew, setCreatingNew] = useState(openAddListing);
   const [replyText, setReplyText] = useState({});
+  const [analyticsProduct, setAnalyticsProduct] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: myProducts = [] } = useQuery({
@@ -173,6 +176,7 @@ export default function SellerDashboard({ user, onClose, openAddListing = false 
   ];
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -308,6 +312,9 @@ export default function SellerDashboard({ user, onClose, openAddListing = false 
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          <button onClick={() => setAnalyticsProduct(product)} className="p-2 hover:bg-indigo-500/20 rounded-lg transition-colors text-zinc-400 hover:text-indigo-400" title="View Sales Analytics">
+                            <TrendingUp className="w-4 h-4" />
+                          </button>
                           <button onClick={() => setEditingProduct(product.id)} className="p-2 hover:bg-white/10 rounded-lg transition-colors text-zinc-400 hover:text-white">
                             <Pencil className="w-4 h-4" />
                           </button>
@@ -485,5 +492,15 @@ export default function SellerDashboard({ user, onClose, openAddListing = false 
         </div>
       </motion.div>
     </motion.div>
+
+    <AnimatePresence>
+      {analyticsProduct && (
+        <ProductSalesAnalytics
+          product={analyticsProduct}
+          onClose={() => setAnalyticsProduct(null)}
+        />
+      )}
+    </AnimatePresence>
+    </>
   );
 }
