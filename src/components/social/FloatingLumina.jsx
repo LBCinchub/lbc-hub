@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Send, Loader2, Minimize2, Mic, MicOff, Volume2, VolumeX, Image, PenLine, Upload, MapPin, Hash, Share2, Code, Copy, Check } from 'lucide-react';
+import { Sparkles, X, Send, Loader2, Minimize2, Image, PenLine, Upload, MapPin, Hash, Share2, Code, Copy, Check } from 'lucide-react';
 import LuminaStreakBadge from './LuminaStreakBadge';
 import ImageEditor from '../social/ImageEditor';
 import LinkText from '../ui/LinkText';
@@ -17,9 +17,7 @@ export default function FloatingLumina({ user }) {
   const [usageLimit] = useState(30);
   const [chatId, setChatId] = useState(null);
   const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const [voiceChatMode, setVoiceChatMode] = useState(false);
+
   const [showSolanaPayment, setShowSolanaPayment] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [uploadedImages, setUploadedImages] = useState([]);
@@ -128,150 +126,9 @@ export default function FloatingLumina({ user }) {
     }
   }, [messages]);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = true;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'en-US';
 
-      recognitionRef.current.onresult = (event) => {
-        const transcript = event.results[event.results.length - 1][0].transcript;
-        if (voiceChatMode) {
-          handleSend(transcript);
-        } else {
-          setInput(transcript);
-          setIsListening(false);
-        }
-      };
 
-      recognitionRef.current.onerror = () => {
-        if (!voiceChatMode) setIsListening(false);
-      };
 
-      recognitionRef.current.onend = () => {
-        if (voiceChatMode && !isSpeaking) {
-          try {
-            recognitionRef.current.start();
-            setIsListening(true);
-          } catch (err) {
-            console.error('Recognition restart error:', err);
-          }
-        } else {
-          setIsListening(false);
-        }
-      };
-    }
-
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      window.speechSynthesis.cancel();
-    };
-  }, [voiceChatMode]);
-
-  const toggleListening = async () => {
-    if (!recognitionRef.current) {
-      alert('Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari.');
-      return;
-    }
-
-    if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    } else {
-      try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (error) {
-        alert('Microphone access denied. Please allow microphone permissions in your browser settings.');
-        console.error('Microphone error:', error);
-      }
-    }
-  };
-
-  const toggleVoiceChat = async () => {
-    if (!recognitionRef.current) {
-      alert('Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari.');
-      return;
-    }
-
-    if (voiceChatMode) {
-      recognitionRef.current.stop();
-      window.speechSynthesis.cancel();
-      setVoiceChatMode(false);
-      setIsListening(false);
-      setIsSpeaking(false);
-    } else {
-      try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        setVoiceChatMode(true);
-        setVoiceEnabled(true);
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (error) {
-        alert('Microphone access denied. Please allow microphone permissions in your browser settings.');
-        console.error('Microphone error:', error);
-      }
-    }
-  };
-
-  const speakText = (text) => {
-    if (!voiceEnabled || !text) return;
-
-    if (isListening && recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (err) {
-        console.error('Stop recognition error:', err);
-      }
-      setIsListening(false);
-    }
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      if (voiceChatMode && recognitionRef.current) {
-        setTimeout(() => {
-          try {
-            recognitionRef.current.start();
-            setIsListening(true);
-          } catch (err) {
-            console.error('Failed to restart recognition:', err);
-          }
-        }, 500);
-      }
-    };
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-      if (voiceChatMode && recognitionRef.current) {
-        setTimeout(() => {
-          try {
-            recognitionRef.current.start();
-            setIsListening(true);
-          } catch (err) {
-            console.error('Failed to restart recognition:', err);
-          }
-        }, 500);
-      }
-    };
-
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const stopSpeaking = () => {
-    window.speechSynthesis.cancel();
-    setIsSpeaking(false);
-  };
 
   const handleGenerateImage = async () => {
     if (generatingImage) return;
@@ -288,7 +145,6 @@ export default function FloatingLumina({ user }) {
         showUpgrade: true
       };
       setMessages(prev => [...prev, errorMessage]);
-      if (voiceEnabled) speakText('Daily limit reached. Upgrade to Premium for unlimited access.');
       return;
     }
 
@@ -454,14 +310,13 @@ export default function FloatingLumina({ user }) {
         showUpgrade: true
       };
       setMessages(prev => [...prev, errorMessage]);
-      if (voiceEnabled) speakText('Daily limit reached. Upgrade to Premium for unlimited access.');
       return;
     }
 
     const userMessage = { role: 'user', content: text, timestamp: new Date().toISOString() };
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
-    if (!voiceChatMode) setInput('');
+    setInput('');
     setLoading(true);
 
     try {
@@ -836,25 +691,7 @@ User: ${text}
               <div ref={bottomRef} />
             </div>
 
-            {voiceChatMode && (
-              <div className="glass rounded-xl p-2 border border-green-500/30 bg-green-500/10 mx-2 mt-2">
-                <div className="flex items-center justify-between gap-2 text-green-400">
-                  <div className="flex items-center gap-2">
-                    <Mic className="w-4 h-4 animate-pulse" />
-                    <div className="text-xs">
-                      <p className="font-semibold">Voice Chat Active</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={toggleVoiceChat}
-                    className="flex-shrink-0 w-6 h-6 rounded-lg bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
-                    title="Stop voice chat"
-                  >
-                    <X className="w-3 h-3 text-white" />
-                  </button>
-                </div>
-              </div>
-            )}
+
 
             <form
               onSubmit={(e) => { e.preventDefault(); handleSend(); }}
@@ -877,18 +714,6 @@ User: ${text}
                   </div>
                 )}
                 <div className="flex items-center gap-2 bg-zinc-800 rounded-xl p-2">
-                  <button
-                    type="button"
-                    onClick={toggleVoiceChat}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-                      voiceChatMode
-                        ? 'bg-green-500 animate-pulse'
-                        : 'bg-zinc-700 hover:bg-zinc-600'
-                    }`}
-                    title={voiceChatMode ? 'Stop voice chat' : 'Start live voice chat'}
-                  >
-                    <Mic className="w-4 h-4 text-white" />
-                  </button>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -910,7 +735,7 @@ User: ${text}
                   <input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder={isListening ? 'Listening...' : 'Ask Lumina or use voice...'}
+                    placeholder="Ask Lumina..."
                     disabled={loading}
                     className="flex-1 bg-transparent text-white placeholder:text-zinc-600 outline-none text-sm"
                   />
