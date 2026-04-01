@@ -16,7 +16,7 @@ export default function FloatingLumina({ user }) {
   const [chatId, setChatId] = useState(null);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [voiceChatMode, setVoiceChatMode] = useState(false);
   const [showSolanaPayment, setShowSolanaPayment] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
@@ -282,8 +282,6 @@ export default function FloatingLumina({ user }) {
       
       setMessages(prev => [...prev.filter(m => !m.isImageLoading), imageMessage]);
       
-      if (voiceEnabled) speakText('Your image is ready!');
-
       // Auto-post to social feed
       try {
         await base44.entities.Post.create({
@@ -453,7 +451,6 @@ export default function FloatingLumina({ user }) {
         const finalMessages = [...updatedMessages, imageMsg];
         setMessages(prev => [...prev.filter(m => !m.isImageLoading), imageMsg]);
         setUploadedImages([]);
-        if (voiceEnabled && !isSpeaking) speakText('Your image is ready!');
         if (chatId) await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
         if (!hasUnlimitedAccess) {
           const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email }).catch(() => []);
@@ -493,7 +490,6 @@ User: ${text}
       const finalMessages = [...updatedMessages, aiMessage];
       setMessages(finalMessages);
       setUploadedImages([]);
-      if (voiceEnabled && !isSpeaking) speakText(response.text || response);
       if (chatId) await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
 
       // Only track usage for users without unlimited access
