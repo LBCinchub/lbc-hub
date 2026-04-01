@@ -12,7 +12,7 @@ export default function FloatingLumina({ user }) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [usageCount, setUsageCount] = useState(0);
-  const [usageLimit] = useState(100);
+  const [usageLimit] = useState(30);
   const [chatId, setChatId] = useState(null);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -38,9 +38,9 @@ export default function FloatingLumina({ user }) {
           const usage = records[0];
           const lastReset = new Date(usage.last_reset);
           const now = new Date();
-          const hoursSinceReset = (now - lastReset) / (1000 * 60 * 60);
+          const isNewDay = lastReset.toDateString() !== now.toDateString();
           
-          if (hoursSinceReset >= 24) {
+          if (isNewDay) {
             await base44.entities.AIUsage.update(usage.id, { count: 0, last_reset: now.toISOString() });
             setUsageCount(0);
           } else {

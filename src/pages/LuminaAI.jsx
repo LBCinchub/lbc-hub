@@ -11,7 +11,7 @@ export default function LuminaAI() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
   const [usageCount, setUsageCount] = useState(0);
-  const [usageLimit] = useState(100); // 30 requests per day
+  const [usageLimit] = useState(30); // 30 requests per day
   const [chatId, setChatId] = useState(null);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -48,9 +48,9 @@ export default function LuminaAI() {
           const usage = records[0];
           const lastReset = new Date(usage.last_reset);
           const now = new Date();
-          const hoursSinceReset = (now - lastReset) / (1000 * 60 * 60);
+          const isNewDay = lastReset.toDateString() !== now.toDateString();
           
-          if (hoursSinceReset >= 24) {
+          if (isNewDay) {
             await base44.entities.AIUsage.update(usage.id, { count: 0, last_reset: now.toISOString() });
             setUsageCount(0);
           } else {
