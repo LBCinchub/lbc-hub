@@ -322,6 +322,8 @@ Provide a brief analysis in JSON format:
     },
   });
 
+  if (!post || !post.content) return null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
