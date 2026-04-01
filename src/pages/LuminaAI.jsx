@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import LuminaStreakBadge from '../components/social/LuminaStreakBadge';
+import VideoGenerator from '../components/lumina/VideoGenerator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, ArrowUp, ArrowDown, Image as ImageIcon, X, PenLine, MapPin, Hash, Share2 } from 'lucide-react';
 import ImageEditor from '../components/social/ImageEditor';
@@ -29,6 +30,7 @@ export default function LuminaAI() {
   const [postHashtags, setPostHashtags] = useState('');
   const [postLocation, setPostLocation] = useState('');
   const [postingToGallery, setPostingToGallery] = useState(false);
+  const [showVideoGenerator, setShowVideoGenerator] = useState(false);
   const bottomRef = useRef(null);
   const topRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -547,6 +549,17 @@ User: ${text}`,
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col">
       {editingImage && <ImageEditor imageUrl={editingImage} user={user} onClose={() => setEditingImage(null)} />}
+      {showVideoGenerator && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl">
+            <VideoGenerator />
+            <button onClick={() => setShowVideoGenerator(false)} className="mt-4 w-full p-3 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm transition-colors">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      {showVideoGenerator && <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div className="w-full max-w-2xl"><VideoGenerator /><button onClick={() => setShowVideoGenerator(false)} className="mt-4 w-full p-3 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm transition-colors">Close</button></div></div>}
       {/* Hero Header */}
       <div className="relative border-b border-white/5">
         <div className="absolute inset-0">
@@ -875,13 +888,21 @@ User: ${text}`,
             </form>
           )}
 
-          {/* Voice Controls */}
+          {/* Video & Voice Controls */}
           <div className="flex items-center justify-center gap-3 mt-3">
-            <button
-              onClick={handleGenerateImage}
-              disabled={generatingImage || !user}
-              className={`p-2 rounded-lg transition-colors text-xs flex items-center gap-2 ${generatingImage ? 'bg-purple-500/20 text-purple-400 animate-pulse' : 'bg-white/5 hover:bg-white/10 text-zinc-400'} disabled:opacity-50`}
-              title="Generate AI image from conversation"
+           <button
+             onClick={() => setShowVideoGenerator(!showVideoGenerator)}
+             className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-xs flex items-center gap-2 text-zinc-400"
+             title="Generate AI video"
+           >
+             <Sparkles className="w-4 h-4" />
+             <span>Generate Video</span>
+           </button>
+           <button
+             onClick={handleGenerateImage}
+             disabled={generatingImage || !user}
+             className={`p-2 rounded-lg transition-colors text-xs flex items-center gap-2 ${generatingImage ? 'bg-purple-500/20 text-purple-400 animate-pulse' : 'bg-white/5 hover:bg-white/10 text-zinc-400'} disabled:opacity-50`}
+             title="Generate AI image from conversation"
             >
               <ImageIcon className="w-4 h-4" />
               <span>{generatingImage ? 'Generating...' : 'Generate Image'}</span>
