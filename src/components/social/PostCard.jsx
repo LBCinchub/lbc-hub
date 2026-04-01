@@ -31,6 +31,8 @@ export default function PostCard({ post, user, onDmUser, onViewProfile, onHashta
   const [luminaLoading, setLuminaLoading] = useState(false);
   const [showLumina, setShowLumina] = useState(false);
   const [showPostMenu, setShowPostMenu] = useState(false);
+  const [isEditingPost, setIsEditingPost] = useState(false);
+  const [editedContent, setEditedContent] = useState(post.content);
   const queryClient = useQueryClient();
   const videoRef = useRef(null);
 
@@ -311,6 +313,15 @@ Provide a brief analysis in JSON format:
     },
   });
 
+  const editPostMutation = useMutation({
+    mutationFn: () => base44.entities.Post.update(post.id, { content: editedContent }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['myPosts'] });
+      setIsEditingPost(false);
+    },
+  });
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -380,7 +391,10 @@ Provide a brief analysis in JSON format:
                         exit={{ opacity: 0, scale: 0.9, y: 6 }}
                         className="absolute top-8 right-0 z-50 bg-zinc-800 border border-white/10 rounded-xl shadow-xl overflow-hidden min-w-[140px]"
                       >
-                        <button className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-white hover:bg-white/10 transition-colors">
+                        <button
+                          onClick={() => { setIsEditingPost(true); setShowPostMenu(false); }}
+                          className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-white hover:bg-white/10 transition-colors"
+                        >
                           <Edit className="w-4 h-4 text-blue-400" />
                           Edit
                         </button>
@@ -412,9 +426,38 @@ Provide a brief analysis in JSON format:
               </div>
             )}
 
-            <p className="text-sm sm:text-base text-zinc-200 mb-2">
-              <RichText text={post.content} onHashtagClick={onHashtagClick} />
-            </p>
+            {isEditingPost ? (
+              <div className="mb-4 flex flex-col gap-2">
+                <textarea
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-indigo-500 resize-none"
+                  rows={4}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-xs"
+                    onClick={() => editPostMutation.mutate()}
+                    disabled={editPostMutation.isPending || !editedContent.trim()}
+                  >
+                    {editPostMutation.isPending ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="flex-1 text-xs"
+                    onClick={() => { setIsEditingPost(false); setEditedContent(post.content); }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm sm:text-base text-zinc-200 mb-2">
+                <RichText text={post.content} onHashtagClick={onHashtagClick} />
+              </p>
+            )}
 
             {isLongPost && (
               <div className="mb-3">
