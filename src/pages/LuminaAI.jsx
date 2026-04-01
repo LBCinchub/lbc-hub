@@ -274,26 +274,65 @@ export default function LuminaAI() {
 
     const conversationContext = messages.slice(-5).map(m => m.content).join(' ');
     const imagePromptContext = conversationContext || 'creative artistic image';
+    const hasUploadedImages = uploadedImages.length > 0;
 
     setGeneratingImage(true);
     const loadingMessage = { role: 'assistant', content: '🎨 Generating image...', isImageLoading: true };
     setMessages(prev => [...prev, loadingMessage]);
 
     try {
-      const enhancedPromptResponse = await base44.integrations.Core.InvokeLLM({
-        prompt: `Based on this conversation context: "${imagePromptContext}", create a detailed, vivid image generation prompt (max 200 words) that describes a beautiful, high-quality image. Be creative and specific about colors, lighting, composition, and style.`,
-        model: 'gemini_3_flash'
-      });
+      let finalPrompt = '';
+
+      if (hasUploadedImages) {
+        // Enhanced image improvement prompt
+        finalPrompt = await base44.integrations.Core.InvokeLLM({
+          prompt: `You are an expert image enhancement specialist. Create a hyper-detailed, professional image enhancement prompt that improves the uploaded reference image while maintaining its exact same angle, perspective, and composition. 
+
+User request: "${imagePromptContext}"
+
+Create a prompt that:
+1. Maintains the EXACT SAME camera angle, perspective, and framing
+2. Enhances quality, detail, lighting, and clarity
+3. Improves color grading and professional finishing
+4. Preserves the original scene's recognizable elements
+5. Uses professional photography/cinematography terminology
+
+Make it extremely detailed and specific (200-300 words). Start with the exact perspective and composition details.`,
+          file_urls: uploadedImages,
+          model: 'gemini_3_flash'
+        });
+      } else {
+        // Regular creative image generation
+        finalPrompt = await base44.integrations.Core.InvokeLLM({
+          prompt: `You are an elite AI art director. Create an exceptionally detailed, vivid, and sophisticated image generation prompt (250-300 words) based on: "${imagePromptContext}"
+
+Your prompt should:
+1. Include specific camera angles, lens types, and cinematography techniques
+2. Detail professional lighting setups (key light, fill light, backlighting)
+3. Specify color grading, mood, and atmosphere with emotional depth
+4. Describe textures, materials, and fine details
+5. Use art direction terminology (golden hour, rule of thirds, depth of field, etc.)
+6. Include quality descriptors (award-winning, museum-quality, professional, cinematic)
+7. Reference artistic styles or photographers when relevant
+
+Create something that would impress a professional photographer or art director.`,
+          model: 'gemini_3_flash'
+        });
+      }
 
       const imageUrl = await base44.integrations.Core.GenerateImage({
-        prompt: enhancedPromptResponse
+        prompt: finalPrompt,
+        existing_image_urls: hasUploadedImages ? uploadedImages : undefined
       });
 
       const imageMessage = { 
         role: 'assistant', 
-        content: `✨ Here's your generated image!`, 
+        content: hasUploadedImages ? '✨ Here\'s your enhanced image (same view)!' : '✨ Here\'s your generated image!',
         image_url: imageUrl.url,
-        imagePrompt: enhancedPromptResponse
+        imagePrompt: finalPrompt,
+        isEnhanced: hasUploadedImages,
+        isRealPicture: false,
+        isAIGenerated: true
       };
       
       setMessages(prev => [...prev.filter(m => !m.isImageLoading), imageMessage]);
@@ -416,9 +455,11 @@ export default function LuminaAI() {
     setLoading(true);
 
     try {
-      // Detect image generation request
-      const imageKeywords = /\b(generate|create|make|draw|paint|design)\b[^.!?]*\b(image|photo|picture|pic|art|illustration|drawing|painting)\b/i;
+      // Detect image generation or enhancement request
+      const imageKeywords = /\b(generate|create|make|draw|paint|design|improve|enhance|better|upgrade|refine)\b[^.!?]*\b(image|photo|picture|pic|art|illustration|drawing|painting)\b/i;
+      const enhanceKeywords = /\b(improve|enhance|better|upgrade|refine|fix|higher quality|better quality|make better|edit)\b/i;
       const isPhotoRequest = imageKeywords.test(text);
+      const isEnhanceRequest = enhanceKeywords.test(text) && uploadedImages.length > 0;
 
       if (isPhotoRequest) {
         // Use exact user description as prompt
@@ -753,11 +794,25 @@ User: ${text}`,
                       )}
                      {msg.image_url && (
                        <div className="mt-3">
-                         <img
-                           src={msg.image_url}
-                           alt="AI Generated"
-                           className="rounded-xl w-full max-w-md h-auto border border-white/10"
-                         />
+                         <div className="relative inline-block">
+                           <img
+                             src={msg.image_url}
+                             alt="AI Generated"
+                             className="rounded-xl w-full max-w-md h-auto border border-white/10"
+                           />
+                           <div className="absolute top-2 right-2 flex gap-1">
+                             {msg.isEnhanced && (
+                               <span className="px-2.5 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full flex items-center gap-1">
+                                 ✨ Enhanced
+                               </span>
+                             )}
+                             {msg.isAIGenerated && (
+                               <span className="px-2.5 py-1 bg-purple-600 text-white text-xs font-semibold rounded-full flex items-center gap-1">
+                                 🤖 AI Generated
+                               </span>
+                             )}
+                           </div>
+                         </div>
                          <div className="flex gap-2 mt-2 flex-wrap">
                            <button
                              onClick={() => setEditingImage(msg.image_url)}
