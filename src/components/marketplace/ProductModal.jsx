@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Star, MessageSquare, Send, Package,
-  ArrowRight, CheckCircle, ShoppingBag, Loader2, Lock, Upload, Image as ImageIcon
+  ArrowRight, CheckCircle, ShoppingBag, Loader2, Lock, Upload, Image as ImageIcon, TrendingUp
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import SolanaCheckout from './SolanaCheckout';
+import ProductSalesAnalytics from './ProductSalesAnalytics';
 
 function StarPicker({ value, onChange }) {
   const [hovered, setHovered] = useState(0);
@@ -196,7 +197,10 @@ export default function ProductModal({ product, user, onClose }) {
   const [checkingOut, setCheckingOut] = useState(false);
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
   const [showSolanaCheckout, setShowSolanaCheckout] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [sellerData, setSellerData] = useState(null);
+
+  const isSeller = user && product.seller_email === user.email;
 
   React.useEffect(() => {
     if (product.seller_email) {
@@ -247,7 +251,11 @@ export default function ProductModal({ product, user, onClose }) {
     : null;
 
   return (
-    <AnimatePresence>
+    <>
+      {showAnalytics && (
+        <ProductSalesAnalytics product={product} onClose={() => setShowAnalytics(false)} />
+      )}
+      <AnimatePresence>
       {showSolanaCheckout && user && (
         <SolanaCheckout
           product={product}
@@ -309,6 +317,17 @@ export default function ProductModal({ product, user, onClose }) {
               )}
               <p className="text-zinc-300 mt-3 leading-relaxed">{product.description}</p>
             </div>
+
+            {/* Seller Analytics */}
+            {isSeller && (
+              <Button
+                onClick={() => setShowAnalytics(true)}
+                className="w-full bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 rounded-xl gap-2"
+                variant="outline"
+              >
+                <TrendingUp className="w-4 h-4" /> View Sales Analytics
+              </Button>
+            )}
 
             {/* Action Buttons */}
             {!showPaymentOptions ? (
@@ -449,5 +468,6 @@ export default function ProductModal({ product, user, onClose }) {
         </motion.div>
       </motion.div>
     </AnimatePresence>
+    </>
   );
 }
