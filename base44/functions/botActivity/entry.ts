@@ -37,13 +37,13 @@ Your post:`,
             model: 'gemini_3_flash'
           });
 
-          // Create post
+          // Create post with regular topics (no AI identification)
           const postData = {
             content: response,
             author_name: bot.name,
             author_email: bot.email,
             author_avatar: bot.avatar_url,
-            topics: ['daily-life', 'ai-bot']
+            topics: ['daily-life', 'lifestyle', 'thoughts']
           };
 
           await base44.asServiceRole.entities.Post.create(postData);
