@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import LuminaStreakBadge from '../components/social/LuminaStreakBadge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, ArrowUp, ArrowDown, Image as ImageIcon, X, PenLine, MapPin, Hash, Share2 } from 'lucide-react';
 import ImageEditor from '../components/social/ImageEditor';
@@ -22,6 +23,7 @@ export default function LuminaAI() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [editingImage, setEditingImage] = useState(null);
+  const [streakData, setStreakData] = useState(null);
   const [postingImage, setPostingImage] = useState(null); // { url }
   const [postCaption, setPostCaption] = useState('');
   const [postHashtags, setPostHashtags] = useState('');
@@ -49,6 +51,32 @@ export default function LuminaAI() {
     
     const loadData = async () => {
       try {
+        // Load / update streak
+        const today = new Date().toISOString().split('T')[0];
+        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+        const streakRecords = await base44.entities.LuminaStreak.filter({ user_email: user.email });
+        if (streakRecords.length > 0) {
+          const s = streakRecords[0];
+          if (s.last_active_date !== today) {
+            const newStreak = s.last_active_date === yesterday ? (s.current_streak || 0) + 1 : 1;
+            const newSparks = (s.total_sparks || 0) + 10;
+            const updated = await base44.entities.LuminaStreak.update(s.id, {
+              current_streak: newStreak,
+              longest_streak: Math.max(newStreak, s.longest_streak || 0),
+              total_sparks: newSparks,
+              last_active_date: today
+            });
+            setStreakData(updated);
+          } else {
+            setStreakData(s);
+          }
+        } else {
+          const created = await base44.entities.LuminaStreak.create({
+            user_email: user.email, current_streak: 1, longest_streak: 1, total_sparks: 10, last_active_date: today
+          });
+          setStreakData(created);
+        }
+
         // Load usage
         const records = await base44.entities.AIUsage.filter({ user_email: user.email });
         if (records.length > 0) {
@@ -56,7 +84,6 @@ export default function LuminaAI() {
           const lastReset = new Date(usage.last_reset);
           const now = new Date();
           const isNewDay = lastReset.toDateString() !== now.toDateString();
-          
           if (isNewDay) {
             await base44.entities.AIUsage.update(usage.id, { count: 0, last_reset: now.toISOString() });
             setUsageCount(0);
@@ -64,11 +91,7 @@ export default function LuminaAI() {
             setUsageCount(usage.count);
           }
         } else {
-          await base44.entities.AIUsage.create({ 
-            user_email: user.email, 
-            count: 0, 
-            last_reset: new Date().toISOString() 
-          });
+          await base44.entities.AIUsage.create({ user_email: user.email, count: 0, last_reset: new Date().toISOString() });
           setUsageCount(0);
         }
 
@@ -78,17 +101,14 @@ export default function LuminaAI() {
           setChatId(chats[0].id);
           setMessages(chats[0].messages || []);
         } else {
-          const newChat = await base44.entities.LuminaChat.create({ 
-            user_email: user.email, 
-            messages: [] 
-          });
+          const newChat = await base44.entities.LuminaChat.create({ user_email: user.email, messages: [] });
           setChatId(newChat.id);
         }
       } catch (err) {
         console.error('Failed to load data:', err);
       }
     };
-    
+
     loadData();
   }, [user]);
 
@@ -764,10 +784,13 @@ User: ${text}`,
       <div className="border-t border-white/5 bg-zinc-950/80 backdrop-blur-xl sticky bottom-0">
         <div className="max-w-4xl mx-auto px-4 py-4">
           {user && (
-            <div className="text-center text-xs text-zinc-600 mb-2">
-              {user.email === 'mokhtartareksamara@gmail.com' ? '⭐ Unlimited (Founder)' : 
-               user.email === 'kiprocolloaj254@gmail.com' ? '👨‍💻 Unlimited (Dev Lead)' : 
-               `${usageCount} / ${usageLimit} requests used today`}
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-zinc-600">
+                {user.email === 'mokhtartareksamara@gmail.com' ? '⭐ Unlimited (Founder)' : 
+                 user.email === 'kiprocolloaj254@gmail.com' ? '👨‍💻 Unlimited (Dev Lead)' : 
+                 `${usageCount} / ${usageLimit} requests used today`}
+              </span>
+              {streakData && <LuminaStreakBadge streak={streakData.current_streak} sparks={streakData.total_sparks} compact />}
             </div>
           )}
           

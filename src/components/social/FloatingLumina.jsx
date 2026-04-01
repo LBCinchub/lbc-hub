@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, Send, Loader2, Minimize2, Mic, MicOff, Volume2, VolumeX, Image, PenLine, Upload, MapPin, Hash, Share2 } from 'lucide-react';
+import LuminaStreakBadge from './LuminaStreakBadge';
 import ImageEditor from '../social/ImageEditor';
 import LinkText from '../ui/LinkText';
 import { base44 } from '@/api/base44Client';
@@ -24,6 +25,7 @@ export default function FloatingLumina({ user }) {
   const [uploadedImages, setUploadedImages] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [editingImage, setEditingImage] = useState(null);
+  const [streakData, setStreakData] = useState(null);
   const [postingImage, setPostingImage] = useState(null);
   const [postCaption, setPostCaption] = useState('');
   const [postHashtags, setPostHashtags] = useState('');
@@ -60,6 +62,39 @@ export default function FloatingLumina({ user }) {
             last_reset: new Date().toISOString() 
           });
           setUsageCount(0);
+        }
+
+        // Load / update streak
+        const today = new Date().toISOString().split('T')[0];
+        const streakRecords = await base44.entities.LuminaStreak.filter({ user_email: user.email });
+        if (streakRecords.length > 0) {
+          const s = streakRecords[0];
+          const last = s.last_active_date;
+          const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+          let newStreak = s.current_streak || 0;
+          let newSparks = s.total_sparks || 0;
+          if (last !== today) {
+            newStreak = last === yesterday ? newStreak + 1 : 1;
+            newSparks += 10;
+            const updated = await base44.entities.LuminaStreak.update(s.id, {
+              current_streak: newStreak,
+              longest_streak: Math.max(newStreak, s.longest_streak || 0),
+              total_sparks: newSparks,
+              last_active_date: today
+            });
+            setStreakData(updated);
+          } else {
+            setStreakData(s);
+          }
+        } else {
+          const created = await base44.entities.LuminaStreak.create({
+            user_email: user.email,
+            current_streak: 1,
+            longest_streak: 1,
+            total_sparks: 10,
+            last_active_date: today
+          });
+          setStreakData(created);
         }
 
         // Load chat history
@@ -578,6 +613,7 @@ User: ${text}
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {streakData && <LuminaStreakBadge streak={streakData.current_streak} sparks={streakData.total_sparks} compact />}
                 <button
                   onClick={handleGenerateImage}
                   disabled={generatingImage}

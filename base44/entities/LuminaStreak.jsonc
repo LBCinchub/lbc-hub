@@ -1,0 +1,28 @@
+{
+  "name": "LuminaStreak",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string"
+    },
+    "current_streak": {
+      "type": "number",
+      "default": 0
+    },
+    "longest_streak": {
+      "type": "number",
+      "default": 0
+    },
+    "total_sparks": {
+      "type": "number",
+      "default": 0
+    },
+    "last_active_date": {
+      "type": "string",
+      "description": "ISO date string YYYY-MM-DD"
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}
