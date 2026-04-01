@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 
 import CreatePost from '../components/social/CreatePost';
 import PostCard from '../components/social/PostCard';
+import PostCardSkeleton from '../components/social/PostCardSkeleton';
 import PostModal from '../components/social/PostModal';
 import NotificationBell from '../components/social/NotificationBell';
 import DirectMessages from '../components/social/DirectMessages';
@@ -314,18 +315,9 @@ export default function Social() {
               }
               return (
                 <div className="space-y-4">
-                  {postsLoading ? (
-                    [...Array(2)].map((_, i) => (
-                      <div key={i} className="glass rounded-2xl p-4 sm:p-6 animate-pulse">
-                        <div className="flex gap-3 sm:gap-4">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex-shrink-0" />
-                          <div className="flex-1 space-y-2 sm:space-y-3">
-                            <div className="h-3 sm:h-4 w-24 sm:w-32 bg-white/10 rounded" />
-                            <div className="h-3 sm:h-4 w-full bg-white/10 rounded" />
-                            <div className="h-3 sm:h-4 w-2/3 bg-white/10 rounded" />
-                          </div>
-                        </div>
-                      </div>
+                   {postsLoading ? (
+                     [...Array(3)].map((_, i) => (
+                       <PostCardSkeleton key={i} />
                     ))
                   ) : filteredPosts.length === 0 ? (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-2xl p-8 sm:p-12 text-center">
