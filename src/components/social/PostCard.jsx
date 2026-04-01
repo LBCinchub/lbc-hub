@@ -32,7 +32,7 @@ export default function PostCard({ post, user, onDmUser, onViewProfile, onHashta
   const [showLumina, setShowLumina] = useState(false);
   const [showPostMenu, setShowPostMenu] = useState(false);
   const [isEditingPost, setIsEditingPost] = useState(false);
-  const [editedContent, setEditedContent] = useState(post.content);
+  const [editedContent, setEditedContent] = useState(post?.content || '');
   const queryClient = useQueryClient();
   const videoRef = useRef(null);
 
