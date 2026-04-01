@@ -1,0 +1,37 @@
+{
+  "name": "PushSubscription",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user who subscribed to push notifications"
+    },
+    "endpoint": {
+      "type": "string",
+      "description": "Push service endpoint URL"
+    },
+    "p256dh": {
+      "type": "string",
+      "description": "ECDH public key (base64)"
+    },
+    "auth": {
+      "type": "string",
+      "description": "Authentication secret (base64)"
+    },
+    "browser_info": {
+      "type": "string",
+      "description": "Browser/device info for tracking"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this subscription is currently active"
+    }
+  },
+  "required": [
+    "user_email",
+    "endpoint",
+    "p256dh",
+    "auth"
+  ]
+}
