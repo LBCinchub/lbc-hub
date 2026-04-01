@@ -25,6 +25,7 @@ export default function FloatingLumina({ user }) {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [editingImage, setEditingImage] = useState(null);
   const [postingImage, setPostingImage] = useState(null);
+  const [postCaption, setPostCaption] = useState('');
   const [postHashtags, setPostHashtags] = useState('');
   const [postLocation, setPostLocation] = useState('');
   const [postingToGallery, setPostingToGallery] = useState(false);
@@ -362,7 +363,8 @@ export default function FloatingLumina({ user }) {
       const tags = hashtags.split(/\s+/).filter(Boolean).map(t => t.startsWith('#') ? t : '#' + t).join(' ');
       const locationSuffix = location ? `\n📍 ${location}` : '';
       const tagsSuffix = tags ? `\n${tags}` : '';
-      const postContent = '🎨 AI-generated image by Lumina AI' + locationSuffix + tagsSuffix;
+      const baseText = postCaption.trim() || '🎨 AI-generated image by Lumina AI';
+      const postContent = baseText + locationSuffix + tagsSuffix;
 
       await base44.entities.Post.create({
         content: postContent,
@@ -376,6 +378,7 @@ export default function FloatingLumina({ user }) {
 
       alert('✅ Posted to your gallery!');
       setPostingImage(null);
+      setPostCaption('');
       setPostHashtags('');
       setPostLocation('');
     } catch (error) {
@@ -686,6 +689,16 @@ User: ${text}
                                 {postingImage?.url === msg.imageUrl && (
                                   <div className="mt-2 bg-zinc-900 rounded-xl p-2 space-y-2 border border-white/10">
                                     <div>
+                                      <label className="text-xs text-zinc-400 block mb-1">Caption</label>
+                                      <textarea
+                                        value={postCaption}
+                                        onChange={(e) => setPostCaption(e.target.value)}
+                                        placeholder="Write a caption..."
+                                        rows={2}
+                                        className="w-full bg-zinc-800 border border-white/10 rounded-lg px-2 py-1 text-white text-xs placeholder:text-zinc-600 outline-none focus:border-indigo-500 resize-none"
+                                      />
+                                    </div>
+                                    <div>
                                       <label className="text-xs text-zinc-400 flex items-center gap-1 mb-1"><MapPin className="w-3 h-3 text-rose-400" /> Location</label>
                                       <input
                                         value={postLocation}
@@ -712,7 +725,7 @@ User: ${text}
                                       </div>
                                     </div>
                                     <div className="flex gap-2">
-                                      <button onClick={() => { setPostingImage(null); setPostHashtags(''); setPostLocation(''); }}
+                                      <button onClick={() => { setPostingImage(null); setPostCaption(''); setPostHashtags(''); setPostLocation(''); }}
                                         className="flex-1 py-1 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-xs text-white transition-colors">
                                         Cancel
                                       </button>
