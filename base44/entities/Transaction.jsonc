@@ -1,0 +1,68 @@
+{
+  "name": "Transaction",
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "description": "Product being purchased"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "seller_email": {
+      "type": "string"
+    },
+    "seller_wallet": {
+      "type": "string",
+      "description": "Seller's Solana wallet address"
+    },
+    "buyer_email": {
+      "type": "string"
+    },
+    "buyer_wallet": {
+      "type": "string",
+      "description": "Buyer's Solana wallet address"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Amount in SOL"
+    },
+    "tx_signature": {
+      "type": "string",
+      "description": "Solana transaction signature"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "escrow",
+        "disputed",
+        "released",
+        "refunded"
+      ],
+      "default": "pending",
+      "description": "Transaction status"
+    },
+    "release_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date when funds will be released (7 days from purchase)"
+    },
+    "dispute_reason": {
+      "type": "string",
+      "description": "Reason for dispute if applicable"
+    },
+    "platform_fee": {
+      "type": "number",
+      "default": 0.025,
+      "description": "Platform fee percentage (2.5%)"
+    }
+  },
+  "required": [
+    "product_id",
+    "seller_email",
+    "buyer_email",
+    "amount",
+    "tx_signature"
+  ]
+}
