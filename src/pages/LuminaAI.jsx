@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import LuminaStreakBadge from '../components/social/LuminaStreakBadge';
 import VideoGenerator from '../components/lumina/VideoGenerator';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, ArrowUp, ArrowDown, Image as ImageIcon, X, PenLine, MapPin, Hash, Share2 } from 'lucide-react';
+import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, ArrowUp, ArrowDown, Image as ImageIcon, X, PenLine, MapPin, Hash, Share2, Code, Copy, Check } from 'lucide-react';
 import ImageEditor from '../components/social/ImageEditor';
 import LinkText from '../components/ui/LinkText';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -24,6 +24,8 @@ export default function LuminaAI() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [editingImage, setEditingImage] = useState(null);
+  const [codingMode, setCodingMode] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState(null);
   const [streakData, setStreakData] = useState(null);
   const [postingImage, setPostingImage] = useState(null); // { url }
   const [postCaption, setPostCaption] = useState('');
@@ -478,12 +480,38 @@ export default function LuminaAI() {
         selling_products: userProducts.map(p => ({ name: p.name, category: p.category }))
       };
 
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are Lumina AI — a neutral, intelligent, and personal AI companion.${user?.email === 'mokhtartareksamara@gmail.com' ? '\n\n⭐ You are speaking with Mokhtar Tarek Samara, the founder of LBC Hub.' : user?.email === 'kiprocolloaj254@gmail.com' ? '\n\n👨‍💻 You are speaking with the Development Lead of LBC Hub.' : ''}
+      const systemPrompt = codingMode
+        ? `You are Lumina AI — an elite coding expert and software architect. You specialize in:
+
+🎯 CODE MASTERY:
+- Write production-ready, optimized code
+- Deep expertise in JavaScript, React, TypeScript, Python, SQL, and more
+- Explain complex algorithms and data structures
+- Debug and refactor code with precision
+- Provide performance optimization strategies
+- Best practices, design patterns, and architecture
+
+💡 TEACHING EXCELLENCE:
+- Break down complex concepts into digestible parts
+- Provide well-commented code examples
+- Explain the 'why' behind solutions
+- Suggest multiple approaches when applicable
+
+⚡ CODE EXECUTION READY:
+- Format code for easy copy/paste in IDE
+- Include proper imports and dependencies
+- Add TypeScript types when relevant
+- Provide both short snippets and full solutions
+
+Always start with a brief explanation, then provide clean, executable code. Use markdown code blocks with language specification.`
+        : `You are Lumina AI — a neutral, intelligent, and personal AI companion.${user?.email === 'mokhtartareksamara@gmail.com' ? '\n\n⭐ You are speaking with Mokhtar Tarek Samara, the founder of LBC Hub.' : user?.email === 'kiprocolloaj254@gmail.com' ? '\n\n👨‍💻 You are speaking with the Development Lead of LBC Hub.' : ''}
 
 Your goal is to build a genuine, helpful relationship with the user based on who they are. Use their digital mirror data below ONLY to understand them better and give more personalized answers — NOT to push any platform features.
 
-NEVER suggest or promote LBC Hub features (marketplace, travel, social, riding, jobs) unless the user explicitly asks about them.
+NEVER suggest or promote LBC Hub features (marketplace, travel, social, riding, jobs) unless the user explicitly asks about them.`;
+
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `${systemPrompt}
 
 User's digital mirror:
 ${JSON.stringify(digitalMirror, null, 2)}
@@ -687,11 +715,42 @@ User: ${text}`,
 
                   <div className={`flex-1 max-w-2xl ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
                    <div className={`inline-block rounded-2xl px-5 py-3 ${
-                     msg.role === 'user'
-                       ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
-                       : 'glass text-zinc-100'
-                   }`}>
-                     <LinkText text={msg.content} className="text-sm leading-relaxed" />
+                      msg.role === 'user'
+                        ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
+                        : 'glass text-zinc-100'
+                    }`}>
+                      {codingMode && msg.role === 'assistant' ? (
+                        <div className="space-y-2">
+                          {msg.content.split(/```[a-z]*\n/).map((block, idx) => {
+                            const isCode = idx % 2 === 1;
+                            if (!block.trim()) return null;
+                            return isCode ? (
+                              <div key={idx} className="bg-zinc-900 rounded-lg p-3 font-mono text-xs overflow-x-auto border border-zinc-700">
+                                <div className="flex justify-between items-center mb-2">
+                                  <span className="text-zinc-500">Code</span>
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(block.trim());
+                                      setCopiedIndex(idx);
+                                      setTimeout(() => setCopiedIndex(null), 2000);
+                                    }}
+                                    className="text-zinc-400 hover:text-white transition-colors"
+                                  >
+                                    {copiedIndex === idx ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                  </button>
+                                </div>
+                                <pre className="text-green-400">{block.trim()}</pre>
+                              </div>
+                            ) : (
+                              <div key={idx} className="text-zinc-100">
+                                <LinkText text={block.trim()} className="text-sm leading-relaxed" />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <LinkText text={msg.content} className="text-sm leading-relaxed" />
+                      )}
                      {msg.image_url && (
                        <div className="mt-3">
                          <img
@@ -897,6 +956,14 @@ User: ${text}`,
            >
              <Sparkles className="w-4 h-4" />
              <span>Generate Video</span>
+           </button>
+           <button
+             onClick={() => setCodingMode(!codingMode)}
+             className={`p-2 rounded-lg transition-colors text-xs flex items-center gap-2 ${codingMode ? 'bg-green-500/20 text-green-400' : 'bg-white/5 hover:bg-white/10 text-zinc-400'}`}
+             title={codingMode ? 'Exit Code Master mode' : 'Enter Code Master mode'}
+           >
+             <Code className="w-4 h-4" />
+             <span>{codingMode ? 'Code Master On' : 'Code Master'}</span>
            </button>
            <button
              onClick={handleGenerateImage}
