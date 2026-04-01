@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Share2, MoreHorizontal, Send, Radio, Bookmark, Sparkles, Loader2, Plane, MapPin, Calendar, ArrowRight, Copy, Check, Users, X, ChevronLeft, ChevronRight, UserPlus, UserCheck, Trash2, Edit } from 'lucide-react';
+import { MessageCircle, Share2, MoreHorizontal, Send, Radio, Bookmark, Sparkles, Loader2, Plane, MapPin, Calendar, ArrowRight, Copy, Check, Users, X, ChevronLeft, ChevronRight, UserPlus, UserCheck, Trash2, Edit, ImageIcon, Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,6 +27,7 @@ export default function PostCard({ post, user, onDmUser, onViewProfile, onHashta
   const [copied, setCopied] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [carouselIndex, setCarouselIndex] = useState(0);
   const [luminaCheck, setLuminaCheck] = useState(null);
   const [luminaLoading, setLuminaLoading] = useState(false);
   const [showLumina, setShowLumina] = useState(false);
@@ -511,20 +512,78 @@ Provide a brief analysis in JSON format:
             )}
 
             {post.media_urls?.length > 0 && (
-              <div className="mb-4 rounded-xl overflow-hidden bg-zinc-900">
+              <div className="mb-4 rounded-xl overflow-hidden bg-zinc-900 relative">
                 {post.media_type === 'video' ? (
-                  <video ref={videoRef} src={post.media_urls[0]} controls loop muted playsInline className="w-full rounded-xl max-h-80 object-cover bg-zinc-900" />
+                  post.media_urls.length === 1 ? (
+                    <video ref={videoRef} src={post.media_urls[0]} controls loop muted playsInline className="w-full rounded-xl max-h-80 object-cover bg-zinc-900" />
+                  ) : (
+                    <div className="relative">
+                      <video src={post.media_urls[carouselIndex]} controls loop muted playsInline className="w-full rounded-xl max-h-80 object-cover bg-zinc-900" />
+                      {post.media_urls.length > 1 && (
+                        <>
+                          <button
+                            onClick={() => setCarouselIndex(i => i > 0 ? i - 1 : post.media_urls.length - 1)}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 rounded-full p-2 text-white transition-colors"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setCarouselIndex(i => i < post.media_urls.length - 1 ? i + 1 : 0)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 rounded-full p-2 text-white transition-colors"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                            {post.media_urls.map((_, i) => (
+                              <button
+                                key={i}
+                                onClick={() => setCarouselIndex(i)}
+                                className={`h-1.5 rounded-full transition-all ${i === carouselIndex ? 'bg-white w-4' : 'bg-white/40 w-1.5'}`}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )
                 ) : (
-                  <div className={`grid gap-1 ${post.media_urls.length > 1 ? 'grid-cols-2' : ''}`}>
-                    {post.media_urls.map((url, i) => (
+                  <div className="relative">
+                    <div className="relative">
                       <img
-                        key={i}
-                        src={url}
+                        src={post.media_urls[carouselIndex]}
                         alt=""
-                        onClick={() => { setLightboxIndex(i); setLightboxOpen(true); }}
-                        className="w-full object-cover rounded-xl max-h-80 cursor-pointer hover:opacity-90 transition-opacity bg-zinc-900"
+                        onClick={() => { setLightboxIndex(carouselIndex); setLightboxOpen(true); }}
+                        className="w-full object-cover rounded-xl max-h-80 cursor-pointer bg-zinc-900"
                       />
-                    ))}
+                      {post.media_urls.length > 1 && (
+                        <>
+                          <button
+                            onClick={() => setCarouselIndex(i => i > 0 ? i - 1 : post.media_urls.length - 1)}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 rounded-full p-2 text-white transition-colors"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setCarouselIndex(i => i < post.media_urls.length - 1 ? i + 1 : 0)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 rounded-full p-2 text-white transition-colors"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                          <div className="absolute bottom-2 right-2 bg-black/60 px-2 py-1 rounded-lg text-xs text-white">
+                            {carouselIndex + 1} / {post.media_urls.length}
+                          </div>
+                          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                            {post.media_urls.map((_, i) => (
+                              <button
+                                key={i}
+                                onClick={() => setCarouselIndex(i)}
+                                className={`h-1.5 rounded-full transition-all ${i === carouselIndex ? 'bg-white w-4' : 'bg-white/40 w-1.5'}`}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -801,7 +860,7 @@ Provide a brief analysis in JSON format:
       </div>
 
       <AnimatePresence>
-        {lightboxOpen && post.media_type === 'image' && (
+        {lightboxOpen && post.media_urls?.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -817,16 +876,25 @@ Provide a brief analysis in JSON format:
             </button>
 
             <div className="relative max-w-7xl max-h-[90vh] w-full h-full flex items-center justify-center">
-              <motion.img
-                key={lightboxIndex}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                src={post.media_urls[lightboxIndex]}
-                alt=""
-                onClick={(e) => e.stopPropagation()}
-                className="max-w-full max-h-full object-contain rounded-lg"
-              />
+              {post.media_type === 'video' ? (
+                <video
+                  src={post.media_urls[lightboxIndex]}
+                  controls
+                  className="max-w-full max-h-full object-contain rounded-lg"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <motion.img
+                  key={lightboxIndex}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  src={post.media_urls[lightboxIndex]}
+                  alt=""
+                  onClick={(e) => e.stopPropagation()}
+                  className="max-w-full max-h-full object-contain rounded-lg"
+                />
+              )}
 
               {post.media_urls.length > 1 && (
                 <>
