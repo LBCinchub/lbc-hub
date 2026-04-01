@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, ArrowUp, ArrowDown, Image as ImageIcon, X, PenLine } from 'lucide-react';
+import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, ArrowUp, ArrowDown, Image as ImageIcon, X, PenLine, MapPin, Hash, Share2 } from 'lucide-react';
 import ImageEditor from '../components/social/ImageEditor';
 import LinkText from '../components/ui/LinkText';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -22,6 +22,10 @@ export default function LuminaAI() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [editingImage, setEditingImage] = useState(null);
+  const [postingImage, setPostingImage] = useState(null); // { url }
+  const [postHashtags, setPostHashtags] = useState('');
+  const [postLocation, setPostLocation] = useState('');
+  const [postingToGallery, setPostingToGallery] = useState(false);
   const bottomRef = useRef(null);
   const topRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -315,16 +319,21 @@ export default function LuminaAI() {
     }
   };
 
-  const saveToGallery = async (imageUrl) => {
+  const saveToGallery = async (imageUrl, hashtags = '', location = '') => {
+    setPostingToGallery(true);
     try {
       const response = await fetch(imageUrl);
       const blob = await response.blob();
       const file = new File([blob], `lumina-${Date.now()}.png`, { type: 'image/png' });
-      
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      
+
+      const tags = hashtags.split(/\s+/).filter(Boolean).map(t => t.startsWith('#') ? t : '#' + t).join(' ');
+      const locationSuffix = location ? `\n📍 ${location}` : '';
+      const tagsSuffix = tags ? `\n${tags}` : '';
+      const postContent = '🎨 AI-generated image by Lumina AI' + locationSuffix + tagsSuffix;
+
       await base44.entities.Post.create({
-        content: '🎨 AI-generated image by Lumina AI',
+        content: postContent,
         media_urls: [file_url],
         media_type: 'image',
         author_name: user.full_name || user.email,
@@ -333,10 +342,15 @@ export default function LuminaAI() {
         topics: ['ai-art', 'lumina']
       });
 
-      alert('✅ Saved to your gallery and posted!');
+      alert('✅ Posted to your gallery!');
+      setPostingImage(null);
+      setPostHashtags('');
+      setPostLocation('');
     } catch (error) {
       console.error('Save to gallery failed:', error);
       alert('Failed to save to gallery');
+    } finally {
+      setPostingToGallery(false);
     }
   };
 
@@ -650,14 +664,62 @@ User: ${text}`,
                            alt="AI Generated"
                            className="rounded-xl w-full max-w-md h-auto border border-white/10"
                          />
-                         <div className="flex gap-2 mt-2">
+                         <div className="flex gap-2 mt-2 flex-wrap">
                            <button
                              onClick={() => setEditingImage(msg.image_url)}
                              className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium transition-colors"
                            >
                              <PenLine className="w-3 h-3" /> Edit & Save
                            </button>
+                           <button
+                             onClick={() => setPostingImage({ url: msg.image_url })}
+                             className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 rounded-lg text-xs font-medium transition-colors"
+                           >
+                             <Share2 className="w-3 h-3" /> Post to Gallery
+                           </button>
                          </div>
+                         {postingImage?.url === msg.image_url && (
+                           <div className="mt-3 bg-zinc-800/80 rounded-xl p-3 space-y-2 border border-white/10">
+                             <div>
+                               <label className="text-xs text-zinc-400 flex items-center gap-1 mb-1"><MapPin className="w-3 h-3 text-rose-400" /> Location</label>
+                               <input
+                                 value={postLocation}
+                                 onChange={(e) => setPostLocation(e.target.value)}
+                                 placeholder="e.g. Paris, France"
+                                 className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs placeholder:text-zinc-600 outline-none focus:border-indigo-500"
+                               />
+                             </div>
+                             <div>
+                               <label className="text-xs text-zinc-400 flex items-center gap-1 mb-1"><Hash className="w-3 h-3" /> Hashtags</label>
+                               <input
+                                 value={postHashtags}
+                                 onChange={(e) => setPostHashtags(e.target.value)}
+                                 placeholder="#travel #art #lumina"
+                                 className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs placeholder:text-zinc-600 outline-none focus:border-indigo-500"
+                               />
+                               <div className="flex flex-wrap gap-1 mt-1.5">
+                                 {['#travel', '#art', '#vibes', '#lumina', '#photography'].map(tag => (
+                                   <button key={tag} type="button" onClick={() => setPostHashtags(prev => (prev + ' ' + tag).trim())}
+                                     className="px-2 py-0.5 rounded-full bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs transition-colors">
+                                     {tag}
+                                   </button>
+                                 ))}
+                               </div>
+                             </div>
+                             <div className="flex gap-2 pt-1">
+                               <button onClick={() => { setPostingImage(null); setPostHashtags(''); setPostLocation(''); }}
+                                 className="flex-1 py-1.5 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-xs text-white transition-colors">
+                                 Cancel
+                               </button>
+                               <button onClick={() => saveToGallery(msg.image_url, postHashtags, postLocation)}
+                                 disabled={postingToGallery}
+                                 className="flex-1 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
+                                 {postingToGallery ? <Loader2 className="w-3 h-3 animate-spin" /> : <Share2 className="w-3 h-3" />}
+                                 {postingToGallery ? 'Posting...' : 'Post'}
+                               </button>
+                             </div>
+                           </div>
+                         )}
                        </div>
                      )}
                    </div>
