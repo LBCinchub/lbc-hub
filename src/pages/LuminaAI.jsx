@@ -11,7 +11,7 @@ export default function LuminaAI() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
   const [usageCount, setUsageCount] = useState(0);
-  const [usageLimit] = useState(30); // 30 requests per day
+  const [usageLimit] = useState(100); // 30 requests per day
   const [chatId, setChatId] = useState(null);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);

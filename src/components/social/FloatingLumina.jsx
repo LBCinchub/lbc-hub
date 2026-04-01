@@ -12,7 +12,7 @@ export default function FloatingLumina({ user }) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [usageCount, setUsageCount] = useState(0);
-  const [usageLimit] = useState(30);
+  const [usageLimit] = useState(100);
   const [chatId, setChatId] = useState(null);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
