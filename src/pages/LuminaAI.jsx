@@ -868,12 +868,21 @@ User: ${text}`,
           
           {voiceChatMode && (
             <div className="glass rounded-2xl p-6 border border-green-500/30 bg-green-500/10">
-              <div className="flex items-center justify-center gap-3 text-green-400">
-                <Mic className="w-6 h-6 animate-pulse" />
-                <div className="text-center">
-                  <p className="font-semibold">Voice Chat Active</p>
-                  <p className="text-sm text-zinc-400">Speak to chat with Lumina</p>
+              <div className="flex items-center justify-between gap-3 text-green-400">
+                <div className="flex items-center gap-3">
+                  <Mic className="w-6 h-6 animate-pulse" />
+                  <div className="text-center">
+                    <p className="font-semibold">Voice Chat Active</p>
+                    <p className="text-sm text-zinc-400">Speak to chat with Lumina</p>
+                  </div>
                 </div>
+                <button
+                  onClick={toggleVoiceChat}
+                  className="flex-shrink-0 w-10 h-10 rounded-lg bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
+                  title="Stop voice chat"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </button>
               </div>
             </div>
           )}
