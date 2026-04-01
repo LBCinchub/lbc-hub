@@ -124,11 +124,12 @@ export default function CreatePost({ user, onGoLive }) {
         author_avatar: user.avatar_url || '',
         likes: 0,
         liked_by: [],
+        reactions: {},
         media_type: mediaType,
         media_urls: mediaUrls,
         is_live: false,
         topics: selectedTopics,
-        cross_post_platforms: selectedPlatforms,
+        cross_post_platforms: selectedPlatforms
       });
       if (selectedPlatforms.length > 0) {
         base44.functions.invoke('crossPostToSocial', {
