@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Send, Loader2, Minimize2, Mic, MicOff, Volume2, VolumeX, Image, Download, Save, Upload } from 'lucide-react';
+import { Sparkles, X, Send, Loader2, Minimize2, Mic, MicOff, Volume2, VolumeX, Image, PenLine, Upload } from 'lucide-react';
+import ImageEditor from '../social/ImageEditor';
 import LinkText from '../ui/LinkText';
 import { base44 } from '@/api/base44Client';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -22,6 +23,7 @@ export default function FloatingLumina({ user }) {
   const [generatingImage, setGeneratingImage] = useState(false);
   const [uploadedImages, setUploadedImages] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [editingImage, setEditingImage] = useState(null);
   const bottomRef = useRef(null);
   const topRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -521,6 +523,7 @@ User: ${text}
 
   return (
     <>
+      {editingImage && <ImageEditor imageUrl={editingImage} user={user} onClose={() => setEditingImage(null)} />}
       {/* Solana Payment Modal */}
       {showSolanaPayment && (
         <SolanaPayment
@@ -655,21 +658,14 @@ User: ${text}
                                   className="rounded-lg max-w-full h-auto"
                                 />
                                 <div className="flex gap-2 mt-2">
-                                  <button
-                                    onClick={() => downloadImage(msg.imageUrl)}
-                                    className="flex items-center gap-1 px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs font-medium transition-colors"
-                                  >
-                                    <Download className="w-3 h-3" />
-                                    Download
-                                  </button>
-                                  <button
-                                    onClick={() => saveToGallery(msg.imageUrl)}
-                                    className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium transition-colors"
-                                  >
-                                    <Save className="w-3 h-3" />
-                                    Save to Gallery
-                                  </button>
-                                </div>
+                                   <button
+                                     onClick={() => setEditingImage(msg.imageUrl)}
+                                     className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium transition-colors"
+                                   >
+                                     <PenLine className="w-3 h-3" />
+                                     Edit & Save
+                                   </button>
+                                 </div>
                                 {msg.imagePrompt && (
                                   <p className="text-xs text-zinc-400 mt-2">Prompt: {msg.imagePrompt}</p>
                                 )}

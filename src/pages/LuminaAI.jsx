@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, ArrowUp, ArrowDown, Image as ImageIcon, X, Download, Save } from 'lucide-react';
+import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, ArrowUp, ArrowDown, Image as ImageIcon, X, PenLine } from 'lucide-react';
+import ImageEditor from '../components/social/ImageEditor';
 import LinkText from '../components/ui/LinkText';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
@@ -20,6 +21,7 @@ export default function LuminaAI() {
   const [uploadedImages, setUploadedImages] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [editingImage, setEditingImage] = useState(null);
   const bottomRef = useRef(null);
   const topRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -508,6 +510,7 @@ User: ${text}`,
 
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col">
+      {editingImage && <ImageEditor imageUrl={editingImage} user={user} onClose={() => setEditingImage(null)} />}
       {/* Hero Header */}
       <div className="relative border-b border-white/5">
         <div className="absolute inset-0">
@@ -649,16 +652,10 @@ User: ${text}`,
                          />
                          <div className="flex gap-2 mt-2">
                            <button
-                             onClick={() => downloadImage(msg.image_url)}
-                             className="flex items-center gap-1 px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs font-medium transition-colors"
-                           >
-                             <Download className="w-3 h-3" /> Download
-                           </button>
-                           <button
-                             onClick={() => saveToGallery(msg.image_url)}
+                             onClick={() => setEditingImage(msg.image_url)}
                              className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium transition-colors"
                            >
-                             <Save className="w-3 h-3" /> Save to Gallery
+                             <PenLine className="w-3 h-3" /> Edit & Save
                            </button>
                          </div>
                        </div>
