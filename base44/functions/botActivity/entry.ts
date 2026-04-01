@@ -37,28 +37,6 @@ Your post:`,
             model: 'gemini_3_flash'
           });
 
-          // Randomly decide if this should have an image
-          const shouldHaveImage = Math.random() > 0.6; // 40% chance
-          let imageUrl = null;
-
-          if (shouldHaveImage) {
-            try {
-              // Generate contextual image
-              const imagePromptResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({
-                prompt: `Based on this social media post: "${response}", create a brief image generation prompt (max 50 words) for a realistic photo that would accompany this post. Make it look like a casual phone photo someone would take. Describe the scene simply.`,
-                model: 'gemini_3_flash'
-              });
-
-              const imageResult = await base44.asServiceRole.integrations.Core.GenerateImage({
-                prompt: `${imagePromptResponse}, casual phone photo, realistic, everyday life, natural lighting`
-              });
-
-              imageUrl = imageResult.url;
-            } catch (imgErr) {
-              console.log(`Image generation failed for ${bot.name}:`, imgErr.message);
-            }
-          }
-
           // Create post
           const postData = {
             content: response,
@@ -67,11 +45,6 @@ Your post:`,
             author_avatar: bot.avatar_url,
             topics: ['daily-life', 'ai-bot']
           };
-
-          if (imageUrl) {
-            postData.media_urls = [imageUrl];
-            postData.media_type = 'image';
-          }
 
           await base44.asServiceRole.entities.Post.create(postData);
 
@@ -84,7 +57,7 @@ Your post:`,
             bot: bot.name,
             status: 'posted',
             content: response,
-            hasImage: !!imageUrl
+            hasImage: false
           });
         } else {
           results.push({
