@@ -975,17 +975,7 @@ User: ${text}`,
               <span>{generatingImage ? 'Generating...' : 'Generate Image'}</span>
             </button>
 
-            <button
-              onClick={() => {
-                setVoiceEnabled(!voiceEnabled);
-                if (isSpeaking) stopSpeaking();
-              }}
-              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-xs flex items-center gap-2 text-zinc-400"
-              title={voiceEnabled ? 'Disable voice output' : 'Enable voice output'}
-            >
-              {voiceEnabled ? <Volume2 className="w-4 h-4 text-white" /> : <VolumeX className="w-4 h-4 text-zinc-500" />}
-              <span>{voiceEnabled ? 'Speaker On' : 'Speaker Off'}</span>
-            </button>
+
           </div>
         </div>
       </div>
