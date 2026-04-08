@@ -1,11 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { cn } from '../lib/utils';
-
-// Mock the window.self / window.top check used by isIframe at module load
-vi.mock('../lib/utils', async (importOriginal) => {
-  const actual = await importOriginal();
-  return actual;
-});
 
 describe('cn (className utility)', () => {
   it('returns a single class unchanged', () => {

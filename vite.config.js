@@ -27,8 +27,5 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.js'],
     css: false,
-    alias: {
-      '@': resolve(__dirname, './src'),
-    },
   },
 });

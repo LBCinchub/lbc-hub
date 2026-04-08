@@ -92,17 +92,20 @@ describe('useIsMobile', () => {
     const { result } = renderHook(() => useIsMobile());
     expect(result.current).toBe(false);
 
-    // Simulate resizing to mobile width
+    // Simulate resizing to mobile width and update the mock state
     act(() => {
       Object.defineProperty(window, 'innerWidth', {
         writable: true,
         configurable: true,
         value: 375,
       });
-      // Trigger the change listeners registered by the hook
+      // Update the mql matches to reflect the new viewport width
       mediaQueryListeners
         .filter((l) => l.event === 'change')
-        .forEach((l) => l.handler());
+        .forEach((l) => {
+          l.mql.matches = true;
+          l.handler();
+        });
     });
 
     expect(result.current).toBe(true);
