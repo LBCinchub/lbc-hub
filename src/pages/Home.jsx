@@ -1,11 +1,15 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 import { 
   Users, ShoppingBag, Car, Plane, ArrowRight, 
   Sparkles, MessageCircle, Video, Globe 
 } from 'lucide-react';
+import PostCard from '../components/social/PostCard';
+import PostCardSkeleton from '../components/social/PostCardSkeleton';
 
 const features = [
   {
@@ -50,6 +54,65 @@ const highlights = [
 ];
 
 export default function Home() {
+  const [searchParams] = useSearchParams();
+  const [user, setUser] = useState(null);
+  const showPostsLayout = searchParams.get('photo') !== null;
+
+  useEffect(() => {
+    base44.auth.me().then(setUser).catch(() => {});
+  }, []);
+
+  const { data: posts = [], isLoading: postsLoading } = useQuery({
+    queryKey: ['posts'],
+    queryFn: () => base44.entities.Post.list('-created_date', 30),
+    enabled: showPostsLayout,
+  });
+
+  if (showPostsLayout) {
+    return (
+      <div className="min-h-screen bg-zinc-950 py-8 px-4">
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mb-8"
+          >
+            <Link 
+              to={createPageUrl('Home')}
+              className="text-indigo-400 hover:text-indigo-300 text-sm flex items-center gap-1 mb-4"
+            >
+              ← Back
+            </Link>
+            <h1 className="text-4xl font-bold">Gallery</h1>
+            <p className="text-zinc-400 mt-2">Explore posts from our community</p>
+          </motion.div>
+
+          <div className="space-y-4">
+            {postsLoading ? (
+              [...Array(3)].map((_, i) => <PostCardSkeleton key={i} />)
+            ) : posts.filter(p => p.media_type === 'image').length === 0 ? (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-2xl p-12 text-center">
+                <p className="text-zinc-400">No photos yet</p>
+              </motion.div>
+            ) : (
+              posts
+                .filter(p => p.media_type === 'image')
+                .map(post => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    user={user}
+                    onDmUser={() => {}}
+                    onViewProfile={() => {}}
+                  />
+                ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-zinc-950">
       {/* Hero Section */}
