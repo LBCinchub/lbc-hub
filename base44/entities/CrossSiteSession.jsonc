@@ -1,0 +1,28 @@
+{
+  "name": "CrossSiteSession",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User's email"
+    },
+    "token": {
+      "type": "string",
+      "description": "Cross-site session token"
+    },
+    "full_name": {
+      "type": "string"
+    },
+    "avatar_url": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "user_email",
+    "token"
+  ]
+}

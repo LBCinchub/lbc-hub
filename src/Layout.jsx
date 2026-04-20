@@ -36,6 +36,27 @@ export default function Layout({ children, currentPageName }) {
     loadUser();
   }, []);
 
+  // Handle cross-site login from lbchub.site
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const crossSiteToken = params.get('cross_site_token');
+    
+    if (crossSiteToken && !user) {
+      base44.entities.CrossSiteSession.filter({ token: crossSiteToken }).then(sessions => {
+        if (sessions.length > 0 && new Date(sessions[0].expires_at) > new Date()) {
+          // Token valid - update user from session
+          setUser({
+            email: sessions[0].user_email,
+            full_name: sessions[0].full_name,
+            avatar_url: sessions[0].avatar_url,
+          });
+          // Clean up token from URL
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      }).catch(console.error);
+    }
+  }, [user]);
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white overflow-x-hidden">
       <style>{`
