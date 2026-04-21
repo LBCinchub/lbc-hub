@@ -72,7 +72,13 @@ export default function Social() {
 
   const { data: posts = [], isLoading: postsLoading } = useQuery({
     queryKey: ['posts'],
-    queryFn: () => base44.entities.Post.list('-created_date', 30),
+    queryFn: async () => {
+      const [userPosts, botPosts] = await Promise.all([
+        base44.entities.Post.list('-created_date', 30),
+        base44.entities.Post.filter({ author_email: { $regex: '@lbchub.ai$' } }, '-created_date', 20).catch(() => [])
+      ]);
+      return [...userPosts, ...botPosts].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    },
     refetchInterval: false,
     retry: false,
     staleTime: Infinity,
