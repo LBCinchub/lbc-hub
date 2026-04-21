@@ -302,35 +302,7 @@ export default function Social() {
               </motion.div>
             )}
 
-            {/* AI Bots Section */}
-             {feedTab === 'forYou' && bots.length > 0 && !searchQuery && !activeTopic && (
-               <motion.div
-                 initial={{ opacity: 0, y: 20 }}
-                 animate={{ opacity: 1, y: 0 }}
-                 className="glass rounded-2xl p-4 sm:p-6"
-               >
-                 <h3 className="font-semibold mb-4 text-sm sm:text-base">Explore AI Bots</h3>
-                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-                   {bots.map((bot) => (
-                     <button
-                       key={bot.id}
-                       onClick={() => handleViewProfile({ email: bot.email, full_name: bot.name, avatar_url: bot.avatar_url })}
-                       className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-white/5 transition-colors group"
-                     >
-                       <img
-                         src={bot.avatar_url}
-                         alt={bot.name}
-                         className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover"
-                       />
-                       <div className="text-center">
-                         <p className="text-xs sm:text-sm font-semibold group-hover:text-indigo-400 transition-colors line-clamp-1">{bot.name}</p>
-                         <p className="text-[10px] sm:text-xs text-zinc-500">🤖 AI Bot</p>
-                       </div>
-                     </button>
-                   ))}
-                 </div>
-               </motion.div>
-             )}
+
 
             {/* Feed */}
              {(() => {
