@@ -311,12 +311,11 @@ export default function Social() {
                        onClick={() => handleViewProfile({ email: bot.email, full_name: bot.name, avatar_url: bot.avatar_url })}
                        className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-white/5 transition-colors group"
                      >
-                       <Avatar className="w-12 h-12 sm:w-16 sm:h-16">
-                         <AvatarImage src={bot.avatar_url} />
-                         <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-600 text-white font-bold text-lg">
-                           {bot.name?.[0]?.toUpperCase()}
-                         </AvatarFallback>
-                       </Avatar>
+                       <img
+                         src={bot.avatar_url}
+                         alt={bot.name}
+                         className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover"
+                       />
                        <div className="text-center">
                          <p className="text-xs sm:text-sm font-semibold group-hover:text-indigo-400 transition-colors line-clamp-1">{bot.name}</p>
                          <p className="text-[10px] sm:text-xs text-zinc-500">🤖 AI Bot</p>
