@@ -7,7 +7,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from 'date-fns';
 
@@ -73,6 +73,14 @@ export default function Social() {
   const { data: posts = [], isLoading: postsLoading } = useQuery({
     queryKey: ['posts'],
     queryFn: () => base44.entities.Post.list('-created_date', 30),
+    refetchInterval: false,
+    retry: false,
+    staleTime: Infinity,
+  });
+
+  const { data: bots = [] } = useQuery({
+    queryKey: ['aiBots'],
+    queryFn: () => base44.entities.AIBot.filter({ is_active: true }, '-created_date', 10),
     refetchInterval: false,
     retry: false,
     staleTime: Infinity,
@@ -288,62 +296,93 @@ export default function Social() {
               </motion.div>
             )}
 
+            {/* AI Bots Section */}
+             {feedTab === 'forYou' && bots.length > 0 && !searchQuery && !activeTopic && (
+               <motion.div
+                 initial={{ opacity: 0, y: 20 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 className="glass rounded-2xl p-4 sm:p-6"
+               >
+                 <h3 className="font-semibold mb-4 text-sm sm:text-base">Explore AI Bots</h3>
+                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                   {bots.map((bot) => (
+                     <button
+                       key={bot.id}
+                       onClick={() => handleViewProfile({ email: bot.email, full_name: bot.name, avatar_url: bot.avatar_url })}
+                       className="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-white/5 transition-colors group"
+                     >
+                       <Avatar className="w-12 h-12 sm:w-16 sm:h-16">
+                         <AvatarImage src={bot.avatar_url} />
+                         <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-600 text-white font-bold text-lg">
+                           {bot.name?.[0]?.toUpperCase()}
+                         </AvatarFallback>
+                       </Avatar>
+                       <div className="text-center">
+                         <p className="text-xs sm:text-sm font-semibold group-hover:text-indigo-400 transition-colors line-clamp-1">{bot.name}</p>
+                         <p className="text-[10px] sm:text-xs text-zinc-500">🤖 AI Bot</p>
+                       </div>
+                     </button>
+                   ))}
+                 </div>
+               </motion.div>
+             )}
+
             {/* Feed */}
-            {(() => {
-              let filteredPosts = posts;
+             {(() => {
+               let filteredPosts = posts;
 
-              // Feed tab filter
-              if (feedTab === 'following') {
-                filteredPosts = filteredPosts.filter(p => followingEmails.has(p.author_email));
-              } else if (feedTab === 'videos') {
-                filteredPosts = filteredPosts.filter(p => p.media_type === 'video' || p.media_type === 'live');
-              } else if (feedTab === 'photos') {
-                filteredPosts = filteredPosts.filter(p => p.media_type === 'image');
-              }
+               // Feed tab filter
+               if (feedTab === 'following') {
+                 filteredPosts = filteredPosts.filter(p => followingEmails.has(p.author_email));
+               } else if (feedTab === 'videos') {
+                 filteredPosts = filteredPosts.filter(p => p.media_type === 'video' || p.media_type === 'live');
+               } else if (feedTab === 'photos') {
+                 filteredPosts = filteredPosts.filter(p => p.media_type === 'image');
+               }
 
-              if (searchQuery.trim()) {
-                filteredPosts = filteredPosts.filter(p =>
-                  p.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  p.author_name?.toLowerCase().includes(searchQuery.toLowerCase())
-                );
-              }
-              if (activeTopic) {
-                filteredPosts = filteredPosts.filter(p => 
-                  p.topics?.includes(activeTopic) || 
-                  p.content?.toLowerCase().includes(`#${activeTopic.toLowerCase()}`)
-                );
-              }
-              return (
-                <div className="space-y-4">
-                   {postsLoading ? (
-                     [...Array(3)].map((_, i) => (
-                       <PostCardSkeleton key={i} />
-                    ))
-                  ) : filteredPosts.length === 0 ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-2xl p-8 sm:p-12 text-center">
-                      <Search className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-zinc-600 mb-3 sm:mb-4" />
-                      <h3 className="text-lg sm:text-xl font-semibold mb-2">{searchQuery ? 'No posts found' : 'No posts yet'}</h3>
-                      <p className="text-sm sm:text-base text-zinc-400">{searchQuery ? `No results for "${searchQuery}"` : 'Be the first to share something!'}</p>
-                    </motion.div>
-                  ) : (
-                    filteredPosts.map(post => (
-                        <div key={post.id}>
-                          <PostCard
-                            post={post}
-                            user={user}
-                            onDmUser={handleDmUser}
-                            onViewProfile={handleViewProfile}
-                            onHashtagClick={(tag) => {
-                              setActiveTopic(tag);
-                              window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}
-                          />
-                        </div>
-                      ))
-                  )}
-                </div>
-              );
-            })()}
+               if (searchQuery.trim()) {
+                 filteredPosts = filteredPosts.filter(p =>
+                   p.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                   p.author_name?.toLowerCase().includes(searchQuery.toLowerCase())
+                 );
+               }
+               if (activeTopic) {
+                 filteredPosts = filteredPosts.filter(p => 
+                   p.topics?.includes(activeTopic) || 
+                   p.content?.toLowerCase().includes(`#${activeTopic.toLowerCase()}`)
+                 );
+               }
+               return (
+                 <div className="space-y-4">
+                    {postsLoading ? (
+                      [...Array(3)].map((_, i) => (
+                        <PostCardSkeleton key={i} />
+                     ))
+                   ) : filteredPosts.length === 0 ? (
+                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass rounded-2xl p-8 sm:p-12 text-center">
+                       <Search className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-zinc-600 mb-3 sm:mb-4" />
+                       <h3 className="text-lg sm:text-xl font-semibold mb-2">{searchQuery ? 'No posts found' : 'No posts yet'}</h3>
+                       <p className="text-sm sm:text-base text-zinc-400">{searchQuery ? `No results for "${searchQuery}"` : 'Be the first to share something!'}</p>
+                     </motion.div>
+                   ) : (
+                     filteredPosts.map(post => (
+                         <div key={post.id}>
+                           <PostCard
+                             post={post}
+                             user={user}
+                             onDmUser={handleDmUser}
+                             onViewProfile={handleViewProfile}
+                             onHashtagClick={(tag) => {
+                               setActiveTopic(tag);
+                               window.scrollTo({ top: 0, behavior: 'smooth' });
+                             }}
+                           />
+                         </div>
+                       ))
+                   )}
+                 </div>
+               );
+             })()}
           </div>
 
           {/* Sidebar */}
