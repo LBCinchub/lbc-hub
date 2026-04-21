@@ -250,40 +250,46 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
             <p className="text-sm text-zinc-400">{displayUser?.email}</p>
 
             {editing ? (
-              <div className="space-y-3 pt-2">
-                <div>
-                  <Label className="text-zinc-400 mb-1 block text-sm">Bio</Label>
-                  <Textarea
-                    value={editForm.bio}
-                    onChange={e => setEditForm(f => ({ ...f, bio: e.target.value }))}
-                    placeholder="Tell the community about yourself..."
-                    className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500 text-sm"
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <Label className="text-zinc-400 mb-1 block text-sm">Profile Visibility</Label>
-                  <Select value={editForm.profile_visibility} onValueChange={v => setEditForm(f => ({ ...f, profile_visibility: v }))}>
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-white/10 text-white">
-                      <SelectItem value="public">🌐 Public — Anyone can view</SelectItem>
-                      <SelectItem value="followers_only">👥 Followers Only</SelectItem>
-                      <SelectItem value="private">🔒 Private — Only you</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            ) : (
-              <>
-                {displayUser?.bio && <p className="text-sm text-zinc-300 mt-2 leading-relaxed">{displayUser.bio}</p>}
-                <div className="flex items-center gap-1 text-xs text-zinc-500 mt-1">
-                  {displayUser?.profile_visibility === 'private' && <><Lock className="w-3 h-3" /> Private profile</>}
-                  {displayUser?.profile_visibility === 'followers_only' && <><EyeOff className="w-3 h-3" /> Followers only</>}
-                </div>
-              </>
-            )}
+               <div className="space-y-3 pt-2">
+                 <div>
+                   <Label className="text-zinc-400 mb-1 block text-sm">Bio</Label>
+                   <Textarea
+                     value={editForm.bio}
+                     onChange={e => setEditForm(f => ({ ...f, bio: e.target.value }))}
+                     placeholder="Tell the community about yourself..."
+                     className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500 text-sm"
+                     rows={3}
+                   />
+                 </div>
+                 <div>
+                   <Label className="text-zinc-400 mb-1 block text-sm">Profile Visibility</Label>
+                   <Select value={editForm.profile_visibility} onValueChange={v => setEditForm(f => ({ ...f, profile_visibility: v }))}>
+                     <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                       <SelectValue />
+                     </SelectTrigger>
+                     <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                       <SelectItem value="public">🌐 Public — Anyone can view</SelectItem>
+                       <SelectItem value="followers_only">👥 Followers Only</SelectItem>
+                       <SelectItem value="private">🔒 Private — Only you</SelectItem>
+                     </SelectContent>
+                   </Select>
+                 </div>
+               </div>
+             ) : (
+               <>
+                 {displayUser?.bio && <p className="text-sm text-zinc-300 mt-2 leading-relaxed">{displayUser.bio}</p>}
+                 {displayUser?.personality && (
+                   <div className="mt-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+                     <p className="text-xs font-semibold text-purple-400 mb-1">✨ About this friend:</p>
+                     <p className="text-sm text-purple-100 leading-relaxed">{displayUser.personality}</p>
+                   </div>
+                 )}
+                 <div className="flex items-center gap-1 text-xs text-zinc-500 mt-1">
+                   {displayUser?.profile_visibility === 'private' && <><Lock className="w-3 h-3" /> Private profile</>}
+                   {displayUser?.profile_visibility === 'followers_only' && <><EyeOff className="w-3 h-3" /> Followers only</>}
+                 </div>
+               </>
+             )}
 
             {/* Stats */}
             <div className="flex gap-5 pt-2">
