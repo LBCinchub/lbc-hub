@@ -26,6 +26,7 @@ import { Loader2 } from 'lucide-react';
 import { TOPICS } from '../components/social/TopicSelector';
 import { Settings as SettingsIcon } from 'lucide-react';
 import LuminaStreakBadge from '../components/social/LuminaStreakBadge';
+import TwinConversationFeed from '../components/social/TwinConversationFeed';
 
 export default function Social() {
   const [user, setUser] = useState(null);
@@ -364,6 +365,9 @@ export default function Social() {
 
           {/* Sidebar */}
            <div className="lg:col-span-1 space-y-4 hidden lg:block">
+
+            {/* Twin AI Dialogue */}
+            <TwinConversationFeed />
 
             {/* Trending Topics */}
             <TrendingWidget 
