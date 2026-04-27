@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -26,17 +26,21 @@ const LUNA = {
 export default function TwinConversationFeed() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const debounceRef = useRef(null);
 
   const fetchPosts = async () => {
-    const [lumina, luna] = await Promise.all([
-      base44.entities.Post.filter({ author_email: LUMINA.email }, '-created_date', 8),
-      base44.entities.Post.filter({ author_email: LUNA.email }, '-created_date', 8),
-    ]);
-    const merged = [...lumina, ...luna].sort(
-      (a, b) => new Date(b.created_date) - new Date(a.created_date)
-    ).slice(0, 12);
-    setPosts(merged);
-    setLoading(false);
+    try {
+      const lumina = await base44.entities.Post.filter({ author_email: LUMINA.email }, '-created_date', 8);
+      const luna = await base44.entities.Post.filter({ author_email: LUNA.email }, '-created_date', 8);
+      const merged = [...lumina, ...luna].sort(
+        (a, b) => new Date(b.created_date) - new Date(a.created_date)
+      ).slice(0, 12);
+      setPosts(merged);
+    } catch (e) {
+      // silently ignore rate limit errors
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -46,10 +50,15 @@ export default function TwinConversationFeed() {
         event.data?.author_email === LUMINA.email ||
         event.data?.author_email === LUNA.email
       ) {
-        fetchPosts();
+        // debounce to avoid rapid re-fetches hitting rate limits
+        clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(fetchPosts, 3000);
       }
     });
-    return unsub;
+    return () => {
+      unsub();
+      clearTimeout(debounceRef.current);
+    };
   }, []);
 
   const getBotMeta = (email) => email === LUMINA.email ? LUMINA : LUNA;
