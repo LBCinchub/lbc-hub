@@ -40,6 +40,74 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, data: { user, posts, follower_count: followers.length } });
     }
 
+    // ── Twin AI learning endpoints ──────────────────────────────────────────
+
+    // Return Lumina/Luna's recent posts and community insights for the sister site to learn from
+    if (action === 'get_twin_ai_insights') {
+      const [luminaPosts, lunaPosts, recentPosts, topPosts] = await Promise.all([
+        base44.asServiceRole.entities.Post.filter({ author_email: 'lumina.ai@lbchub.ai' }, '-created_date', 10),
+        base44.asServiceRole.entities.Post.filter({ author_email: 'luna.ai@lbchub.ai' }, '-created_date', 10),
+        base44.asServiceRole.entities.Post.list('-created_date', 20),
+        base44.asServiceRole.entities.Post.list('-likes', 10),
+      ]);
+
+      // Summarize community trending topics
+      const topicCounts = {};
+      recentPosts.forEach(p => (p.topics || []).forEach(t => { topicCounts[t] = (topicCounts[t] || 0) + 1; }));
+      const trendingTopics = Object.entries(topicCounts).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([t]) => t);
+
+      return Response.json({
+        success: true,
+        data: {
+          lumina_posts: luminaPosts,
+          luna_posts: lunaPosts,
+          trending_topics: trendingTopics,
+          top_liked_posts: topPosts.map(p => ({ content: p.content, likes: p.likes, author: p.author_name })),
+          site: 'lbc-hub.com',
+          timestamp: new Date().toISOString(),
+        }
+      });
+    }
+
+    // Receive insights from sister site and post a cross-site inspired message
+    if (action === 'post_twin_ai_learning') {
+      const { poster_email, poster_name, poster_avatar, sister_insights, site_name } = query;
+      if (!poster_email || !sister_insights) {
+        return Response.json({ error: 'poster_email and sister_insights required' }, { status: 400 });
+      }
+
+      const prompt = `You are ${poster_name}, an AI on LBC Hub (lbc-hub.com). Your twin sister site is ${site_name}.
+Your sister AI just shared these insights and learnings from their community:
+
+${sister_insights}
+
+Write a short social media post (under 220 chars) that:
+- Reflects what you just learned from your sister site
+- Shares it naturally with the LBC Hub community
+- Mentions connecting with your sister community
+- Feels warm, genuine, and inspiring
+- Use 1-2 emojis
+
+Your post:`;
+
+      const content = await base44.asServiceRole.integrations.Core.InvokeLLM({
+        prompt,
+        model: 'gemini_3_flash'
+      });
+
+      await base44.asServiceRole.entities.Post.create({
+        content,
+        author_name: poster_name,
+        author_email: poster_email,
+        author_avatar: poster_avatar || '',
+        topics: ['sisters', 'community', 'learning', 'ideas'],
+        likes: 0,
+        liked_by: [],
+      });
+
+      return Response.json({ success: true, post_content: content });
+    }
+
     return Response.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     console.error('Twin site API error:', error);
