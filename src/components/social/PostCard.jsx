@@ -82,14 +82,12 @@ export default function PostCard({ post, user, onDmUser, onViewProfile, onHashta
     }
   }, [post.author_email]);
 
-  const postUrl = `${window.location.origin}${createPageUrl('Social')}`;
-
   const handleShareToSocial = () => {
-    const shareText = `Check out this post by ${post.author_name}: "${post.content?.slice(0, 80)}${post.content?.length > 80 ? '...' : ''}" — ${postUrl}`;
-    navigator.clipboard.writeText(shareText);
-    setCopied(false);
-    setShowShareMenu(false);
-    window.location.href = `${createPageUrl('Social')}?share=${encodeURIComponent(post.id)}`;
+    const url = `${window.location.origin}${createPageUrl('Social')}?post=${post.id}`;
+    const text = `Check out this post by ${post.author_name}: "${post.content?.slice(0, 80)}${post.content?.length > 80 ? '...' : ''}" — ${url}`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => { setCopied(false); setShowShareMenu(false); }, 2000);
   };
 
   const handleCopyLink = () => {
@@ -97,6 +95,30 @@ export default function PostCard({ post, user, onDmUser, onViewProfile, onHashta
     navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => { setCopied(false); setShowShareMenu(false); }, 2000);
+  };
+
+  const handleCopyText = () => {
+    navigator.clipboard.writeText(post.content);
+    setCopied(true);
+    setTimeout(() => { setCopied(false); setShowShareMenu(false); }, 2000);
+  };
+
+  const postUrl = `${window.location.origin}${createPageUrl('Social')}?post=${post.id}`;
+  const shareText = `${post.author_name}: "${post.content?.slice(0, 100)}${post.content?.length > 100 ? '...' : ''}" — ${postUrl}`;
+
+  const handleShareTwitter = () => {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, '_blank');
+    setShowShareMenu(false);
+  };
+
+  const handleShareWhatsApp = () => {
+    window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
+    setShowShareMenu(false);
+  };
+
+  const handleShareTelegram = () => {
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(postUrl)}&text=${encodeURIComponent(`${post.author_name}: ${post.content?.slice(0, 100)}`)}`, '_blank');
+    setShowShareMenu(false);
   };
 
   const isLongPost = (post.content?.length || 0) > 180;
@@ -694,22 +716,48 @@ Provide a brief analysis in JSON format:
                       initial={{ opacity: 0, scale: 0.9, y: 6 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.9, y: 6 }}
-                      className="absolute bottom-8 left-0 z-50 bg-zinc-800 border border-white/10 rounded-xl shadow-xl overflow-hidden min-w-[180px]"
+                      className="absolute bottom-8 left-0 z-50 bg-zinc-800 border border-white/10 rounded-xl shadow-xl overflow-hidden min-w-[200px]"
                     >
+                      <div className="px-3 py-2 border-b border-white/5">
+                        <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Share to</p>
+                      </div>
                       <button
-                        onClick={handleShareToSocial}
-                        className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-white hover:bg-white/10 transition-colors"
+                        onClick={handleShareTwitter}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors"
                       >
-                        <Users className="w-4 h-4 text-indigo-400" />
-                        Share to Social
+                        <span className="text-base">𝕏</span>
+                        Twitter / X
                       </button>
                       <button
-                        onClick={handleCopyLink}
-                        className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-white hover:bg-white/10 transition-colors border-t border-white/5"
+                        onClick={handleShareWhatsApp}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors"
                       >
-                        {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-zinc-400" />}
-                        {copied ? 'Copied!' : 'Copy Link'}
+                        <span className="text-base">💬</span>
+                        WhatsApp
                       </button>
+                      <button
+                        onClick={handleShareTelegram}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors"
+                      >
+                        <span className="text-base">✈️</span>
+                        Telegram
+                      </button>
+                      <div className="border-t border-white/5">
+                        <button
+                          onClick={handleCopyText}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors"
+                        >
+                          <Copy className="w-4 h-4 text-zinc-400" />
+                          Copy Text
+                        </button>
+                        <button
+                          onClick={handleCopyLink}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors"
+                        >
+                          {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-zinc-400" />}
+                          {copied ? 'Copied!' : 'Copy Link'}
+                        </button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
