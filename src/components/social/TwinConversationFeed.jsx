@@ -8,7 +8,7 @@ import { Zap, Globe } from 'lucide-react';
 const LUMINA = {
   name: 'Lumina AI',
   email: 'lumina.ai@lbchub.ai',
-  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=LuminaAI',
+  avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png',
   site: 'lbchub.site',
   color: 'from-indigo-500 to-purple-600',
   badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
@@ -17,7 +17,7 @@ const LUMINA = {
 const LUNA = {
   name: 'Luna AI',
   email: 'luna.ai@lbchub.ai',
-  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=LunaAI',
+  avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/04bd50c12_generated_image.png',
   site: 'lbc-hub.com',
   color: 'from-pink-500 to-rose-600',
   badge: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
