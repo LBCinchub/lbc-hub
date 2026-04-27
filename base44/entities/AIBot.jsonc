@@ -1,0 +1,46 @@
+{
+  "name": "AIBot",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Bot's name"
+    },
+    "email": {
+      "type": "string",
+      "description": "Bot's email identifier"
+    },
+    "avatar_url": {
+      "type": "string",
+      "description": "Bot's profile picture"
+    },
+    "bio": {
+      "type": "string",
+      "description": "Bot's biography"
+    },
+    "personality": {
+      "type": "string",
+      "description": "Bot's personality traits and interests"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether bot is currently active"
+    },
+    "post_frequency_hours": {
+      "type": "number",
+      "default": 8,
+      "description": "How often the bot posts (in hours)"
+    },
+    "last_post_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time bot posted"
+    }
+  },
+  "required": [
+    "name",
+    "email",
+    "personality"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "FollowedPost",
+  "type": "object",
+  "properties": {
+    "post_id": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "post_author_name": {
+      "type": "string"
+    },
+    "post_content_preview": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "post_id",
+    "user_email"
+  ],
+  "rls": {
+    "create": {
+      "data.user_email": "{{user.email}}"
+    },
+    "read": {
+      "data.user_email": "{{user.email}}"
+    },
+    "update": {
+      "data.user_email": "{{user.email}}"
+    },
+    "delete": {
+      "data.user_email": "{{user.email}}"
+    }
+  }
+}

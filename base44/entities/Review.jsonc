@@ -1,0 +1,44 @@
+{
+  "name": "Review",
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string"
+    },
+    "seller_email": {
+      "type": "string"
+    },
+    "reviewer_name": {
+      "type": "string"
+    },
+    "reviewer_email": {
+      "type": "string"
+    },
+    "rating": {
+      "type": "number"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "product",
+        "seller"
+      ],
+      "default": "product"
+    },
+    "photo_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Photos uploaded with the review"
+    }
+  },
+  "required": [
+    "product_id",
+    "rating",
+    "type"
+  ]
+}

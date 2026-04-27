@@ -1,0 +1,34 @@
+{
+  "name": "UserBadge",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string"
+    },
+    "badge_emoji": {
+      "type": "string"
+    },
+    "badge_name": {
+      "type": "string"
+    },
+    "challenge_id": {
+      "type": "string"
+    },
+    "challenge_title": {
+      "type": "string"
+    },
+    "earned_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "rank": {
+      "type": "number",
+      "description": "Position in challenge leaderboard"
+    }
+  },
+  "required": [
+    "user_email",
+    "badge_emoji",
+    "badge_name"
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "name": "Challenge",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Challenge title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Challenge description"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "travel_miles",
+        "products_sold",
+        "posts_created",
+        "trips_planned",
+        "connections_made"
+      ],
+      "description": "Type of challenge"
+    },
+    "target": {
+      "type": "number",
+      "description": "Target goal to achieve"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed",
+        "upcoming"
+      ],
+      "default": "active"
+    },
+    "reward_badge": {
+      "type": "string",
+      "description": "Badge emoji/name for winners"
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "progress": {
+            "type": "number",
+            "default": 0
+          },
+          "joined_date": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "default": []
+    }
+  },
+  "required": [
+    "title",
+    "type",
+    "target",
+    "start_date",
+    "end_date"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

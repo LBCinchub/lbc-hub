@@ -1,0 +1,21 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "user"
+      ],
+      "default": "user",
+      "description": "User role in the app"
+    },
+    "unlimited_credits": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether user has unlimited AI credits"
+    }
+  },
+  "required": []
+}

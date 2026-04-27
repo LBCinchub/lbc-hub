@@ -1,0 +1,64 @@
+{
+  "name": "CallSignal",
+  "type": "object",
+  "properties": {
+    "from_email": {
+      "type": "string"
+    },
+    "to_email": {
+      "type": "string"
+    },
+    "from_name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "offer",
+        "answer",
+        "ice-candidate",
+        "hangup",
+        "call-request"
+      ]
+    },
+    "call_type": {
+      "type": "string",
+      "enum": [
+        "audio",
+        "video"
+      ]
+    },
+    "payload": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "from_email",
+    "to_email",
+    "type"
+  ],
+  "rls": {
+    "create": {
+      "data.from_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.from_email": "{{user.email}}"
+        },
+        {
+          "data.to_email": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "data.from_email": "{{user.email}}"
+    },
+    "delete": {
+      "data.from_email": "{{user.email}}"
+    }
+  }
+}

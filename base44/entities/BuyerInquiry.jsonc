@@ -1,0 +1,72 @@
+{
+  "name": "BuyerInquiry",
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "seller_email": {
+      "type": "string"
+    },
+    "buyer_name": {
+      "type": "string"
+    },
+    "buyer_email": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "reply": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "replied",
+        "closed"
+      ],
+      "default": "open"
+    }
+  },
+  "required": [
+    "product_id",
+    "seller_email",
+    "buyer_email",
+    "message"
+  ],
+  "rls": {
+    "create": {
+      "data.buyer_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.buyer_email": "{{user.email}}"
+        },
+        {
+          "data.seller_email": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.buyer_email": "{{user.email}}"
+        },
+        {
+          "data.seller_email": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

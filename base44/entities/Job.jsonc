@@ -1,0 +1,65 @@
+{
+  "name": "Job",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "company": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "technology",
+        "design",
+        "marketing",
+        "finance",
+        "healthcare",
+        "education",
+        "engineering",
+        "sales",
+        "other"
+      ]
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "full-time",
+        "part-time",
+        "freelance",
+        "contract",
+        "remote"
+      ],
+      "default": "full-time"
+    },
+    "salary_range": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "logo_url": {
+      "type": "string"
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "title",
+    "company",
+    "location",
+    "category"
+  ]
+}

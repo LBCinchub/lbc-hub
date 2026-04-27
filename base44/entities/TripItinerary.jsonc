@@ -1,0 +1,74 @@
+{
+  "name": "TripItinerary",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "user_avatar": {
+      "type": "string"
+    },
+    "trip_name": {
+      "type": "string"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "num_days": {
+      "type": "number"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "is_public": {
+      "type": "boolean",
+      "default": false
+    },
+    "days": {
+      "type": "array",
+      "description": "Daily activity plans",
+      "items": {
+        "type": "object",
+        "properties": {
+          "day_number": {
+            "type": "number"
+          },
+          "theme": {
+            "type": "string"
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "time": {
+                  "type": "string"
+                },
+                "activity": {
+                  "type": "string"
+                },
+                "location": {
+                  "type": "string"
+                },
+                "tip": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "destination",
+    "num_days"
+  ]
+}

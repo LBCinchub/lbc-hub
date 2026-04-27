@@ -1,0 +1,98 @@
+{
+  "name": "Post",
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "string"
+    },
+    "media_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "media_type": {
+      "type": "string",
+      "enum": [
+        "image",
+        "video",
+        "live",
+        "none"
+      ],
+      "default": "none"
+    },
+    "likes": {
+      "type": "number",
+      "default": 0
+    },
+    "liked_by": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "author_name": {
+      "type": "string"
+    },
+    "author_email": {
+      "type": "string"
+    },
+    "author_avatar": {
+      "type": "string"
+    },
+    "is_live": {
+      "type": "boolean",
+      "default": false
+    },
+    "topics": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Topic tags for this post"
+    },
+    "reactions": {
+      "type": "object",
+      "description": "Emoji reactions with arrays of user emails",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "trip_id": {
+      "type": "string",
+      "description": "Linked TripItinerary id"
+    },
+    "trip_name": {
+      "type": "string"
+    },
+    "trip_destination": {
+      "type": "string"
+    },
+    "trip_days": {
+      "type": "number"
+    },
+    "trip_user": {
+      "type": "string"
+    },
+    "cross_post_platforms": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "twitter",
+          "facebook",
+          "instagram",
+          "linkedin",
+          "tiktok"
+        ]
+      },
+      "description": "Social media platforms this post was cross-posted to"
+    }
+  },
+  "required": [
+    "content"
+  ]
+}

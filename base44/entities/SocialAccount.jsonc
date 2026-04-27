@@ -1,0 +1,55 @@
+{
+  "name": "SocialAccount",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user who connected the account"
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "twitter",
+        "facebook",
+        "instagram",
+        "linkedin",
+        "tiktok"
+      ],
+      "description": "Social media platform"
+    },
+    "account_name": {
+      "type": "string",
+      "description": "Username or display name on the platform"
+    },
+    "access_token": {
+      "type": "string",
+      "description": "Encrypted OAuth access token"
+    },
+    "refresh_token": {
+      "type": "string",
+      "description": "Encrypted OAuth refresh token"
+    },
+    "platform_user_id": {
+      "type": "string",
+      "description": "User ID from the platform"
+    }
+  },
+  "required": [
+    "user_email",
+    "platform"
+  ],
+  "rls": {
+    "create": {
+      "data.user_email": "{{user.email}}"
+    },
+    "read": {
+      "data.user_email": "{{user.email}}"
+    },
+    "update": {
+      "data.user_email": "{{user.email}}"
+    },
+    "delete": {
+      "data.user_email": "{{user.email}}"
+    }
+  }
+}

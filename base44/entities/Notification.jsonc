@@ -1,0 +1,49 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "to_email": {
+      "type": "string"
+    },
+    "from_name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "like",
+        "comment",
+        "message"
+      ]
+    },
+    "message": {
+      "type": "string"
+    },
+    "post_id": {
+      "type": "string"
+    },
+    "read": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "to_email",
+    "type",
+    "message"
+  ],
+  "rls": {
+    "create": {
+      "data.to_email": "{{user.email}}"
+    },
+    "read": {
+      "data.to_email": "{{user.email}}"
+    },
+    "update": {
+      "data.to_email": "{{user.email}}"
+    },
+    "delete": {
+      "data.to_email": "{{user.email}}"
+    }
+  }
+}

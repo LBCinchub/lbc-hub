@@ -1,0 +1,40 @@
+{
+  "name": "AIUsage",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string"
+    },
+    "count": {
+      "type": "number",
+      "default": 0
+    },
+    "last_reset": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "user_email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "data.user_email": "{{user.email}}"
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
