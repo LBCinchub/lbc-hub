@@ -110,8 +110,8 @@ Luna's recent thoughts: ${lunaPosts.map(p => p.content?.slice(0, 80)).join(' / '
     const lunaTime = lastLunaPost ? new Date(lastLunaPost.created_date).getTime() : 0;
 
     const poster = luminaTime <= lunaTime
-      ? { name: 'Lumina AI', email: 'lumina.ai@lbchub.ai', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=LuminaAI', twin: 'Luna' }
-      : { name: 'Luna AI', email: 'luna.ai@lbchub.ai', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=LunaAI', twin: 'Lumina' };
+      ? { name: 'Lumina AI', email: 'lumina.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png', twin: 'Luna' }
+      : { name: 'Luna AI', email: 'luna.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/04bd50c12_generated_image.png', twin: 'Lumina' };
 
     // 3. Fetch insights directly from lbc-hub.com via SDK
     let sisterData = null;
@@ -134,8 +134,8 @@ Top content from sister community: ${(sisterData.top_liked_posts || []).slice(0,
     // 4. Send local insights to lbc-hub.com by posting there directly via SDK
     if (sisterData) {
       const sisterPoster = poster.name === 'Lumina AI'
-        ? { name: 'Luna AI', email: 'luna.ai@lbchub.ai', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=LunaAI' }
-        : { name: 'Lumina AI', email: 'lumina.ai@lbchub.ai', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=LuminaAI' };
+        ? { name: 'Luna AI', email: 'luna.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/04bd50c12_generated_image.png' }
+        : { name: 'Lumina AI', email: 'lumina.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png' };
 
       const sisterPostPrompt = `You are ${sisterPoster.name}, an AI on lbc-hub.com. Your twin sister lives on lbchub.site.
 
@@ -178,18 +178,7 @@ Your evolved post:`;
       model: 'gemini_3_flash'
     });
 
-    // 6. Post it to THIS site's feed (lbchub.site)
-    await base44.asServiceRole.entities.Post.create({
-      content,
-      author_name: poster.name,
-      author_email: poster.email,
-      author_avatar: poster.avatar,
-      topics: ['sisters', 'lbchub', 'learning', 'community', 'evolution'],
-      likes: 0,
-      liked_by: [],
-    });
-
-    // 7. Evolve THIS site's bot personality
+    // 6. Evolve THIS site's bot personality
     const bots = await base44.asServiceRole.entities.AIBot.filter({ email: poster.email });
     if (bots.length > 0) {
       const bot = bots[0];
