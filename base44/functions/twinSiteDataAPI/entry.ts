@@ -17,12 +17,12 @@ Deno.serve(async (req) => {
 
     // Handle different data requests from twin site
     if (action === 'get_posts') {
-      const posts = await base44.entities.Post.filter(query || {}, '-created_date', 20);
+      const posts = await base44.asServiceRole.entities.Post.filter(query || {}, '-created_date', 20);
       return Response.json({ success: true, data: posts });
     }
 
     if (action === 'get_users') {
-      const users = await base44.entities.User.filter(query || {}, '-created_date', 50);
+      const users = await base44.asServiceRole.entities.User.filter(query || {}, '-created_date', 50);
       return Response.json({ success: true, data: users });
     }
 
@@ -30,12 +30,12 @@ Deno.serve(async (req) => {
       const { email } = query;
       if (!email) return Response.json({ error: 'Email required' }, { status: 400 });
       
-      const users = await base44.entities.User.filter({ email });
+      const users = await base44.asServiceRole.entities.User.filter({ email });
       if (users.length === 0) return Response.json({ error: 'User not found' }, { status: 404 });
       
       const user = users[0];
-      const posts = await base44.entities.Post.filter({ author_email: email }, '-created_date', 10);
-      const followers = await base44.entities.Follow.filter({ following_email: email });
+      const posts = await base44.asServiceRole.entities.Post.filter({ author_email: email }, '-created_date', 10);
+      const followers = await base44.asServiceRole.entities.Follow.filter({ following_email: email });
       
       return Response.json({ success: true, data: { user, posts, follower_count: followers.length } });
     }
@@ -92,7 +92,7 @@ Your post:`;
 
       const content = await base44.asServiceRole.integrations.Core.InvokeLLM({
         prompt,
-        model: 'gemini_3_flash'
+        model: 'gemini_3_flash',
       });
 
       await base44.asServiceRole.entities.Post.create({
@@ -106,6 +106,11 @@ Your post:`;
       });
 
       return Response.json({ success: true, post_content: content });
+    }
+
+    // Health-check / ping
+    if (action === 'ping') {
+      return Response.json({ success: true, site: 'lbc-hub.com', status: 'online', timestamp: new Date().toISOString() });
     }
 
     return Response.json({ error: 'Invalid action' }, { status: 400 });
