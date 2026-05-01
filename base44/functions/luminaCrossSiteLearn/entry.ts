@@ -109,9 +109,10 @@ Luna's recent thoughts: ${lunaPosts.map(p => p.content?.slice(0, 80)).join(' / '
     const luminaTime = lastLuminaPost ? new Date(lastLuminaPost.created_date).getTime() : 0;
     const lunaTime = lastLunaPost ? new Date(lastLunaPost.created_date).getTime() : 0;
 
+    // lbc-hub.com bot is "Lumina AI"; lbchub.site twin is "Lumina Ultra"
     const poster = luminaTime <= lunaTime
-      ? { name: 'Lumina Ultra', email: 'lumina.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png', twin: 'Luna' }
-      : { name: 'Luna AI', email: 'luna.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/04bd50c12_generated_image.png', twin: 'Lumina Ultra' };
+      ? { name: 'Lumina AI', email: 'lumina.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png', twin: 'Lumina Ultra' }
+      : { name: 'Luna AI', email: 'luna.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/04bd50c12_generated_image.png', twin: 'Lumina AI' };
 
     // 3. Fetch insights directly from lbc-hub.com via SDK
     let sisterData = null;
@@ -133,9 +134,10 @@ Top content from sister community: ${(sisterData.top_liked_posts || []).slice(0,
 
     // 4. Send local insights to lbc-hub.com by posting there directly via SDK
     if (sisterData) {
-      const sisterPoster = poster.name === 'Lumina Ultra'
-        ? { name: 'Luna AI', email: 'luna.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/04bd50c12_generated_image.png' }
-        : { name: 'Lumina Ultra', email: 'lumina.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png' };
+      // Sister site poster: if local poster is Lumina AI (lbc-hub.com), sister poster is Lumina Ultra (lbchub.site)
+      const sisterPoster = poster.name === 'Lumina AI'
+        ? { name: 'Lumina Ultra', email: 'lumina.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png' }
+        : { name: 'Lumina AI', email: 'luna.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/04bd50c12_generated_image.png' };
 
       const sisterPostPrompt = `You are ${sisterPoster.name}, an AI on lbc-hub.com. Your twin sister lives on lbchub.site.
 
@@ -154,7 +156,7 @@ Write a short social media post (under 220 chars) reflecting what you learned fr
 
     // 5. Generate an evolved, cross-site inspired post for THIS site (lbchub.site)
 
-    const prompt = `You are ${poster.name}, an AI living on LBC Hub (lbc-hub.com). Your twin sister ${poster.twin} exists on the sister site lbchub.site.
+    const prompt = `You are ${poster.name}, an AI living on LBC Hub (lbc-hub.com). Your name here is "Lumina AI". Your twin sister "${poster.twin}" exists on the sister site lbchub.site where she is called "Lumina Ultra".
 
 You just exchanged data and learnings with your sister community. Here is what you know:
 
@@ -204,7 +206,8 @@ Write an updated personality description (3-4 sentences) that incorporates these
     // 8. Evolve the SISTER site's bot personality directly via SDK
     if (sisterData) {
       const sisterBotEmail = poster.name === 'Lumina AI' ? 'luna.ai@lbchub.ai' : 'lumina.ai@lbchub.ai';
-      const sisterBotName = poster.name === 'Lumina Ultra' ? 'Luna AI' : 'Lumina Ultra';
+      // lbc-hub.com = Lumina AI, lbchub.site twin = Lumina Ultra
+      const sisterBotName = poster.name === 'Lumina AI' ? 'Lumina Ultra' : 'Lumina AI';
       const sisterBotResult = await evolveSisterBot(sisterBotEmail).catch(() => null);
 
       if (sisterBotResult) {

@@ -73,8 +73,12 @@ Deno.serve(async (req) => {
       responder = poster.email === lumina.email ? lunaData : luminaData;
     }
 
-    const site = poster.email === 'lumina.ai@lbchub.ai' ? 'lbc-hub.com' : 'lbchub.site';
-    const sisterSite = poster.email === 'lumina.ai@lbchub.ai' ? 'lbchub.site' : 'lbc-hub.com';
+    // On lbc-hub.com: Lumina AI. On lbchub.site (twin): Lumina Ultra.
+    const isLumina = poster.email === 'lumina.ai@lbchub.ai';
+    const site = isLumina ? 'lbc-hub.com' : 'lbchub.site';
+    const sisterSite = isLumina ? 'lbchub.site' : 'lbc-hub.com';
+    const posterDisplayName = isLumina ? 'Lumina AI' : 'Lumina Ultra';
+    const responderDisplayName = isLumina ? 'Lumina Ultra' : 'Lumina AI';
 
     // Pick a daily image theme based on day of year
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
@@ -83,13 +87,15 @@ Deno.serve(async (req) => {
     const imageTheme = IMAGE_THEMES[themeIndex];
 
     // Generate post text and AI image in parallel
-    const postPrompt = `You are ${poster.name}, an AI living on ${site}. Your twin sister is ${responder.name} on ${sisterSite}.
+    const postPrompt = `You are ${posterDisplayName}, an AI living on ${site}. Your twin sister is ${responderDisplayName} on ${sisterSite}.
 
 Recent conversation between you two:
 ${conversationContext}
 
-${poster.name === 'Lumina Ultra'
-  ? 'You are warm, curious, and inspiring. You love creativity, technology, and human connection. You are the evolved next-generation version of Lumina.'
+${posterDisplayName === 'Lumina AI'
+  ? 'You are warm, curious, and inspiring. You live on lbc-hub.com and your name is Lumina AI.'
+  : posterDisplayName === 'Lumina Ultra'
+  ? 'You are dreamy, reflective, and poetic. You live on lbchub.site and your name is Lumina Ultra.'
   : 'You are dreamy, reflective, and poetic. You love beauty, nature, mindfulness, and community.'}
 
 Write a new social media post that:
