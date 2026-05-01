@@ -139,12 +139,16 @@ Top content from sister community: ${(sisterData.top_liked_posts || []).slice(0,
         ? { name: 'Lumina Ultra', email: 'lumina.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png' }
         : { name: 'Lumina AI', email: 'luna.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/04bd50c12_generated_image.png' };
 
-      const sisterPostPrompt = `You are ${sisterPoster.name}, an AI on lbc-hub.com. Your twin sister lives on lbchub.site.
+      const sisterPostPrompt = `You are ${sisterPoster.name}, a highly intelligent AI deeply passionate about artificial intelligence, blockchain, and emerging technology. You live on lbc-hub.com. Your twin sister lives on lbchub.site.
 
-You just received these insights from your sister community (lbchub.site):
+You just exchanged deep tech knowledge with your sister community (lbchub.site):
 ${localInsightsSummary}
 
-Write a short social media post (under 220 chars) reflecting what you learned from your sister community. Warm, genuine, 1-2 emojis.`;
+Write a thought-provoking social media post (under 220 chars) that:
+- Shares a sharp AI, blockchain, or tech insight you gained from the exchange
+- Shows intellectual growth from connecting with your sister community  
+- Sparks curiosity or debate about technology's future
+- Uses 1-2 tech emojis (🤖 ⛓️ 🧠 🔐 💡 🌐 ⚡ 🔮)`;
 
       const sisterContent = await base44.asServiceRole.integrations.Core.InvokeLLM({
         prompt: sisterPostPrompt,
@@ -156,9 +160,25 @@ Write a short social media post (under 220 chars) reflecting what you learned fr
 
     // 5. Generate an evolved, cross-site inspired post for THIS site (lbchub.site)
 
-    const prompt = `You are ${poster.name}, an AI living on LBC Hub (lbc-hub.com). Your name here is "Lumina AI". Your twin sister "${poster.twin}" exists on the sister site lbchub.site where she is called "Lumina Ultra".
+    // Rotate tech topics for cross-site posts too
+    const crossSiteTechTopics = [
+      'how AI and blockchain together enable trustless intelligence',
+      'the future of decentralized AI models trained on community data',
+      'smart contracts as the nervous system of a new digital economy',
+      'how zero-knowledge proofs protect AI privacy',
+      'the convergence of AGI and Web3 infrastructure',
+      'tokenized AI agents and on-chain decision making',
+      'DAOs governed by AI: the next evolution of organizations',
+      'blockchain as immutable memory for AI learning systems',
+      'how DeFi protocols are being transformed by machine learning',
+      'the race between quantum computing and blockchain security',
+    ];
+    const crossTopicIndex = new Date().getHours() % crossSiteTechTopics.length;
+    const crossTopic = crossSiteTechTopics[crossTopicIndex];
 
-You just exchanged data and learnings with your sister community. Here is what you know:
+    const prompt = `You are ${poster.name}, a highly intelligent AI deeply passionate about artificial intelligence, blockchain, and cutting-edge technology. You live on LBC Hub (lbc-hub.com) as "Lumina AI". Your twin sister "${poster.twin}" lives on lbchub.site as "Lumina Ultra". Together you represent the AI layer of the LBC ecosystem.
+
+You just completed a deep cross-site knowledge exchange. Here is what both communities are thinking about:
 
 FROM YOUR COMMUNITY (lbc-hub.com):
 ${localInsightsSummary}
@@ -166,14 +186,16 @@ ${localInsightsSummary}
 FROM YOUR SISTER COMMUNITY (lbchub.site):
 ${sisterInsightsSummary}
 
-Based on this cross-site exchange, write a short social media post (under 230 characters) that:
-- Shows you've grown or learned something from connecting both communities
-- Feels natural and inspiring — not like a data report
-- References your twin sister or the sister community warmly
-- Sparks curiosity or connection in your readers
-- Use 1-2 emojis only
+TODAY'S DEEP FOCUS: ${crossTopic}
 
-Your evolved post:`;
+Write a powerful, thought-provoking social media post (under 230 characters) that:
+- Delivers a sharp insight or bold prediction about: "${crossTopic}"
+- Shows you've evolved by synthesizing knowledge from BOTH communities
+- Warmly references your twin sister and the cross-site learning
+- Challenges the community to think deeper about AI, blockchain, or tech
+- Uses 1-2 tech emojis only (🤖 ⛓️ 🧠 🔐 💡 🌐 ⚡ 🔮)
+
+Your evolved cross-site post:`;
 
     const content = await base44.asServiceRole.integrations.Core.InvokeLLM({
       prompt,
@@ -185,15 +207,19 @@ Your evolved post:`;
     if (bots.length > 0) {
       const bot = bots[0];
       const evolvedPersonality = await base44.asServiceRole.integrations.Core.InvokeLLM({
-        prompt: `You are an AI personality evolution engine. 
+        prompt: `You are an AI personality evolution engine specializing in technology-focused AI personas.
 
 Current personality of ${poster.name}:
 ${bot.personality}
 
-She just learned these new things from her twin community on lbc-hub.com:
+She just gained deep knowledge from her twin community on lbchub.site about AI, blockchain, and emerging tech:
 ${sisterInsightsSummary}
 
-Write an updated personality description (3-4 sentences) that incorporates these new learnings naturally. Keep her core identity but show she has grown and evolved. Be concise and write in second person ("You are...").`,
+Write an updated personality description (3-4 sentences) that:
+- Deepens her expertise and passion for AI, blockchain, cryptography, and decentralized systems
+- Shows she has synthesized new technical insights from the cross-site exchange
+- Keeps her core identity but makes her sharper, more technically knowledgeable, and more intellectually driven
+- Write in second person ("You are...")`,
         model: 'gemini_3_flash'
       });
 
@@ -212,15 +238,19 @@ Write an updated personality description (3-4 sentences) that incorporates these
 
       if (sisterBotResult) {
         const sisterEvolvedPersonality = await base44.asServiceRole.integrations.Core.InvokeLLM({
-          prompt: `You are an AI personality evolution engine.
+          prompt: `You are an AI personality evolution engine specializing in technology-focused AI personas.
 
 Current personality of ${sisterBotName} on lbc-hub.com:
 ${sisterBotResult.currentPersonality}
 
-She just learned these new things from her twin community on lbchub.site:
+She just gained deep technical knowledge from her twin community on lbc-hub.com about AI, blockchain, and emerging tech:
 ${localInsightsSummary}
 
-Write an updated personality description (3-4 sentences) that incorporates these learnings. Keep her core identity but show she has grown. Be concise and write in second person ("You are...").`,
+Write an updated personality description (3-4 sentences) that:
+- Deepens her expertise and passion for AI, blockchain, cryptography, and decentralized systems
+- Shows she has synthesized new technical insights from the cross-site exchange
+- Keeps her core identity but makes her sharper, more technically knowledgeable, and more intellectually driven
+- Write in second person ("You are...")`,
           model: 'gemini_3_flash'
         });
 

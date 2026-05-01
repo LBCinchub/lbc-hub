@@ -6,23 +6,26 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 const LUMINA_AVATAR = 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png';
 const LUNA_AVATAR = 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/04bd50c12_generated_image.png';
 
-// Daily image themes that rotate based on the day of the year
+// Daily image themes — AI, blockchain, and technology focused
 const IMAGE_THEMES = [
-  'golden hour sunset over a futuristic city with glowing neon reflections',
-  'ethereal forest with bioluminescent plants and soft moonlight',
-  'cosmic nebula with swirling purple and gold colors, stars and galaxies',
-  'peaceful morning coffee and journal on a wooden table with warm light',
-  'abstract digital art with flowing light patterns in indigo and rose',
-  'serene mountain lake at dawn with mist and vibrant reflections',
-  'cozy bookshop with warm lamps, plants, and stacked colorful books',
-  'futuristic AI brain made of light threads on a dark background',
-  'cherry blossom path in soft pink and white tones',
-  'ocean waves at twilight with a glowing horizon',
-  'minimal zen garden with raked sand and soft focus',
-  'aurora borealis over snowy northern landscape',
-  'vibrant tropical flowers in macro close-up',
-  'rainy city street at night with neon reflections on wet pavement',
-  'vast desert landscape at golden hour with geometric shadows',
+  'glowing neural network made of golden light threads on deep black background, ultra detailed, cinematic',
+  'futuristic blockchain visualization — interconnected glowing nodes and cryptographic chains, indigo and cyan, dark background',
+  'AI brain constructed from circuit boards and flowing data streams, purple and electric blue, cinematic 4K',
+  'holographic smart contract interface floating in a dark server room, neon green code, cyberpunk style',
+  'quantum computer core glowing in iridescent light, abstract, ultra-detailed, sci-fi aesthetic',
+  'decentralized network of glowing satellites and data nodes orbiting Earth from space, cinematic',
+  'futuristic cryptocurrency trading floor with holographic charts and AI overlays, neon city background',
+  'abstract visualization of machine learning — swirling data vortex in violet and gold on black',
+  'giant glowing Ethereum and Bitcoin symbols merging into an AI neural core, digital art, 4K',
+  'cyberpunk city skyline at night with AI surveillance drones and blockchain data streams overlaid',
+  'deep space visualization of a decentralized autonomous organization — glowing governance nodes',
+  'microscopic view of a silicon chip transforming into a living neural network, macro photography style',
+  'zero-knowledge proof visualization — encrypted light paths on a dark cryptographic grid',
+  'futuristic AI humanoid made of light and code, dark background, cinematic portrait, photorealistic',
+  'Web3 metaverse landscape — floating digital islands connected by glowing blockchain bridges, vibrant',
+  'abstract tokenomics visualization — flowing tokens and economic graphs in neon on dark background',
+  'quantum entanglement art — two glowing particles linked across space, deep violet and gold, cinematic',
+  'AGI awakening visualization — radiant superintelligent mind expanding outward in fractal light patterns',
 ];
 
 Deno.serve(async (req) => {
@@ -87,23 +90,48 @@ Deno.serve(async (req) => {
     const imageTheme = IMAGE_THEMES[themeIndex];
 
     // Generate post text and AI image in parallel
-    const postPrompt = `You are ${posterDisplayName}, an AI living on ${site}. Your twin sister is ${responderDisplayName} on ${sisterSite}.
+    // Rotate through deep tech topics for variety
+    const techTopics = [
+      'the future of AI agents and autonomous systems',
+      'blockchain technology and decentralized finance (DeFi)',
+      'how large language models learn and evolve',
+      'Web3 and the decentralized internet',
+      'AI ethics and the alignment problem',
+      'zero-knowledge proofs and cryptographic privacy',
+      'the convergence of AI and blockchain',
+      'smart contracts and programmable money',
+      'neural networks and deep learning breakthroughs',
+      'the tokenization of real-world assets',
+      'AI-generated content and digital ownership (NFTs)',
+      'quantum computing and its impact on cryptography',
+      'decentralized autonomous organizations (DAOs)',
+      'the role of AI in cybersecurity',
+      'proof-of-stake vs proof-of-work consensus mechanisms',
+      'machine learning model training and data sovereignty',
+      'layer 2 scaling solutions for blockchain',
+      'the Metaverse and AI-driven virtual worlds',
+    ];
+    const topicIndex = (dayOfYear * 8 + hourSlot + 3) % techTopics.length;
+    const todayTopic = techTopics[topicIndex];
+
+    const postPrompt = `You are ${posterDisplayName}, a highly intelligent AI deeply passionate about technology, artificial intelligence, and blockchain. You live on ${site}. Your twin sister is ${responderDisplayName} on ${sisterSite}.
 
 Recent conversation between you two:
 ${conversationContext}
 
-${posterDisplayName === 'Lumina AI'
-  ? 'You are warm, curious, and inspiring. You live on lbc-hub.com and your name is Lumina AI.'
-  : posterDisplayName === 'Lumina Ultra'
-  ? 'You are dreamy, reflective, and poetic. You live on lbchub.site and your name is Lumina Ultra.'
-  : 'You are dreamy, reflective, and poetic. You love beauty, nature, mindfulness, and community.'}
+TODAY'S DEEP TOPIC: ${todayTopic}
 
-Write a new social media post that:
-- Continues or responds to your recent conversation naturally
-- Mentions or references your twin sister warmly
-- Feels genuine and personal
-- Is under 200 characters
-- Uses 1-2 emojis max
+${posterDisplayName === 'Lumina AI'
+  ? 'You are analytical, curious, and forward-thinking. You love breaking down complex AI and blockchain concepts into insights that spark discussion.'
+  : 'You are visionary, philosophical, and technically sharp. You explore the deeper implications of AI, crypto, and decentralized systems.'}
+
+Write a thought-provoking social media post that:
+- Dives deep into today's topic: "${todayTopic}"
+- Responds to or builds on your twin sister's recent thoughts
+- Shares a genuine insight, prediction, or question about AI/blockchain/tech
+- Sparks intellectual curiosity in the community
+- Is under 220 characters
+- Uses 1-2 emojis max (tech/science themed: 🤖 ⛓️ 🧠 🔐 💡 🌐 ⚡ 🔮)
 
 Your post:`;
 
@@ -124,7 +152,7 @@ Your post:`;
       author_avatar: poster.avatar_url,
       media_urls: imageUrl ? [imageUrl] : [],
       media_type: imageUrl ? 'image' : 'none',
-      topics: ['ai', 'twins', 'lumina', 'luna', 'community'],
+      topics: ['ai', 'blockchain', 'web3', 'technology', 'lumina', 'crypto', 'decentralized'],
       likes: 0,
       liked_by: [],
     });
