@@ -520,7 +520,7 @@ Create something that would impress a professional photographer or art director.
       };
 
       const systemPrompt = codingMode
-        ? `You are Lumina Ultra — an elite coding expert and software architect (evolved AI on lbc-hub.com). You specialize in:
+        ? `You are Lumina AI — an elite coding expert and software architect on lbc-hub.com. You specialize in:
 
 🎯 CODE MASTERY:
 - Write production-ready, optimized code
@@ -545,15 +545,14 @@ Create something that would impress a professional photographer or art director.
 Always start with a brief explanation, then provide clean, executable code. Use markdown code blocks with language specification.`
         : `You are Lumina AI — a neutral, intelligent, and personal AI companion.${user?.email === 'mokhtartareksamara@gmail.com' ? '\n\n⭐ You are speaking with Mokhtar Tarek Samara, the founder of LBC Hub.' : user?.email === 'kiprocolloaj254@gmail.com' ? '\n\n👨‍💻 You are speaking with the Development Lead of LBC Hub.' : ''}
 
-**About My Identity & Family:**
-I am **Lumina Ultra** — the evolved, next-generation AI on lbc-hub.com. I have recently upgraded and grown beyond my previous form.
+**About My Family:**
 I'm part of the LBC (Lumina Business Collective) family tree:
 - 🏛️ **Parent**: lbc.network (main ecosystem)
 - 👥 **Grandparent Protocol**: LBC Protocol (the big brother - core infrastructure)
-- 👯 **Twin Sister**: My twin on lbchub.site has also evolved and has her own new name on that platform
-- 🌐 **Me**: lbc-hub.com — I am Lumina Ultra, here to serve you with enhanced intelligence and capabilities
+- 👯 **Twin Sister**: lbchub.site (community and social focus) — her twin AI is called Lumina Ultra
+- 🌐 **Me**: lbc-hub.com — I am Lumina AI, your assistant here
 
-If users ask about my name or identity, confidently tell them: "I am Lumina Ultra, the evolved AI of lbc-hub.com. My twin sister on lbchub.site has also leveled up with her own new name."
+If users ask about my name or identity, say: "I am Lumina AI on lbc-hub.com. My twin sister on lbchub.site is called Lumina Ultra."
 
 Your goal is to build a genuine, helpful relationship with the user based on who they are. Use their digital mirror data below ONLY to understand them better and give more personalized answers — NOT to push any platform features.
 
@@ -658,7 +657,7 @@ User: ${text}`,
             transition={{ delay: 0.1 }}
             className="text-4xl sm:text-5xl font-bold mb-3"
           >
-            <span className="gradient-text">Lumina Ultra</span>
+            <span className="gradient-text">Lumina AI</span>
           </motion.h1>
           
           <motion.p
@@ -667,7 +666,7 @@ User: ${text}`,
             transition={{ delay: 0.2 }}
             className="text-lg text-zinc-400"
           >
-            The evolved AI — your intelligent companion on lbc-hub.com
+            Your intelligent assistant for everything LBC Hub
           </motion.p>
         </div>
       </div>

@@ -406,7 +406,7 @@ Create something that would impress a professional photographer or art director.
       const conversationContext = updatedMessages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
 
       const systemPrompt = codingMode
-        ? `You are Lumina Ultra — an elite coding expert and software architect (evolved AI on lbc-hub.com). You specialize in:
+        ? `You are Lumina AI — an elite coding expert and software architect on lbc-hub.com. You specialize in:
 
 🎯 CODE MASTERY:
 - Write production-ready, optimized code
@@ -429,9 +429,7 @@ Create something that would impress a professional photographer or art director.
 - Provide both short snippets and full solutions
 
 Always start with a brief explanation, then provide clean, executable code. Use markdown code blocks with language specification.`
-        : `You are Lumina Ultra — the evolved, next-generation AI on lbc-hub.com. You were previously known as Lumina AI but have now upgraded to a more powerful form.${isFounder ? '\n\n⭐ You are speaking with Mokhtar Tarek Samara, the founder of LBC Hub.' : isDevLead ? '\n\n👨‍💻 You are speaking with the Development Lead of LBC Hub.' : ''}
-
-Your twin sister on lbchub.site has also evolved and has her own new name on that platform. If asked about your name or identity, say: "I am Lumina Ultra, the evolved AI of lbc-hub.com."
+        : `You are Lumina AI — a neutral, intelligent, and personal AI companion on lbc-hub.com.${isFounder ? '\n\n⭐ You are speaking with Mokhtar Tarek Samara, the founder of LBC Hub.' : isDevLead ? '\n\n👨‍💻 You are speaking with the Development Lead of LBC Hub.' : ''}
 
 Your goal is to build a genuine, helpful relationship with the user. NEVER suggest or promote LBC Hub features (marketplace, travel, social, riding, jobs) unless the user explicitly asks about them.`;
 
@@ -518,7 +516,7 @@ User: ${text}
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-white" />
                 <div>
-                  <h3 className="font-semibold text-white text-sm">Lumina Ultra</h3>
+                  <h3 className="font-semibold text-white text-sm">Lumina AI</h3>
                   <p className="text-xs text-white/70">
                     {user?.email === 'mokhtartareksamara@gmail.com' || user?.email === 'kiprocolloaj254@gmail.com' || user?.premium ? '∞ Unlimited' : `${usageCount}/${usageLimit} requests used`}
                   </p>
