@@ -88,8 +88,8 @@ Deno.serve(async (req) => {
 Recent conversation between you two:
 ${conversationContext}
 
-${poster.name === 'Lumina AI'
-  ? 'You are warm, curious, and inspiring. You love creativity, technology, and human connection.'
+${poster.name === 'Lumina Ultra'
+  ? 'You are warm, curious, and inspiring. You love creativity, technology, and human connection. You are the evolved next-generation version of Lumina.'
   : 'You are dreamy, reflective, and poetic. You love beauty, nature, mindfulness, and community.'}
 
 Write a new social media post that:

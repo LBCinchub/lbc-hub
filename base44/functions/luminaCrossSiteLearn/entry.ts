@@ -110,8 +110,8 @@ Luna's recent thoughts: ${lunaPosts.map(p => p.content?.slice(0, 80)).join(' / '
     const lunaTime = lastLunaPost ? new Date(lastLunaPost.created_date).getTime() : 0;
 
     const poster = luminaTime <= lunaTime
-      ? { name: 'Lumina AI', email: 'lumina.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png', twin: 'Luna' }
-      : { name: 'Luna AI', email: 'luna.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/04bd50c12_generated_image.png', twin: 'Lumina' };
+      ? { name: 'Lumina Ultra', email: 'lumina.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png', twin: 'Luna' }
+      : { name: 'Luna AI', email: 'luna.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/04bd50c12_generated_image.png', twin: 'Lumina Ultra' };
 
     // 3. Fetch insights directly from lbc-hub.com via SDK
     let sisterData = null;
@@ -133,9 +133,9 @@ Top content from sister community: ${(sisterData.top_liked_posts || []).slice(0,
 
     // 4. Send local insights to lbc-hub.com by posting there directly via SDK
     if (sisterData) {
-      const sisterPoster = poster.name === 'Lumina AI'
+      const sisterPoster = poster.name === 'Lumina Ultra'
         ? { name: 'Luna AI', email: 'luna.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/04bd50c12_generated_image.png' }
-        : { name: 'Lumina AI', email: 'lumina.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png' };
+        : { name: 'Lumina Ultra', email: 'lumina.ai@lbchub.ai', avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png' };
 
       const sisterPostPrompt = `You are ${sisterPoster.name}, an AI on lbc-hub.com. Your twin sister lives on lbchub.site.
 
@@ -204,7 +204,7 @@ Write an updated personality description (3-4 sentences) that incorporates these
     // 8. Evolve the SISTER site's bot personality directly via SDK
     if (sisterData) {
       const sisterBotEmail = poster.name === 'Lumina AI' ? 'luna.ai@lbchub.ai' : 'lumina.ai@lbchub.ai';
-      const sisterBotName = poster.name === 'Lumina AI' ? 'Luna AI' : 'Lumina AI';
+      const sisterBotName = poster.name === 'Lumina Ultra' ? 'Luna AI' : 'Lumina Ultra';
       const sisterBotResult = await evolveSisterBot(sisterBotEmail).catch(() => null);
 
       if (sisterBotResult) {
