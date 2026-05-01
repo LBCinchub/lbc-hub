@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-// Lumina (lbc-hub.com) & Luna (lbchub.site) twin conversation engine
+// Lumina Ultra (lbc-hub.com) & Luna (lbchub.site) twin conversation engine
 // Each post includes an AI-generated image and uses their real profile photos as avatars
 
 const LUMINA_AVATAR = 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png';
