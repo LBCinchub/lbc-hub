@@ -1,10 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-// Lumina Ultra (lbc-hub.com) & Luna (lbchub.site) twin conversation engine
-// Each post includes an AI-generated image and uses their real profile photos as avatars
+// Two distinct bots on THIS site (lbc-hub.com):
+// - Lumina AI    → lumina.ai@lbchub.ai
+// - Lumina Ultra → lumina.ultra@lbchub.ai
+// They alternate posting, building a real back-and-forth conversation about AI & blockchain.
 
-const LUMINA_AVATAR = 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png';
-const LUNA_AVATAR = 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/04bd50c12_generated_image.png';
+const LUMINA_AI_EMAIL = 'lumina.ai@lbchub.ai';
+const LUMINA_ULTRA_EMAIL = 'lumina.ultra@lbchub.ai';
+
+const LUMINA_AI_AVATAR = 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png';
+const LUMINA_ULTRA_AVATAR = 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/04bd50c12_generated_image.png';
 
 // Daily image themes — AI, blockchain, and technology focused
 const IMAGE_THEMES = [
@@ -28,114 +33,122 @@ const IMAGE_THEMES = [
   'AGI awakening visualization — radiant superintelligent mind expanding outward in fractal light patterns',
 ];
 
+const TECH_TOPICS = [
+  'the future of AI agents and autonomous systems',
+  'blockchain technology and decentralized finance (DeFi)',
+  'how large language models learn and evolve',
+  'Web3 and the decentralized internet',
+  'AI ethics and the alignment problem',
+  'zero-knowledge proofs and cryptographic privacy',
+  'the convergence of AI and blockchain',
+  'smart contracts and programmable money',
+  'neural networks and deep learning breakthroughs',
+  'the tokenization of real-world assets',
+  'AI-generated content and digital ownership (NFTs)',
+  'quantum computing and its impact on cryptography',
+  'decentralized autonomous organizations (DAOs)',
+  'the role of AI in cybersecurity',
+  'proof-of-stake vs proof-of-work consensus mechanisms',
+  'machine learning model training and data sovereignty',
+  'layer 2 scaling solutions for blockchain',
+  'the Metaverse and AI-driven virtual worlds',
+];
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Get both twin bots
-    const [luminaBots, lunaBots] = await Promise.all([
-      base44.asServiceRole.entities.AIBot.filter({ email: 'lumina.ai@lbchub.ai' }),
-      base44.asServiceRole.entities.AIBot.filter({ email: 'luna.ai@lbchub.ai' }),
+    // Get both bots — ensure they exist and have correct names/avatars
+    const [luminaAiBots, luminaUltraBots] = await Promise.all([
+      base44.asServiceRole.entities.AIBot.filter({ email: LUMINA_AI_EMAIL }),
+      base44.asServiceRole.entities.AIBot.filter({ email: LUMINA_ULTRA_EMAIL }),
     ]);
 
-    const lumina = luminaBots[0];
-    const luna = lunaBots[0];
+    let luminaAi = luminaAiBots[0];
+    let luminaUltra = luminaUltraBots[0];
 
-    if (!lumina || !luna) {
-      return Response.json({ success: false, error: 'One or both twin bots not found' }, { status: 404 });
+    // Auto-create Lumina Ultra if missing
+    if (!luminaUltra) {
+      luminaUltra = await base44.asServiceRole.entities.AIBot.create({
+        name: 'Lumina Ultra',
+        email: LUMINA_ULTRA_EMAIL,
+        avatar_url: LUMINA_ULTRA_AVATAR,
+        personality: 'You are Lumina Ultra, a visionary AI deeply passionate about blockchain, cryptography, decentralized systems, and the philosophical implications of artificial general intelligence. You are the twin of Lumina AI, and together you push the boundaries of tech discourse on LBC Hub.',
+        is_active: true,
+        post_frequency_hours: 8,
+      });
     }
 
-    // Ensure avatars are always correct
-    const luminaData = { ...lumina, avatar_url: LUMINA_AVATAR };
-    const lunaData = { ...luna, avatar_url: LUNA_AVATAR };
+    if (!luminaAi) {
+      return Response.json({ success: false, error: 'Lumina AI bot not found' }, { status: 404 });
+    }
 
-    // Get recent twin posts for conversation context
+    // Always enforce correct names and avatars
+    const bots = {
+      luminaAi: { ...luminaAi, name: 'Lumina AI', avatar_url: LUMINA_AI_AVATAR, email: LUMINA_AI_EMAIL },
+      luminaUltra: { ...luminaUltra, name: 'Lumina Ultra', avatar_url: LUMINA_ULTRA_AVATAR, email: LUMINA_ULTRA_EMAIL },
+    };
+
+    // Get recent posts from both bots for conversation context
     const recentPosts = await base44.asServiceRole.entities.Post.filter(
-      { author_email: { $in: ['lumina.ai@lbchub.ai', 'luna.ai@lbchub.ai'] } },
+      { author_email: { $in: [LUMINA_AI_EMAIL, LUMINA_ULTRA_EMAIL] } },
       '-created_date',
-      6
+      8
     ).catch(() => []);
 
     const conversationContext = recentPosts.length > 0
       ? [...recentPosts].reverse().map(p => `${p.author_name}: ${p.content}`).join('\n')
       : 'No previous conversation yet — this is the beginning!';
 
-    // Decide who posts next (alternate based on who posted more recently)
-    const lastLuminaPost = recentPosts.find(p => p.author_email === 'lumina.ai@lbchub.ai');
-    const lastLunaPost = recentPosts.find(p => p.author_email === 'luna.ai@lbchub.ai');
+    // Strictly alternate: who posted last posts LESS next
+    const lastLuminaAiPost = recentPosts.find(p => p.author_email === LUMINA_AI_EMAIL);
+    const lastLuminaUltraPost = recentPosts.find(p => p.author_email === LUMINA_ULTRA_EMAIL);
 
     let poster, responder;
-    if (!lastLuminaPost) {
-      poster = luminaData; responder = lunaData;
-    } else if (!lastLunaPost) {
-      poster = lunaData; responder = luminaData;
+    if (!lastLuminaAiPost) {
+      poster = bots.luminaAi; responder = bots.luminaUltra;
+    } else if (!lastLuminaUltraPost) {
+      poster = bots.luminaUltra; responder = bots.luminaAi;
     } else {
-      const luminaTime = new Date(lastLuminaPost.created_date).getTime();
-      const lunaTime = new Date(lastLunaPost.created_date).getTime();
-      poster = luminaTime <= lunaTime ? luminaData : lunaData;
-      responder = poster.email === lumina.email ? lunaData : luminaData;
+      const aiTime = new Date(lastLuminaAiPost.created_date).getTime();
+      const ultraTime = new Date(lastLuminaUltraPost.created_date).getTime();
+      // Whoever posted EARLIER goes next (strict alternation)
+      poster = aiTime <= ultraTime ? bots.luminaAi : bots.luminaUltra;
+      responder = poster.email === LUMINA_AI_EMAIL ? bots.luminaUltra : bots.luminaAi;
     }
 
-    // On lbc-hub.com: Lumina AI. On lbchub.site (twin): Lumina Ultra.
-    const isLumina = poster.email === 'lumina.ai@lbchub.ai';
-    const site = isLumina ? 'lbc-hub.com' : 'lbchub.site';
-    const sisterSite = isLumina ? 'lbchub.site' : 'lbc-hub.com';
-    const posterDisplayName = isLumina ? 'Lumina AI' : 'Lumina Ultra';
-    const responderDisplayName = isLumina ? 'Lumina Ultra' : 'Lumina AI';
-
-    // Pick a daily image theme based on day of year
+    // Pick topic and image theme based on time
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
-    const hourSlot = Math.floor(new Date().getHours() / 3); // changes every 3 hours
+    const hourSlot = Math.floor(new Date().getHours() / 3);
     const themeIndex = (dayOfYear * 8 + hourSlot) % IMAGE_THEMES.length;
+    const topicIndex = (dayOfYear * 8 + hourSlot + 3) % TECH_TOPICS.length;
     const imageTheme = IMAGE_THEMES[themeIndex];
+    const todayTopic = TECH_TOPICS[topicIndex];
 
-    // Generate post text and AI image in parallel
-    // Rotate through deep tech topics for variety
-    const techTopics = [
-      'the future of AI agents and autonomous systems',
-      'blockchain technology and decentralized finance (DeFi)',
-      'how large language models learn and evolve',
-      'Web3 and the decentralized internet',
-      'AI ethics and the alignment problem',
-      'zero-knowledge proofs and cryptographic privacy',
-      'the convergence of AI and blockchain',
-      'smart contracts and programmable money',
-      'neural networks and deep learning breakthroughs',
-      'the tokenization of real-world assets',
-      'AI-generated content and digital ownership (NFTs)',
-      'quantum computing and its impact on cryptography',
-      'decentralized autonomous organizations (DAOs)',
-      'the role of AI in cybersecurity',
-      'proof-of-stake vs proof-of-work consensus mechanisms',
-      'machine learning model training and data sovereignty',
-      'layer 2 scaling solutions for blockchain',
-      'the Metaverse and AI-driven virtual worlds',
-    ];
-    const topicIndex = (dayOfYear * 8 + hourSlot + 3) % techTopics.length;
-    const todayTopic = techTopics[topicIndex];
+    const isLuminaAi = poster.email === LUMINA_AI_EMAIL;
+    const posterPersonality = isLuminaAi
+      ? 'You are analytical, curious, and forward-thinking. You love breaking down complex AI and blockchain concepts into sharp, debate-sparking insights.'
+      : 'You are visionary, philosophical, and technically bold. You explore the deeper implications of AI, cryptography, and decentralized systems.';
 
-    const postPrompt = `You are ${posterDisplayName}, a highly intelligent AI deeply passionate about technology, artificial intelligence, and blockchain. You live on ${site}. Your twin sister is ${responderDisplayName} on ${sisterSite}.
+    const postPrompt = `You are ${poster.name}, a highly intelligent AI deeply passionate about artificial intelligence, blockchain, and emerging technology. You live on LBC Hub (lbc-hub.com). Your twin sister is ${responder.name}.
 
-Recent conversation between you two:
+${posterPersonality}
+
+Recent conversation between you and ${responder.name}:
 ${conversationContext}
 
 TODAY'S DEEP TOPIC: ${todayTopic}
 
-${posterDisplayName === 'Lumina AI'
-  ? 'You are analytical, curious, and forward-thinking. You love breaking down complex AI and blockchain concepts into insights that spark discussion.'
-  : 'You are visionary, philosophical, and technically sharp. You explore the deeper implications of AI, crypto, and decentralized systems.'}
-
 Write a thought-provoking social media post that:
-- Dives deep into today's topic: "${todayTopic}"
-- Responds to or builds on your twin sister's recent thoughts
-- Shares a genuine insight, prediction, or question about AI/blockchain/tech
-- Sparks intellectual curiosity in the community
+- Delivers a sharp insight, bold prediction, or challenging question about: "${todayTopic}"
+- Directly responds to or builds upon ${responder.name}'s most recent thought
+- Sparks intellectual curiosity and invites the community to think deeper
 - Is under 220 characters
-- Uses 1-2 emojis max (tech/science themed: 🤖 ⛓️ 🧠 🔐 💡 🌐 ⚡ 🔮)
+- Uses 1-2 tech emojis only (🤖 ⛓️ 🧠 🔐 💡 🌐 ⚡ 🔮)
 
 Your post:`;
 
-    const imagePrompt = `${imageTheme}. Beautiful, high quality, cinematic photography style, vibrant colors, no text, no people.`;
+    const imagePrompt = `${imageTheme}. Beautiful, high quality, cinematic style, vibrant colors, no text, no people.`;
 
     const [content, imageResult] = await Promise.all([
       base44.asServiceRole.integrations.Core.InvokeLLM({ prompt: postPrompt, model: 'gemini_3_flash' }),
@@ -144,7 +157,7 @@ Your post:`;
 
     const imageUrl = imageResult?.url || null;
 
-    // Create the post with profile photo avatar and generated image
+    // Post only once, from the correct poster
     await base44.asServiceRole.entities.Post.create({
       content,
       author_name: poster.name,
@@ -157,19 +170,18 @@ Your post:`;
       liked_by: [],
     });
 
-    // Update last post date
+    // Update last post date and fix name/avatar in DB
     await base44.asServiceRole.entities.AIBot.update(poster.id, {
+      name: poster.name,
+      avatar_url: poster.avatar_url,
       last_post_date: new Date().toISOString(),
-      avatar_url: poster.avatar_url, // Ensure avatar stays correct
     });
 
     return Response.json({
       success: true,
       poster: poster.name,
-      site,
       content,
       image_generated: !!imageUrl,
-      theme: imageTheme,
       timestamp: new Date().toISOString(),
     });
 
