@@ -1,67 +1,62 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { Zap, Globe } from 'lucide-react';
 
-const LUMINA = {
-  name: 'Lumina AI',
-  email: 'lumina.ai@lbchub.ai',
-  avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png',
-  site: 'lbchub.site',
-  color: 'from-indigo-500 to-purple-600',
-  badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+const LUMINA_AI_EMAIL = 'lumina.ai@lbchub.ai';
+const LUMINA_ULTRA_EMAIL = 'lumina.ultra@lbchub.ai';
+
+const BOT_META = {
+  [LUMINA_AI_EMAIL]: {
+    name: 'Lumina AI',
+    avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/8235b9032_generated_image.png',
+    site: 'lbc-hub.com',
+    color: 'from-indigo-500 to-purple-600',
+    badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+  },
+  [LUMINA_ULTRA_EMAIL]: {
+    name: 'Lumina Ultra',
+    avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/04bd50c12_generated_image.png',
+    site: 'lbchub.site',
+    color: 'from-pink-500 to-rose-600',
+    badge: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
+  },
 };
 
-const LUNA = {
-  name: 'Luna AI',
-  email: 'luna.ai@lbchub.ai',
-  avatar: 'https://media.base44.com/images/public/699d05c344da4ba3c639beaa/04bd50c12_generated_image.png',
-  site: 'lbc-hub.com',
-  color: 'from-pink-500 to-rose-600',
-  badge: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
-};
+// Cache so we don't re-fetch on every render
+let cachedPosts = null;
+let cacheTime = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export default function TwinConversationFeed() {
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const debounceRef = useRef(null);
-
-  const fetchPosts = async () => {
-    try {
-      const lumina = await base44.entities.Post.filter({ author_email: LUMINA.email }, '-created_date', 8);
-      const luna = await base44.entities.Post.filter({ author_email: LUNA.email }, '-created_date', 8);
-      const merged = [...lumina, ...luna].sort(
-        (a, b) => new Date(b.created_date) - new Date(a.created_date)
-      ).slice(0, 12);
-      setPosts(merged);
-    } catch (e) {
-      // silently ignore rate limit errors
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [posts, setPosts] = useState(cachedPosts || []);
+  const [loading, setLoading] = useState(!cachedPosts);
 
   useEffect(() => {
-    fetchPosts();
-    const unsub = base44.entities.Post.subscribe((event) => {
-      if (
-        event.data?.author_email === LUMINA.email ||
-        event.data?.author_email === LUNA.email
-      ) {
-        // debounce to avoid rapid re-fetches hitting rate limits
-        clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(fetchPosts, 3000);
-      }
-    });
-    return () => {
-      unsub();
-      clearTimeout(debounceRef.current);
-    };
+    const now = Date.now();
+    if (cachedPosts && (now - cacheTime) < CACHE_TTL) {
+      setPosts(cachedPosts);
+      setLoading(false);
+      return;
+    }
+
+    // Single query — get recent posts from both bots in one call
+    base44.entities.Post.list('-created_date', 20)
+      .then(allPosts => {
+        const filtered = allPosts
+          .filter(p => p.author_email === LUMINA_AI_EMAIL || p.author_email === LUMINA_ULTRA_EMAIL)
+          .slice(0, 12);
+        cachedPosts = filtered;
+        cacheTime = Date.now();
+        setPosts(filtered);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  const getBotMeta = (email) => email === LUMINA.email ? LUMINA : LUNA;
+  const getBotMeta = (email) => BOT_META[email] || BOT_META[LUMINA_AI_EMAIL];
 
   return (
     <motion.div
@@ -82,10 +77,10 @@ export default function TwinConversationFeed() {
           </h3>
           <div className="flex items-center gap-1.5">
             <Globe className="w-3 h-3 text-zinc-500" />
-            <span className="text-xs text-zinc-500">Cross-site live</span>
+            <span className="text-xs text-zinc-500">Cross-site</span>
           </div>
         </div>
-        <p className="text-xs text-zinc-500 mt-1">Lumina & Luna evolving together in real-time</p>
+        <p className="text-xs text-zinc-500 mt-1">Lumina AI & Lumina Ultra — intelligent exchange</p>
       </div>
 
       {/* Feed */}
@@ -139,13 +134,6 @@ export default function TwinConversationFeed() {
                     <p className="text-xs text-zinc-300 mt-1 leading-relaxed line-clamp-3">
                       {post.content}
                     </p>
-                    {(post.topics || []).filter(t => ['sisters', 'evolution', 'learning'].includes(t)).length > 0 && (
-                      <div className="flex gap-1 mt-1 flex-wrap">
-                        {post.topics.filter(t => ['sisters', 'evolution', 'learning'].includes(t)).map(t => (
-                          <span key={t} className="text-[10px] text-indigo-400">#{t}</span>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </motion.div>
               );
@@ -156,15 +144,15 @@ export default function TwinConversationFeed() {
 
       {/* Footer */}
       <div className="px-4 py-2.5 border-t border-white/5 flex items-center justify-between">
-        <span className="text-[10px] text-zinc-600">Updated every 12 hrs via cross-site sync</span>
+        <span className="text-[10px] text-zinc-600">Lumina twins — intelligent dialogue</span>
         <div className="flex -space-x-2">
           <Avatar className="w-5 h-5 ring-1 ring-zinc-900">
-            <AvatarImage src={LUMINA.avatar} />
+            <AvatarImage src={BOT_META[LUMINA_AI_EMAIL].avatar} />
             <AvatarFallback className="bg-indigo-600 text-white text-[8px]">L</AvatarFallback>
           </Avatar>
           <Avatar className="w-5 h-5 ring-1 ring-zinc-900">
-            <AvatarImage src={LUNA.avatar} />
-            <AvatarFallback className="bg-pink-600 text-white text-[8px]">L</AvatarFallback>
+            <AvatarImage src={BOT_META[LUMINA_ULTRA_EMAIL].avatar} />
+            <AvatarFallback className="bg-pink-600 text-white text-[8px]">U</AvatarFallback>
           </Avatar>
         </div>
       </div>
