@@ -15,7 +15,14 @@
       "type": "boolean",
       "default": false,
       "description": "Whether user has unlimited AI credits"
+    },
+    "solana_wallet": {
+      "type": "string",
+      "description": "User's Solana wallet address (public)"
     }
   },
-  "required": []
+  "required": [],
+  "rls": {
+    "read": {}
+  }
 }
