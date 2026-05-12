@@ -189,7 +189,7 @@ export default function Settings() {
           <Button
             onClick={() => base44.auth.logout()}
             variant="outline"
-            className="gap-2"
+            className="gap-2 border-white/20 bg-transparent text-white hover:bg-white/10"
           >
             <LogOut className="w-4 h-4" />
             Sign Out
