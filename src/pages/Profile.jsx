@@ -34,7 +34,7 @@ export default function Profile() {
       setUser(u);
       setBio(u.bio || '');
       setLocation(u.location || '');
-      setSolanaAddress(u.solana_address || '');
+      setSolanaAddress(u.solana_wallet || '');
       // Load streak
       base44.entities.LuminaStreak.filter({ user_email: u.email }).then(records => {
         if (records.length > 0) setStreakData(records[0]);
@@ -93,7 +93,7 @@ export default function Profile() {
   });
 
   const handleSave = () => {
-    updateProfileMutation.mutate({ bio, location, solana_address: solanaAddress });
+    updateProfileMutation.mutate({ bio, location, solana_wallet: solanaAddress });
   };
 
   const handleAvatarUpload = async (e) => {
@@ -114,10 +114,10 @@ export default function Profile() {
 
   if (authLoading || (isViewingOther && !viewUser && viewEmail)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-indigo-500/30 border-t-indigo-500 animate-spin" />
-          <p className="text-zinc-400">Loading profile...</p>
+          <p className="text-zinc-400 text-sm">Loading profile...</p>
         </div>
       </div>
     );
@@ -125,7 +125,7 @@ export default function Profile() {
 
   if (!profileUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="text-center glass rounded-2xl p-12 max-w-md mx-auto">
           <h2 className="text-2xl font-bold mb-3">Sign in to view your profile</h2>
           <p className="text-zinc-400 mb-6">You need to be signed in to access your profile page.</p>
@@ -138,7 +138,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 py-8 px-4">
+    <div className="min-h-screen bg-zinc-950 text-white py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header Card */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-2xl p-8 mb-6">
@@ -172,7 +172,7 @@ export default function Profile() {
                    </Button>
                  ) : (
                    <div className="flex gap-2">
-                     <Button onClick={() => { setEditMode(false); setBio(user.bio || ''); setLocation(user.location || ''); setSolanaAddress(user.solana_address || ''); }} variant="outline" className="gap-2 text-white">
+                     <Button onClick={() => { setEditMode(false); setBio(user.bio || ''); setLocation(user.location || ''); setSolanaAddress(user.solana_wallet || ''); }} variant="outline" className="gap-2 text-white">
                        <X className="w-4 h-4" />
                        Cancel
                      </Button>
