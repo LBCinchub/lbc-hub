@@ -166,10 +166,10 @@ export default function Profile() {
                   {streakData && <div className="mt-2"><LuminaStreakBadge streak={streakData.current_streak} sparks={streakData.total_sparks} compact /></div>}
                 </div>
                 {!isViewingOther && (!editMode ? (
-                   <Button onClick={() => setEditMode(true)} variant="outline" className="gap-2">
-                     <Edit2 className="w-4 h-4" />
-                     Edit Profile
-                   </Button>
+                  <Button onClick={() => setEditMode(true)} variant="outline" className="gap-2 border-white/20 bg-transparent text-white hover:bg-white/10">
+                    <Edit2 className="w-4 h-4" />
+                    Edit Profile
+                  </Button>
                  ) : (
                    <div className="flex gap-2">
                      <Button onClick={() => { setEditMode(false); setBio(user.bio || ''); setLocation(user.location || ''); setSolanaAddress(user.solana_wallet || ''); }} variant="outline" className="gap-2 text-white">
