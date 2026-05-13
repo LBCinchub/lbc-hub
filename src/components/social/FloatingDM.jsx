@@ -257,10 +257,10 @@ export default function FloatingDM({ user }) {
             className="rounded-3xl flex flex-col overflow-hidden"
             style={{
               position: 'fixed',
-              bottom: window.innerWidth < 640 ? 8 : 80,
-              left: window.innerWidth < 640 ? 8 : '50%',
-              right: window.innerWidth < 640 ? 8 : 'auto',
-              transform: window.innerWidth < 640 ? 'none' : 'translateX(-50%)',
+              bottom: window.innerWidth < 640 ? 8 : 112,
+              right: window.innerWidth < 640 ? 8 : 24,
+              left: 'auto',
+              transform: 'none',
               width: window.innerWidth < 640 ? 'auto' : '340px',
               maxWidth: window.innerWidth < 640 ? 'calc(100vw - 16px)' : '340px',
               maxHeight: window.innerWidth < 640 ? 'calc(100vh - 16px)' : 'auto',

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Minimize2, Mic, MicOff, Volume2, VolumeX, Phone } from 'lucide-react';
+import { X, Send, Minimize2, Mic, MicOff, Volume2, VolumeX, Phone, Sparkles } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useVoice } from '@/hooks/useVoice';
 import LuminaCallMode from './LuminaCallMode';
@@ -285,7 +285,7 @@ export default function LuminaChatWidget() {
             {open ? (
               <X className="w-6 h-6 text-white" />
             ) : (
-              <img src={LUMINA_AVATAR} alt="Lumina" className="w-10 h-10 rounded-full object-cover" />
+              <Sparkles className="w-7 h-7 text-white" />
             )}
           </button>
           {hasUnread && !open && (
