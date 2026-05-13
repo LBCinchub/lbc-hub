@@ -9,13 +9,14 @@ export default function LuminaCallMode({ onEnd }) {
   const [callState, setCallState] = useState('listening');
   const [transcript, setTranscript] = useState([]);
   const [elapsed, setElapsed] = useState(0);
-  const [micMuted, setMicMuted] = useState(false);
+  const [userMuted, setUserMuted] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState('');
   
   const timerRef = useRef(null);
   const bottomRef = useRef(null);
   const recognitionRef = useRef(null);
   const isBusyRef = useRef(false);
+  const resumeListeningRef = useRef(null);
 
   const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
@@ -56,25 +57,26 @@ export default function LuminaCallMode({ onEnd }) {
     // Timer
     timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
 
-    // Start listening
-    const startListeningTimer = setTimeout(() => {
-      if (!micMuted) {
-        recognition.start();
-      }
-    }, 800);
+    // Start listening immediately (no delay, fully automatic)
+    if (!userMuted) {
+      recognition.start();
+    }
 
     return () => {
-      clearTimeout(startListeningTimer);
       clearInterval(timerRef.current);
+      clearTimeout(resumeListeningRef.current);
       recognition.stop();
     };
-  }, [micMuted]);
+  }, [userMuted]);
 
   const sendToLumina = async (text) => {
     if (isBusyRef.current || !text.trim()) return;
     isBusyRef.current = true;
     setCallState('thinking');
     setTranscript(prev => [...prev, { role: 'user', content: text }]);
+    
+    // Stop listening before sending to Lumina
+    recognitionRef.current?.stop();
 
     try {
       console.log('📡 Sending to Lumina...');
@@ -89,7 +91,7 @@ export default function LuminaCallMode({ onEnd }) {
       console.error('❌ Error calling Lumina:', err);
       setCallState('listening');
       isBusyRef.current = false;
-      if (!micMuted && recognitionRef.current) {
+      if (!userMuted && recognitionRef.current) {
         recognitionRef.current.start();
       }
     }
@@ -98,6 +100,8 @@ export default function LuminaCallMode({ onEnd }) {
   const speakReply = (text) => {
     console.log('🔊 Speaking reply...');
     window.speechSynthesis.cancel();
+    // Pause listening while Lumina speaks (so she doesn't hear herself)
+    recognitionRef.current?.stop();
 
     const getPreferredVoice = (voices) => {
       const preferred = [
@@ -113,7 +117,6 @@ export default function LuminaCallMode({ onEnd }) {
         const voice = voices.find(v => v.name.includes(name));
         if (voice) return voice;
       }
-      // Fallback: any English female voice
       let voice = voices.find(v =>
         v.lang.startsWith('en') &&
         (v.name.includes('Female') || v.name.includes('female'))
@@ -131,8 +134,11 @@ export default function LuminaCallMode({ onEnd }) {
           console.log('🔁 Looping back to listen');
           setCallState('listening');
           isBusyRef.current = false;
-          if (!micMuted && recognitionRef.current) {
-            recognitionRef.current.start();
+          // Auto-resume listening after natural pause
+          if (!userMuted && recognitionRef.current) {
+            resumeListeningRef.current = setTimeout(() => {
+              recognitionRef.current?.start();
+            }, 500);
           }
           return;
         }
@@ -179,18 +185,20 @@ export default function LuminaCallMode({ onEnd }) {
   }, [transcript]);
 
   const toggleMic = () => {
-    setMicMuted(m => {
-      if (!m) {
+    setUserMuted(m => {
+      const newMuted = !m;
+      if (newMuted) {
         recognitionRef.current?.stop();
+        clearTimeout(resumeListeningRef.current);
       } else if (callState === 'listening' && !isBusyRef.current) {
         recognitionRef.current?.start();
       }
-      return !m;
+      return newMuted;
     });
   };
 
   const ringColor = callState === 'speaking' ? '#7c3aed' : callState === 'thinking' ? '#f59e0b' : '#22c55e';
-  const statusLabel = callState === 'speaking' ? 'Lumina is speaking...' : callState === 'thinking' ? 'Lumina is thinking...' : micMuted ? 'Microphone muted' : 'Listening...';
+  const statusLabel = callState === 'speaking' ? 'Lumina is speaking...' : callState === 'thinking' ? 'Lumina is thinking...' : userMuted ? 'Microphone muted' : 'Listening...';
 
   return (
     <div className="fixed inset-0 z-[99999] flex flex-col items-center justify-between bg-zinc-950" style={{ background: 'radial-gradient(ellipse at top, #1e1040 0%, #09090b 60%)' }}>
@@ -226,7 +234,7 @@ export default function LuminaCallMode({ onEnd }) {
         <div className="text-center space-y-1">
           <div className="text-white text-xl font-semibold">Lumina</div>
           <div className="text-sm flex items-center gap-2" style={{ color: ringColor }}>
-            {callState === 'listening' && !micMuted && (
+            {callState === 'listening' && !userMuted && (
               <motion.span animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1, repeat: Infinity }}>●</motion.span>
             )}
             {statusLabel}
@@ -263,9 +271,10 @@ export default function LuminaCallMode({ onEnd }) {
         <button
           onClick={toggleMic}
           className="w-14 h-14 rounded-full flex items-center justify-center transition-all"
-          style={{ background: micMuted ? '#ef4444' : 'rgba(255,255,255,0.1)' }}
+          style={{ background: userMuted ? '#ef4444' : 'rgba(255,255,255,0.1)' }}
+          title={userMuted ? 'Unmute microphone' : 'Mute microphone'}
         >
-          {micMuted ? <MicOff className="w-6 h-6 text-white" /> : <Mic className="w-6 h-6 text-white" />}
+          {userMuted ? <MicOff className="w-6 h-6 text-white" /> : <Mic className="w-6 h-6 text-white" />}
         </button>
 
         {/* End call */}
