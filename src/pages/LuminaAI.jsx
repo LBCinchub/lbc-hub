@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import LuminaStreakBadge from '../components/social/LuminaStreakBadge';
 import VideoGenerator from '../components/lumina/VideoGenerator';
 import LuminaCallMode from '../components/lumina/LuminaCallMode';
+import ChatSidebar from '../components/lumina/ChatSidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, Phone, ArrowUp, ArrowDown, Image as ImageIcon, X, PenLine, MapPin, Hash, Share2, Code, Copy, Check } from 'lucide-react';
 import ImageEditor from '../components/social/ImageEditor';
@@ -16,8 +18,8 @@ export default function LuminaAI() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
   const [usageCount, setUsageCount] = useState(0);
-  const [usageLimit] = useState(30); // 30 requests per day
-  const [chatId, setChatId] = useState(null);
+  const [usageLimit] = useState(30);
+  const [currentSessionId, setCurrentSessionId] = useState(null);
   const [callMode, setCallMode] = useState(false);
   const [uploadedImages, setUploadedImages] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -26,15 +28,17 @@ export default function LuminaAI() {
   const [codingMode, setCodingMode] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [streakData, setStreakData] = useState(null);
-  const [postingImage, setPostingImage] = useState(null); // { url }
+  const [postingImage, setPostingImage] = useState(null);
   const [postCaption, setPostCaption] = useState('');
   const [postHashtags, setPostHashtags] = useState('');
   const [postLocation, setPostLocation] = useState('');
   const [postingToGallery, setPostingToGallery] = useState(false);
   const [showVideoGenerator, setShowVideoGenerator] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const bottomRef = useRef(null);
   const topRef = useRef(null);
   const fileInputRef = useRef(null);
+  const queryClient = useQueryClient();
 
   const voice = useVoice({
     onTranscript: (t) => setInput(t),
@@ -45,24 +49,16 @@ export default function LuminaAI() {
     continuous: false,
   });
 
-  const scrollToTop = () => {
-    topRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const scrollToBottom = () => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
+  // Load streaks and usage
   useEffect(() => {
     if (!user) return;
     
     const loadData = async () => {
       try {
-        // Load / update streak
         const today = new Date().toISOString().split('T')[0];
         const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
         const streakRecords = await base44.entities.LuminaStreak.filter({ user_email: user.email });
@@ -88,7 +84,6 @@ export default function LuminaAI() {
           setStreakData(created);
         }
 
-        // Load usage
         const records = await base44.entities.AIUsage.filter({ user_email: user.email });
         if (records.length > 0) {
           const usage = records[0];
@@ -105,16 +100,6 @@ export default function LuminaAI() {
           await base44.entities.AIUsage.create({ user_email: user.email, count: 0, last_reset: new Date().toISOString() });
           setUsageCount(0);
         }
-
-        // Load chat history
-        const chats = await base44.entities.LuminaChat.filter({ user_email: user.email });
-        if (chats.length > 0) {
-          setChatId(chats[0].id);
-          setMessages(chats[0].messages || []);
-        } else {
-          const newChat = await base44.entities.LuminaChat.create({ user_email: user.email, messages: [] });
-          setChatId(newChat.id);
-        }
       } catch (err) {
         console.error('Failed to load data:', err);
       }
@@ -123,13 +108,49 @@ export default function LuminaAI() {
     loadData();
   }, [user]);
 
+  // Load current session messages
+  useEffect(() => {
+    if (!user || !currentSessionId) return;
+
+    const loadSessionMessages = async () => {
+      try {
+        const msgs = await base44.entities.ChatMessage.filter(
+          { user_id: user.email, session_id: currentSessionId },
+          'created_date',
+          100
+        );
+        setMessages(msgs.map(m => ({ role: m.role, content: m.content, id: m.id })));
+      } catch (err) {
+        console.error('Failed to load session messages:', err);
+      }
+    };
+
+    loadSessionMessages();
+  }, [user, currentSessionId]);
+
   useEffect(() => {
     if (messages.length > 0) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
 
+  const handleNewChat = async () => {
+    try {
+      const session = await base44.entities.ChatSession.create({
+        user_id: user.email,
+        title: 'New Chat',
+        message_count: 0
+      });
+      setCurrentSessionId(session.id);
+      setMessages([]);
+    } catch (err) {
+      console.error('Failed to create chat session:', err);
+    }
+  };
 
+  const handleSelectSession = (sessionId) => {
+    setCurrentSessionId(sessionId);
+  };
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files || []);
@@ -154,8 +175,6 @@ export default function LuminaAI() {
   const removeImage = (index) => {
     setUploadedImages(prev => prev.filter((_, i) => i !== index));
   };
-
-
 
   const handleGenerateImage = async () => {
     if (generatingImage || !user) return;
@@ -186,7 +205,6 @@ export default function LuminaAI() {
       let finalPrompt = '';
 
       if (hasUploadedImages) {
-        // Enhanced image improvement prompt
         finalPrompt = await base44.integrations.Core.InvokeLLM({
           prompt: `You are an expert image enhancement specialist. Create a hyper-detailed, professional image enhancement prompt that improves the uploaded reference image while maintaining its exact same angle, perspective, and composition. 
 
@@ -204,7 +222,6 @@ Make it extremely detailed and specific (200-300 words). Start with the exact pe
           model: 'gemini_3_flash'
         });
       } else {
-        // Regular creative image generation
         finalPrompt = await base44.integrations.Core.InvokeLLM({
           prompt: `You are an elite AI art director. Create an exceptionally detailed, vivid, and sophisticated image generation prompt (250-300 words) based on: "${imagePromptContext}"
 
@@ -238,11 +255,6 @@ Create something that would impress a professional photographer or art director.
       };
       
       setMessages(prev => [...prev.filter(m => !m.isImageLoading), imageMessage]);
-
-      const finalMessages = [...messages, imageMessage];
-      if (chatId) {
-        await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
-      }
 
       if (!hasUnlimitedAccess) {
         try {
@@ -298,7 +310,6 @@ Create something that would impress a professional photographer or art director.
       const tagsSuffix = tags ? `\n${tags}` : '';
       const postContent = (postCaption.trim() + locationSuffix + tagsSuffix).trim();
 
-      // Create post with full metadata for persistent storage and feed display
       await base44.entities.Post.create({
         content: postContent || '✨ AI Generated by Lumina',
         media_urls: [file_url],
@@ -341,6 +352,21 @@ Create something that would impress a professional photographer or art director.
       return;
     }
 
+    // Create session if needed
+    if (!currentSessionId) {
+      try {
+        const session = await base44.entities.ChatSession.create({
+          user_id: user.email,
+          title: 'New Chat',
+          message_count: 0
+        });
+        setCurrentSessionId(session.id);
+      } catch (err) {
+        console.error('Failed to create session:', err);
+        return;
+      }
+    }
+
     const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
     const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
     const hasUnlimitedAccess = isFounder || isDevLead;
@@ -359,53 +385,29 @@ Create something that would impress a professional photographer or art director.
     setLoading(true);
 
     try {
-      // Detect image generation or enhancement request
-      const imageKeywords = /\b(generate|create|make|draw|paint|design|improve|enhance|better|upgrade|refine)\b[^.!?]*\b(image|photo|picture|pic|art|illustration|drawing|painting)\b/i;
-      const enhanceKeywords = /\b(improve|enhance|better|upgrade|refine|fix|higher quality|better quality|make better|edit)\b/i;
-      const isPhotoRequest = imageKeywords.test(text);
-      const isEnhanceRequest = enhanceKeywords.test(text) && uploadedImages.length > 0;
+      // Save user message
+      await base44.entities.ChatMessage.create({
+        user_id: user.email,
+        session_id: currentSessionId,
+        role: 'user',
+        content: text
+      });
 
-      if (isPhotoRequest) {
-        // Use exact user description as prompt
-        const subject = text
-          .replace(/^(please\s+)?(can you\s+)?(generate|create|make|draw|paint|design)\s+(me\s+)?(a\s+|an\s+)?/i, '')
-          .replace(/^(image|photo|picture|pic|art|illustration|drawing|painting)\s+(of\s+)?/i, '')
-          .trim() || text;
-
-        const generatingMsg = { 
-          role: 'assistant', 
-          content: `🎨 Generating your image...`,
-          isImageLoading: true,
-          timestamp: new Date().toISOString()
-        };
-        setMessages([...updatedMessages, generatingMsg]);
-
-        const imageResult = await base44.integrations.Core.GenerateImage({ prompt: subject });
-        
-        const imageMessage = { 
-          role: 'assistant', 
-          content: `✨ Here's your image:`,
-          image_url: imageResult.url,
-          timestamp: new Date().toISOString()
-        };
-        
-        setMessages(prev => [...prev.filter(m => !m.isImageLoading), imageMessage]);
-        const finalMessages = [...updatedMessages, imageMessage];
-        if (chatId) await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
-        if (!hasUnlimitedAccess && !hasUnlimitedCredits) {
-          const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email }).catch(() => []);
-          if (usageRecords.length > 0) {
-            await base44.entities.AIUsage.update(usageRecords[0].id, { count: usageRecords[0].count + 1 });
-            setUsageCount(usageRecords[0].count + 1);
+      // Generate title for first message
+      if (messages.length === 0) {
+        try {
+          const titleRes = await base44.functions.invoke('generateSessionTitle', { firstMessage: text });
+          if (titleRes.data?.title) {
+            await base44.entities.ChatSession.update(currentSessionId, { title: titleRes.data.title });
+            queryClient.invalidateQueries({ queryKey: ['chatSessions'] });
           }
+        } catch (err) {
+          console.error('Failed to generate title:', err);
         }
-        setLoading(false);
-        return;
       }
 
       const conversationContext = updatedMessages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
       
-      // Gather user's digital mirror data
       const [userPosts, userFollows, userTrips, userProducts] = await Promise.all([
         base44.entities.Post.filter({ author_email: user.email }, '-created_date', 10).catch(() => []),
         base44.entities.Follow.filter({ follower_email: user.email }, '-created_date', 5).catch(() => []),
@@ -483,22 +485,39 @@ User: ${text}`,
         }
       });
 
-      const aiMessage = { role: 'assistant', content: response.text || response, timestamp: new Date().toISOString() };
+      const reply = response.text || response;
+      const aiMessage = { role: 'assistant', content: reply, timestamp: new Date().toISOString() };
       const finalMessages = [...updatedMessages, aiMessage];
       setMessages(finalMessages);
 
-      // Clear uploaded images after sending
-      setUploadedImages([]);
+      // Save AI response
+      await base44.entities.ChatMessage.create({
+        user_id: user.email,
+        session_id: currentSessionId,
+        role: 'lumina',
+        content: reply
+      });
 
-      // Speak Lumina's reply if not muted
-      if (!voice.isMuted) voice.speak(aiMessage.content);
+      // Update session metadata
+      await base44.entities.ChatSession.update(currentSessionId, {
+        message_count: finalMessages.length,
+        last_message_date: new Date().toISOString(),
+        last_message_preview: reply.substring(0, 100)
+      });
 
-      // Save chat history
-      if (chatId) {
-        await base44.entities.LuminaChat.update(chatId, { messages: finalMessages });
+      queryClient.invalidateQueries({ queryKey: ['chatSessions'] });
+
+      // Sync user memory
+      try {
+        await base44.functions.invoke('syncUserMemory', { lumina_response: reply });
+      } catch (err) {
+        console.error('Failed to sync memory:', err);
       }
 
-      // Update usage count (skip for unlimited access users)
+      setUploadedImages([]);
+
+      if (!voice.isMuted) voice.speak(reply);
+
       if (!hasUnlimitedAccess && !hasUnlimitedCredits) {
         try {
           const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
@@ -525,12 +544,20 @@ User: ${text}`,
     }
   };
 
+  const scrollToTop = () => {
+    topRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const scrollToBottom = () => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   if (callMode) {
     return <LuminaCallMode onEnd={() => setCallMode(false)} />;
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col">
+    <div className="min-h-screen bg-zinc-950 flex">
       {editingImage && <ImageEditor imageUrl={editingImage} user={user} onClose={() => setEditingImage(null)} />}
       {showVideoGenerator && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -542,394 +569,401 @@ User: ${text}`,
           </div>
         </div>
       )}
-      {showVideoGenerator && <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div className="w-full max-w-2xl"><VideoGenerator /><button onClick={() => setShowVideoGenerator(false)} className="mt-4 w-full p-3 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm transition-colors">Close</button></div></div>}
-      {/* Hero Header */}
-      <div className="relative border-b border-white/5">
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-[120px]" />
-          <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/15 rounded-full blur-[120px]" />
-        </div>
-        
-        <div className="relative z-10 max-w-4xl mx-auto px-4 py-12 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-center mb-4"
-          >
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600">
-              <Sparkles className="w-8 h-8 text-white" />
-            </div>
-          </motion.div>
-          
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-4xl sm:text-5xl font-bold mb-3"
-          >
-            <span className="gradient-text">Lumina AI</span>
-          </motion.h1>
-          
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-lg text-zinc-400"
-          >
-            Your intelligent assistant for everything LBC Hub
-          </motion.p>
-        </div>
-      </div>
 
-      {/* Chat Container */}
-      <div className="flex-1 overflow-y-auto relative">
-        {messages.length > 0 && (
-          <div className="fixed left-8 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30">
-            <button
-              onClick={scrollToTop}
-              className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
-              title="Scroll to top"
-            >
-              <ArrowUp className="w-5 h-5 text-white" />
-            </button>
-            <button
-              onClick={scrollToBottom}
-              className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
-              title="Scroll to bottom"
-            >
-              <ArrowDown className="w-5 h-5 text-white" />
-            </button>
+      {/* Sidebar */}
+      <ChatSidebar
+        currentSessionId={currentSessionId}
+        onNewChat={handleNewChat}
+        onSelectSession={handleSelectSession}
+        user={user}
+        isMobileOpen={sidebarOpen}
+        onMobileClose={(open) => setSidebarOpen(open ?? !sidebarOpen)}
+      />
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Hero Header */}
+        <div className="relative border-b border-white/5">
+          <div className="absolute inset-0">
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-[120px]" />
+            <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/15 rounded-full blur-[120px]" />
           </div>
-        )}
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div ref={topRef} />
-          {messages.length === 0 ? (
+          
+          <div className="relative z-10 max-w-4xl mx-auto px-4 py-12 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-center space-y-8"
+              className="flex items-center justify-center mb-4"
             >
-              <div className="space-y-4">
-                <div className="flex items-center justify-center gap-6">
-                  {[Brain, Zap, Bot].map((Icon, i) => (
-                    <motion.div
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600">
+                <Sparkles className="w-8 h-8 text-white" />
+              </div>
+            </motion.div>
+            
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-4xl sm:text-5xl font-bold mb-3"
+            >
+              <span className="gradient-text">Lumina AI</span>
+            </motion.h1>
+            
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-lg text-zinc-400"
+            >
+              Your intelligent assistant for everything LBC Hub
+            </motion.p>
+          </div>
+        </div>
+
+        {/* Chat Container */}
+        <div className="flex-1 overflow-y-auto relative">
+          {messages.length > 0 && (
+            <div className="fixed right-8 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30">
+              <button
+                onClick={scrollToTop}
+                className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+                title="Scroll to top"
+              >
+                <ArrowUp className="w-5 h-5 text-white" />
+              </button>
+              <button
+                onClick={scrollToBottom}
+                className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+                title="Scroll to bottom"
+              >
+                <ArrowDown className="w-5 h-5 text-white" />
+              </button>
+            </div>
+          )}
+          <div className="max-w-4xl mx-auto px-4 py-8">
+            <div ref={topRef} />
+            {messages.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center space-y-8"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center gap-6">
+                    {[Brain, Zap, Bot].map((Icon, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.3 + i * 0.1 }}
+                        className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center"
+                      >
+                        <Icon className="w-6 h-6 text-indigo-400" />
+                      </motion.div>
+                    ))}
+                  </div>
+                  
+                  <h2 className="text-2xl font-semibold text-white">How can I help you today?</h2>
+                  <p className="text-zinc-500">Ask me anything about our platform, or try a suggestion below</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
+                  {suggestions.map((suggestion, i) => (
+                    <motion.button
                       key={i}
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.3 + i * 0.1 }}
-                      className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 + i * 0.1 }}
+                      onClick={() => handleSend(suggestion)}
+                      className="glass rounded-2xl p-4 text-left hover:bg-white/10 transition-colors group"
                     >
-                      <Icon className="w-6 h-6 text-indigo-400" />
-                    </motion.div>
+                      <p className="text-sm text-zinc-300 group-hover:text-white transition-colors">{suggestion}</p>
+                    </motion.button>
                   ))}
                 </div>
-                
-                <h2 className="text-2xl font-semibold text-white">How can I help you today?</h2>
-                <p className="text-zinc-500">Ask me anything about our platform, or try a suggestion below</p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
-                {suggestions.map((suggestion, i) => (
-                  <motion.button
+              </motion.div>
+            ) : (
+              <div className="space-y-6">
+                {messages.map((msg, i) => (
+                  <motion.div
                     key={i}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 + i * 0.1 }}
-                    onClick={() => handleSend(suggestion)}
-                    className="glass rounded-2xl p-4 text-left hover:bg-white/10 transition-colors group"
+                    className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
                   >
-                    <p className="text-sm text-zinc-300 group-hover:text-white transition-colors">{suggestion}</p>
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-          ) : (
-            <div className="space-y-6">
-              {messages.map((msg, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-                >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    msg.role === 'user'
-                      ? 'bg-gradient-to-br from-zinc-700 to-zinc-800'
-                      : 'bg-gradient-to-br from-indigo-500 to-purple-600'
-                  }`}>
-                    {msg.role === 'user' ? (
-                      <Avatar className="w-full h-full">
-                        <AvatarFallback className="bg-transparent text-white font-semibold">
-                          {user?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    ) : (
-                      <Sparkles className="w-5 h-5 text-white" />
-                    )}
-                  </div>
-
-                  <div className={`flex-1 max-w-2xl ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                   <div className={`inline-block rounded-2xl px-5 py-3 ${
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                       msg.role === 'user'
-                        ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
-                        : 'glass text-zinc-100'
+                        ? 'bg-gradient-to-br from-zinc-700 to-zinc-800'
+                        : 'bg-gradient-to-br from-indigo-500 to-purple-600'
                     }`}>
-                      {codingMode && msg.role === 'assistant' && msg.content ? (
-                        <div className="space-y-2">
-                          {msg.content.split(/```[a-z]*\n/).map((block, idx) => {
-                            const isCode = idx % 2 === 1;
-                            if (!block.trim()) return null;
-                            return isCode ? (
-                              <div key={idx} className="bg-zinc-900 rounded-lg p-3 font-mono text-xs overflow-x-auto border border-zinc-700">
-                                <div className="flex justify-between items-center mb-2">
-                                  <span className="text-zinc-500">Code</span>
-                                  <button
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(block.trim());
-                                      setCopiedIndex(idx);
-                                      setTimeout(() => setCopiedIndex(null), 2000);
-                                    }}
-                                    className="text-zinc-400 hover:text-white transition-colors"
-                                  >
-                                    {copiedIndex === idx ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                                  </button>
-                                </div>
-                                <pre className="text-green-400">{block.trim()}</pre>
-                              </div>
-                            ) : (
-                              <div key={idx} className="text-zinc-100">
-                                <LinkText text={block.trim()} className="text-sm leading-relaxed" />
-                              </div>
-                            );
-                          })}
-                        </div>
+                      {msg.role === 'user' ? (
+                        <Avatar className="w-full h-full">
+                          <AvatarFallback className="bg-transparent text-white font-semibold">
+                            {user?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
                       ) : (
-                        <LinkText text={msg.content} className="text-sm leading-relaxed" />
+                        <Sparkles className="w-5 h-5 text-white" />
                       )}
-                     {msg.image_url && (
-                       <div className="mt-3">
-                         <div className="relative inline-block">
-                           <img
-                             src={msg.image_url}
-                             alt="AI Generated"
-                             className="rounded-xl w-full max-w-md h-auto border border-white/10"
-                           />
-                           <div className="absolute top-2 right-2 flex gap-1">
-                             {msg.isEnhanced && (
-                               <span className="px-2.5 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full flex items-center gap-1">
-                                 ✨ Enhanced
-                               </span>
-                             )}
-                             {msg.isAIGenerated && (
-                               <span className="px-2.5 py-1 bg-purple-600 text-white text-xs font-semibold rounded-full flex items-center gap-1">
-                                 🤖 AI Generated
-                               </span>
+                    </div>
+
+                    <div className={`flex-1 max-w-2xl ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
+                     <div className={`inline-block rounded-2xl px-5 py-3 ${
+                        msg.role === 'user'
+                          ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
+                          : 'glass text-zinc-100'
+                      }`}>
+                        {codingMode && msg.role === 'assistant' && msg.content ? (
+                          <div className="space-y-2">
+                            {msg.content.split(/```[a-z]*\n/).map((block, idx) => {
+                              const isCode = idx % 2 === 1;
+                              if (!block.trim()) return null;
+                              return isCode ? (
+                                <div key={idx} className="bg-zinc-900 rounded-lg p-3 font-mono text-xs overflow-x-auto border border-zinc-700">
+                                  <div className="flex justify-between items-center mb-2">
+                                    <span className="text-zinc-500">Code</span>
+                                    <button
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(block.trim());
+                                        setCopiedIndex(idx);
+                                        setTimeout(() => setCopiedIndex(null), 2000);
+                                      }}
+                                      className="text-zinc-400 hover:text-white transition-colors"
+                                    >
+                                      {copiedIndex === idx ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                    </button>
+                                  </div>
+                                  <pre className="text-green-400">{block.trim()}</pre>
+                                </div>
+                              ) : (
+                                <div key={idx} className="text-zinc-100">
+                                  <LinkText text={block.trim()} className="text-sm leading-relaxed" />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <LinkText text={msg.content} className="text-sm leading-relaxed" />
+                        )}
+                       {msg.image_url && (
+                         <div className="mt-3">
+                           <div className="relative inline-block">
+                             <img
+                               src={msg.image_url}
+                               alt="AI Generated"
+                               className="rounded-xl w-full max-w-md h-auto border border-white/10"
+                             />
+                             <div className="absolute top-2 right-2 flex gap-1">
+                               {msg.isEnhanced && (
+                                 <span className="px-2.5 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full flex items-center gap-1">
+                                   ✨ Enhanced
+                                 </span>
+                               )}
+                               {msg.isAIGenerated && (
+                                 <span className="px-2.5 py-1 bg-purple-600 text-white text-xs font-semibold rounded-full flex items-center gap-1">
+                                   🤖 AI Generated
+                                 </span>
+                               )}
+                             </div>
+                           </div>
+                           <div className="flex gap-2 mt-2 flex-wrap">
+                             <button
+                               onClick={() => setEditingImage(msg.image_url)}
+                               className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium transition-colors"
+                             >
+                               <PenLine className="w-3 h-3" /> Edit & Save
+                             </button>
+                             {msg.isSaveable !== false && (
+                               <button
+                                 onClick={() => setPostingImage({ url: msg.image_url })}
+                                 className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 rounded-lg text-xs font-medium transition-colors"
+                               >
+                                 <Share2 className="w-3 h-3" /> Save to Gallery
+                               </button>
                              )}
                            </div>
-                         </div>
-                         <div className="flex gap-2 mt-2 flex-wrap">
-                           <button
-                             onClick={() => setEditingImage(msg.image_url)}
-                             className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium transition-colors"
-                           >
-                             <PenLine className="w-3 h-3" /> Edit & Save
-                           </button>
-                           {msg.isSaveable !== false && (
-                             <button
-                               onClick={() => setPostingImage({ url: msg.image_url })}
-                               className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 rounded-lg text-xs font-medium transition-colors"
-                             >
-                               <Share2 className="w-3 h-3" /> Save to Gallery
-                             </button>
-                           )}
-                         </div>
-                         {postingImage?.url === msg.image_url && (
-                           <div className="mt-3 bg-zinc-800/80 rounded-xl p-3 space-y-2 border border-white/10">
-                             <div>
-                               <label className="text-xs text-zinc-400 block mb-1">Caption</label>
-                               <textarea
-                                 value={postCaption}
-                                 onChange={(e) => setPostCaption(e.target.value)}
-                                 placeholder="Write a caption..."
-                                 rows={2}
-                                 className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs placeholder:text-zinc-600 outline-none focus:border-indigo-500 resize-none"
-                               />
-                             </div>
-                             <div>
-                               <label className="text-xs text-zinc-400 flex items-center gap-1 mb-1"><MapPin className="w-3 h-3 text-rose-400" /> Location</label>
-                               <input
-                                 value={postLocation}
-                                 onChange={(e) => setPostLocation(e.target.value)}
-                                 placeholder="e.g. Paris, France"
-                                 className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs placeholder:text-zinc-600 outline-none focus:border-indigo-500"
-                               />
-                             </div>
-                             <div>
-                               <label className="text-xs text-zinc-400 flex items-center gap-1 mb-1"><Hash className="w-3 h-3" /> Hashtags</label>
-                               <input
-                                 value={postHashtags}
-                                 onChange={(e) => setPostHashtags(e.target.value)}
-                                 placeholder="#travel #art #lumina"
-                                 className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs placeholder:text-zinc-600 outline-none focus:border-indigo-500"
-                               />
-                               <div className="flex flex-wrap gap-1 mt-1.5">
-                                 {['#travel', '#art', '#vibes', '#lumina', '#photography'].map(tag => (
-                                   <button key={tag} type="button" onClick={() => setPostHashtags(prev => (prev + ' ' + tag).trim())}
-                                     className="px-2 py-0.5 rounded-full bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs transition-colors">
-                                     {tag}
-                                   </button>
-                                 ))}
+                           {postingImage?.url === msg.image_url && (
+                             <div className="mt-3 bg-zinc-800/80 rounded-xl p-3 space-y-2 border border-white/10">
+                               <div>
+                                 <label className="text-xs text-zinc-400 block mb-1">Caption</label>
+                                 <textarea
+                                   value={postCaption}
+                                   onChange={(e) => setPostCaption(e.target.value)}
+                                   placeholder="Write a caption..."
+                                   rows={2}
+                                   className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs placeholder:text-zinc-600 outline-none focus:border-indigo-500 resize-none"
+                                 />
+                               </div>
+                               <div>
+                                 <label className="text-xs text-zinc-400 flex items-center gap-1 mb-1"><MapPin className="w-3 h-3 text-rose-400" /> Location</label>
+                                 <input
+                                   value={postLocation}
+                                   onChange={(e) => setPostLocation(e.target.value)}
+                                   placeholder="e.g. Paris, France"
+                                   className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs placeholder:text-zinc-600 outline-none focus:border-indigo-500"
+                                 />
+                               </div>
+                               <div>
+                                 <label className="text-xs text-zinc-400 flex items-center gap-1 mb-1"><Hash className="w-3 h-3" /> Hashtags</label>
+                                 <input
+                                   value={postHashtags}
+                                   onChange={(e) => setPostHashtags(e.target.value)}
+                                   placeholder="#travel #art #lumina"
+                                   className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs placeholder:text-zinc-600 outline-none focus:border-indigo-500"
+                                 />
+                                 <div className="flex flex-wrap gap-1 mt-1.5">
+                                   {['#travel', '#art', '#vibes', '#lumina', '#photography'].map(tag => (
+                                     <button key={tag} type="button" onClick={() => setPostHashtags(prev => (prev + ' ' + tag).trim())}
+                                       className="px-2 py-0.5 rounded-full bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs transition-colors">
+                                       {tag}
+                                     </button>
+                                   ))}
+                                 </div>
+                               </div>
+                               <div className="flex gap-2 pt-1">
+                                 <button onClick={() => { setPostingImage(null); setPostCaption(''); setPostHashtags(''); setPostLocation(''); }}
+                                   className="flex-1 py-1.5 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-xs text-white transition-colors">
+                                   Cancel
+                                 </button>
+                                 <button onClick={() => saveToGallery(msg.image_url, postHashtags, postLocation)}
+                                   disabled={postingToGallery}
+                                   className="flex-1 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
+                                   {postingToGallery ? <Loader2 className="w-3 h-3 animate-spin" /> : <Share2 className="w-3 h-3" />}
+                                   {postingToGallery ? 'Posting...' : 'Post'}
+                                 </button>
                                </div>
                              </div>
-                             <div className="flex gap-2 pt-1">
-                               <button onClick={() => { setPostingImage(null); setPostCaption(''); setPostHashtags(''); setPostLocation(''); }}
-                                 className="flex-1 py-1.5 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-xs text-white transition-colors">
-                                 Cancel
-                               </button>
-                               <button onClick={() => saveToGallery(msg.image_url, postHashtags, postLocation)}
-                                 disabled={postingToGallery}
-                                 className="flex-1 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
-                                 {postingToGallery ? <Loader2 className="w-3 h-3 animate-spin" /> : <Share2 className="w-3 h-3" />}
-                                 {postingToGallery ? 'Posting...' : 'Post'}
-                               </button>
-                             </div>
-                           </div>
-                         )}
-                       </div>
-                     )}
-                   </div>
-                  </div>
-                </motion.div>
-              ))}
-
-              {loading && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex gap-4"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="glass rounded-2xl px-5 py-3">
-                    <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
-                  </div>
-                </motion.div>
-              )}
-
-              <div ref={bottomRef} />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Input Bar */}
-      <div className="border-t border-white/5 bg-zinc-950/80 backdrop-blur-xl sticky bottom-0">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          {user && (
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-zinc-600">
-                {user.email === 'mokhtartareksamara@gmail.com' ? '⭐ Unlimited (Founder)' : 
-                 user.email === 'kiprocolloaj254@gmail.com' ? '👨‍💻 Unlimited (Dev Lead)' : 
-                 `${usageCount} / ${usageLimit} requests used today`}
-              </span>
-              {streakData && <LuminaStreakBadge streak={streakData.current_streak} sparks={streakData.total_sparks} compact />}
-            </div>
-          )}
-          
-          {/* Listening indicator */}
-          {voice.isListening && (
-            <div className="flex items-center gap-2 mb-1">
-              <motion.div className="w-2 h-2 rounded-full bg-red-400" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }} />
-              <span className="text-xs text-red-400">Listening... speak now</span>
-            </div>
-          )}
-
-          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative space-y-3">
-            {uploadedImages.length > 0 && (
-              <div className="flex gap-2 flex-wrap">
-                {uploadedImages.map((imgUrl, idx) => (
-                  <div key={idx} className="relative inline-block">
-                    <img src={imgUrl} alt="Uploaded" className="h-20 w-20 object-cover rounded-lg border border-white/10" />
-                    <button type="button" onClick={() => removeImage(idx)} className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors">
-                      <X className="w-3 h-3 text-white" />
-                    </button>
-                  </div>
+                           )}
+                         </div>
+                       )}
+                     </div>
+                    </div>
+                  </motion.div>
                 ))}
+
+                {loading && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex gap-4"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                      <Sparkles className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="glass rounded-2xl px-5 py-3">
+                      <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+                    </div>
+                  </motion.div>
+                )}
+
+                <div ref={bottomRef} />
               </div>
             )}
-            <div className="flex items-center gap-2 glass rounded-2xl p-3 border border-white/10">
-              <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleImageUpload} disabled={loading || uploadingImage} className="hidden" />
-              <button type="button" onClick={() => fileInputRef.current?.click()} disabled={loading || uploadingImage}
-                className="w-10 h-10 rounded-xl bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center disabled:opacity-40 transition-all" title="Add photos">
-                {uploadingImage ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <ImageIcon className="w-5 h-5 text-white" />}
-              </button>
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder={voice.isListening ? 'Speak now...' : 'Ask Lumina...'}
-                disabled={loading}
-                className="flex-1 bg-transparent text-white placeholder:text-zinc-600 outline-none text-sm"
-              />
-              {/* Mic button */}
-              <button type="button" onClick={voice.toggleListening}
-                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
-                style={{
-                  background: voice.isListening ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'rgba(255,255,255,0.08)',
-                  boxShadow: voice.isListening ? '0 0 14px rgba(239,68,68,0.5)' : 'none',
-                }} title={voice.isListening ? 'Stop listening' : 'Voice input'}>
-                {voice.isListening ? <MicOff className="w-5 h-5 text-white" /> : <Mic className="w-5 h-5 text-white" />}
-              </button>
-              {/* Mute toggle */}
-              <button type="button" onClick={voice.isSpeaking ? voice.stopSpeaking : voice.toggleMute}
-                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-white/5 hover:bg-white/10"
-                title={voice.isMuted ? 'Unmute Lumina' : voice.isSpeaking ? 'Stop speaking' : 'Mute Lumina'}>
-                {voice.isMuted ? <VolumeX className="w-5 h-5 text-zinc-500" /> : voice.isSpeaking ? (
-                  <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.5, repeat: Infinity }}>
-                    <Volume2 className="w-5 h-5 text-purple-400" />
-                  </motion.div>
-                ) : <Volume2 className="w-5 h-5 text-zinc-300" />}
-              </button>
-              {/* Call button */}
-              <button type="button" onClick={() => setCallMode(true)}
-                className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center hover:scale-105 transition-transform" title="Call Lumina">
-                <Phone className="w-4 h-4 text-white" />
-              </button>
-              {/* Send */}
-              <button type="submit" disabled={!input.trim() || loading}
-                className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center disabled:opacity-40 hover:scale-105 transition-transform">
-                <Send className="w-4 h-4 text-white" />
+          </div>
+        </div>
+
+        {/* Input Bar */}
+        <div className="border-t border-white/5 bg-zinc-950/80 backdrop-blur-xl sticky bottom-0">
+          <div className="max-w-4xl mx-auto px-4 py-4 w-full">
+            {user && (
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-zinc-600">
+                  {user.email === 'mokhtartareksamara@gmail.com' ? '⭐ Unlimited (Founder)' : 
+                   user.email === 'kiprocolloaj254@gmail.com' ? '👨‍💻 Unlimited (Dev Lead)' : 
+                   `${usageCount} / ${usageLimit} requests used today`}
+                </span>
+                {streakData && <LuminaStreakBadge streak={streakData.current_streak} sparks={streakData.total_sparks} compact />}
+              </div>
+            )}
+            
+            {voice.isListening && (
+              <div className="flex items-center gap-2 mb-1">
+                <motion.div className="w-2 h-2 rounded-full bg-red-400" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }} />
+                <span className="text-xs text-red-400">Listening... speak now</span>
+              </div>
+            )}
+
+            <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative space-y-3">
+              {uploadedImages.length > 0 && (
+                <div className="flex gap-2 flex-wrap">
+                  {uploadedImages.map((imgUrl, idx) => (
+                    <div key={idx} className="relative inline-block">
+                      <img src={imgUrl} alt="Uploaded" className="h-20 w-20 object-cover rounded-lg border border-white/10" />
+                      <button type="button" onClick={() => removeImage(idx)} className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors">
+                        <X className="w-3 h-3 text-white" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center gap-2 glass rounded-2xl p-3 border border-white/10">
+                <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleImageUpload} disabled={loading || uploadingImage} className="hidden" />
+                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={loading || uploadingImage}
+                  className="w-10 h-10 rounded-xl bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center disabled:opacity-40 transition-all" title="Add photos">
+                  {uploadingImage ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <ImageIcon className="w-5 h-5 text-white" />}
+                </button>
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={voice.isListening ? 'Speak now...' : 'Ask Lumina...'}
+                  disabled={loading}
+                  className="flex-1 bg-transparent text-white placeholder:text-zinc-600 outline-none text-sm"
+                />
+                <button type="button" onClick={voice.toggleListening}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
+                  style={{
+                    background: voice.isListening ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'rgba(255,255,255,0.08)',
+                    boxShadow: voice.isListening ? '0 0 14px rgba(239,68,68,0.5)' : 'none',
+                  }} title={voice.isListening ? 'Stop listening' : 'Voice input'}>
+                  {voice.isListening ? <MicOff className="w-5 h-5 text-white" /> : <Mic className="w-5 h-5 text-white" />}
+                </button>
+                <button type="button" onClick={voice.isSpeaking ? voice.stopSpeaking : voice.toggleMute}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-white/5 hover:bg-white/10"
+                  title={voice.isMuted ? 'Unmute Lumina' : voice.isSpeaking ? 'Stop speaking' : 'Mute Lumina'}>
+                  {voice.isMuted ? <VolumeX className="w-5 h-5 text-zinc-500" /> : voice.isSpeaking ? (
+                    <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.5, repeat: Infinity }}>
+                      <Volume2 className="w-5 h-5 text-purple-400" />
+                    </motion.div>
+                  ) : <Volume2 className="w-5 h-5 text-zinc-300" />}
+                </button>
+                <button type="button" onClick={() => setCallMode(true)}
+                  className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center hover:scale-105 transition-transform" title="Call Lumina">
+                  <Phone className="w-4 h-4 text-white" />
+                </button>
+                <button type="submit" disabled={!input.trim() || loading}
+                  className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center disabled:opacity-40 hover:scale-105 transition-transform">
+                  <Send className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            </form>
+
+            <div className="flex items-center justify-center gap-3 mt-3">
+             <button
+               onClick={() => setShowVideoGenerator(!showVideoGenerator)}
+               className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-xs flex items-center gap-2 text-zinc-400"
+               title="Generate AI video"
+             >
+               <Sparkles className="w-4 h-4" />
+               <span>Generate Video</span>
+             </button>
+             <button
+               onClick={() => setCodingMode(!codingMode)}
+               className={`p-2 rounded-lg transition-colors text-xs flex items-center gap-2 ${codingMode ? 'bg-green-500/20 text-green-400' : 'bg-white/5 hover:bg-white/10 text-zinc-400'}`}
+               title={codingMode ? 'Exit Code Master mode' : 'Enter Code Master mode'}
+             >
+               <Code className="w-4 h-4" />
+               <span>{codingMode ? 'Code Master On' : 'Code Master'}</span>
+             </button>
+             <button
+               onClick={handleGenerateImage}
+               disabled={generatingImage || !user}
+               className={`p-2 rounded-lg transition-colors text-xs flex items-center gap-2 ${generatingImage ? 'bg-purple-500/20 text-purple-400 animate-pulse' : 'bg-white/5 hover:bg-white/10 text-zinc-400'} disabled:opacity-50`}
+               title="Generate AI image from conversation"
+              >
+                <ImageIcon className="w-4 h-4" />
+                <span>{generatingImage ? 'Generating...' : 'Generate Image'}</span>
               </button>
             </div>
-          </form>
-
-          {/* Video & Code Controls */}
-          <div className="flex items-center justify-center gap-3 mt-3">
-           <button
-             onClick={() => setShowVideoGenerator(!showVideoGenerator)}
-             className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-xs flex items-center gap-2 text-zinc-400"
-             title="Generate AI video"
-           >
-             <Sparkles className="w-4 h-4" />
-             <span>Generate Video</span>
-           </button>
-           <button
-             onClick={() => setCodingMode(!codingMode)}
-             className={`p-2 rounded-lg transition-colors text-xs flex items-center gap-2 ${codingMode ? 'bg-green-500/20 text-green-400' : 'bg-white/5 hover:bg-white/10 text-zinc-400'}`}
-             title={codingMode ? 'Exit Code Master mode' : 'Enter Code Master mode'}
-           >
-             <Code className="w-4 h-4" />
-             <span>{codingMode ? 'Code Master On' : 'Code Master'}</span>
-           </button>
-           <button
-             onClick={handleGenerateImage}
-             disabled={generatingImage || !user}
-             className={`p-2 rounded-lg transition-colors text-xs flex items-center gap-2 ${generatingImage ? 'bg-purple-500/20 text-purple-400 animate-pulse' : 'bg-white/5 hover:bg-white/10 text-zinc-400'} disabled:opacity-50`}
-             title="Generate AI image from conversation"
-            >
-              <ImageIcon className="w-4 h-4" />
-              <span>{generatingImage ? 'Generating...' : 'Generate Image'}</span>
-            </button>
           </div>
         </div>
       </div>

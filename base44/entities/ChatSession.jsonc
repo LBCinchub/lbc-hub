@@ -1,0 +1,49 @@
+{
+  "name": "ChatSession",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User's email/unique ID"
+    },
+    "title": {
+      "type": "string",
+      "description": "Auto-generated conversation title"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Brief summary of the conversation"
+    },
+    "message_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Total messages in this session"
+    },
+    "last_message_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of last message"
+    },
+    "last_message_preview": {
+      "type": "string",
+      "description": "Preview of the last message"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.email}}"
+    },
+    "read": {
+      "data.user_id": "{{user.email}}"
+    },
+    "update": {
+      "data.user_id": "{{user.email}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.email}}"
+    }
+  }
+}

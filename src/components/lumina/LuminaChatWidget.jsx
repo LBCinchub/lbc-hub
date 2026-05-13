@@ -70,18 +70,28 @@ export default function LuminaChatWidget() {
   const loadHistory = async () => {
     setInitializing(true);
     try {
-      const res = await base44.functions.invoke('luminaChat', { action: 'load' });
-      const { history, memory: mem, user_name } = res.data;
+      // Load last 20 messages from ChatMessage entity
+      const chatMessages = await base44.entities.ChatMessage.filter(
+        { user_id: user.email },
+        '-created_date',
+        20
+      );
+      const history = chatMessages.reverse();
+
+      // Load user memory for greeting context
+      const memories = await base44.entities.UserMemory.filter({ user_id: user.email });
+      const mem = memories.length > 0 ? memories[0] : null;
 
       if (history && history.length > 0) {
         setMessages(history.map(m => ({ role: m.role, content: m.content, id: m.id })));
       } else {
         const greeting = mem
-          ? buildReturningGreeting(user_name, mem)
-          : buildNewUserGreeting(user_name);
+          ? buildReturningGreeting(user.full_name, mem)
+          : buildNewUserGreeting(user.full_name);
         setMessages([{ role: 'lumina', content: greeting, id: 'greeting' }]);
       }
-    } catch {
+    } catch (err) {
+      console.error('Failed to load history:', err);
       setMessages([{ role: 'lumina', content: "Hey! I'm Lumina 👋 Your personal AI on LBC Hub. How can I help you today?", id: 'greeting' }]);
     }
     setInitializing(false);
@@ -104,18 +114,42 @@ export default function LuminaChatWidget() {
   };
 
   const sendMessageText = async (text) => {
-    if (!text || loading) return;
+    if (!text || loading || !user) return;
     const userMsg = { role: 'user', content: text, id: Date.now().toString() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
 
     try {
+      // Save user message to ChatMessage entity
+      await base44.entities.ChatMessage.create({
+        user_id: user.email,
+        role: 'user',
+        content: text
+      });
+
+      // Get AI response
       const res = await base44.functions.invoke('luminaChat', { action: 'send', message: text });
       const reply = res.data?.reply || "I'm here! What can I help you with?";
+      
+      // Save Lumina response to ChatMessage entity
+      await base44.entities.ChatMessage.create({
+        user_id: user.email,
+        role: 'lumina',
+        content: reply
+      });
+
+      // Sync user memory with new learning
+      try {
+        await base44.functions.invoke('syncUserMemory', { lumina_response: reply });
+      } catch (err) {
+        console.error('Failed to sync memory:', err);
+      }
+
       setMessages(prev => [...prev, { role: 'lumina', content: reply, id: Date.now().toString() + '_l' }]);
       if (!voice.isMuted) voice.speak(reply);
-    } catch {
+    } catch (err) {
+      console.error('Send message error:', err);
       setMessages(prev => [...prev, { role: 'lumina', content: "Sorry, I had a little hiccup. Try again? 😊", id: 'err' }]);
     }
     setLoading(false);

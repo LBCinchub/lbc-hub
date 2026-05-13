@@ -2,24 +2,44 @@
   "name": "ChatMessage",
   "type": "object",
   "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User's email/unique ID"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Chat session this message belongs to"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "lumina"
+      ],
+      "description": "Who sent this message"
+    },
     "content": {
-      "type": "string"
-    },
-    "author_name": {
-      "type": "string"
-    },
-    "author_email": {
-      "type": "string"
-    },
-    "author_avatar": {
-      "type": "string"
-    },
-    "is_pinned": {
-      "type": "boolean",
-      "default": false
+      "type": "string",
+      "description": "Message text"
     }
   },
   "required": [
+    "user_id",
+    "role",
     "content"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.email}}"
+    },
+    "read": {
+      "data.user_id": "{{user.email}}"
+    },
+    "update": {
+      "data.user_id": "{{user.email}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.email}}"
+    }
+  }
 }
