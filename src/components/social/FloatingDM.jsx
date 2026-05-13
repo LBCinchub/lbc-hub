@@ -220,7 +220,7 @@ export default function FloatingDM({ user }) {
   };
 
   return (
-    <div style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 9999 }}>
+    <div style={{ position: 'fixed', right: 20, bottom: 96, zIndex: 9998 }}>
       {/* Floating button (when closed) */}
       {!open && (
         <motion.button
