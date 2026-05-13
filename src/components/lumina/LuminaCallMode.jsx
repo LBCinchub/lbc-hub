@@ -1,71 +1,142 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { MicOff, Mic, PhoneOff } from 'lucide-react';
-import { useVoice } from '@/hooks/useVoice';
 import { base44 } from '@/api/base44Client';
 
 const LUMINA_AVATAR = 'https://images.unsplash.com/photo-1635002962487-2c1d4d2f63c2?w=80&h=80&fit=crop&crop=face';
 
 export default function LuminaCallMode({ onEnd }) {
-  const [callState, setCallState] = useState('listening'); // listening | thinking | speaking
+  const [callState, setCallState] = useState('listening');
   const [transcript, setTranscript] = useState([]);
   const [elapsed, setElapsed] = useState(0);
   const [micMuted, setMicMuted] = useState(false);
+  const [liveTranscript, setLiveTranscript] = useState('');
+  
   const timerRef = useRef(null);
   const bottomRef = useRef(null);
+  const recognitionRef = useRef(null);
   const isBusyRef = useRef(false);
-
-  // Timer
-  useEffect(() => {
-    timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
-    return () => clearInterval(timerRef.current);
-  }, []);
 
   const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
-  const handleSpeakEnd = () => {
-    setCallState('listening');
-    if (!micMuted) voice.startListening();
-    isBusyRef.current = false;
-  };
+  // Start recognition on mount
+  useEffect(() => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      console.error('❌ SpeechRecognition not supported');
+      return;
+    }
 
-  const handleFinal = async (text) => {
+    const recognition = new SR();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognitionRef.current = recognition;
+
+    recognition.onstart = () => {
+      console.log('🎤 Started listening');
+    };
+
+    recognition.onresult = (event) => {
+      if (!event.results.length) return;
+      const transcript = event.results[0][0].transcript;
+      console.log('📝 Transcript:', transcript);
+      setLiveTranscript('');
+      sendToLumina(transcript);
+    };
+
+    recognition.onerror = (event) => {
+      console.error('❌ Recognition error:', event.error);
+    };
+
+    recognition.onend = () => {
+      console.log('🛑 Recognition ended');
+    };
+
+    // Timer
+    timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
+
+    // Start listening
+    const startListeningTimer = setTimeout(() => {
+      if (!micMuted) {
+        recognition.start();
+      }
+    }, 800);
+
+    return () => {
+      clearTimeout(startListeningTimer);
+      clearInterval(timerRef.current);
+      recognition.stop();
+    };
+  }, [micMuted]);
+
+  const sendToLumina = async (text) => {
     if (isBusyRef.current || !text.trim()) return;
     isBusyRef.current = true;
     setCallState('thinking');
     setTranscript(prev => [...prev, { role: 'user', content: text }]);
-    voice.stopListening();
 
     try {
+      console.log('📡 Sending to Lumina...');
       const res = await base44.functions.invoke('luminaChat', { action: 'send', message: text });
       const reply = res.data?.reply || "I'm here!";
+      console.log('💬 Lumina replied:', reply);
+      
       setTranscript(prev => [...prev, { role: 'lumina', content: reply }]);
       setCallState('speaking');
-      // speak() will call onSpeakEnd when done, which resumes listening
-      voice.speak(reply);
-    } catch {
+      speakReply(reply);
+    } catch (err) {
+      console.error('❌ Error calling Lumina:', err);
       setCallState('listening');
-      if (!micMuted) voice.startListening();
       isBusyRef.current = false;
+      if (!micMuted && recognitionRef.current) {
+        recognitionRef.current.start();
+      }
     }
   };
 
-  const voice = useVoice({
-    onTranscript: () => {},
-    onFinalTranscript: handleFinal,
-    onSpeakEnd: handleSpeakEnd,
-    continuous: false,
-  });
+  const speakReply = (text) => {
+    console.log('🔊 Speaking reply...');
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.95;
+    utterance.pitch = 1.1;
+    utterance.volume = 1;
 
-  // Start listening on mount
-  useEffect(() => {
-    const t = setTimeout(() => voice.startListening(), 800);
-    return () => {
-      clearTimeout(t);
-      voice.stopListening();
-      voice.stopSpeaking();
+    const setVoiceAndSpeak = () => {
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find(v =>
+        v.name.includes('Samantha') ||
+        v.name.includes('Google UK English Female') ||
+        v.name.includes('Zira') ||
+        (v.lang.startsWith('en') && v.name.includes('Female'))
+      );
+      if (preferred) utterance.voice = preferred;
+
+      utterance.onend = () => {
+        console.log('🔁 Looping back to listen');
+        setCallState('listening');
+        isBusyRef.current = false;
+        if (!micMuted && recognitionRef.current) {
+          recognitionRef.current.start();
+        }
+      };
+
+      utterance.onerror = () => {
+        console.error('❌ Speech synthesis error');
+        setCallState('listening');
+        isBusyRef.current = false;
+      };
+
+      window.speechSynthesis.speak(utterance);
     };
-  }, []);
+
+    if (window.speechSynthesis.getVoices().length > 0) {
+      setVoiceAndSpeak();
+    } else {
+      window.speechSynthesis.onvoiceschanged = setVoiceAndSpeak;
+    }
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -73,8 +144,11 @@ export default function LuminaCallMode({ onEnd }) {
 
   const toggleMic = () => {
     setMicMuted(m => {
-      if (!m) voice.stopListening();
-      else if (callState === 'listening') voice.startListening();
+      if (!m) {
+        recognitionRef.current?.stop();
+      } else if (callState === 'listening' && !isBusyRef.current) {
+        recognitionRef.current?.start();
+      }
       return !m;
     });
   };
@@ -124,13 +198,13 @@ export default function LuminaCallMode({ onEnd }) {
         </div>
 
         {/* Live transcript bubble */}
-        {voice.liveTranscript && (
+        {liveTranscript && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             className="mx-6 px-4 py-2 rounded-2xl bg-white/10 text-white/80 text-sm text-center max-w-xs"
           >
-            {voice.liveTranscript}
+            {liveTranscript}
           </motion.div>
         )}
       </div>
