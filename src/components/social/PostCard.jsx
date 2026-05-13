@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Share2, MoreHorizontal, Send, Radio, Bookmark, Sparkles, Loader2, Plane, MapPin, Calendar, ArrowRight, Copy, Check, Users, X, ChevronLeft, ChevronRight, UserPlus, UserCheck, Trash2, Edit, ImageIcon, Play } from 'lucide-react';
+import { MessageCircle, Share2, MoreHorizontal, Radio, Bookmark, Sparkles, Loader2, Plane, MapPin, Calendar, ArrowRight, Copy, Check, X, ChevronLeft, ChevronRight, UserPlus, UserCheck, Trash2, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,15 +11,13 @@ import { Input } from "@/components/ui/input";
 import { format } from 'date-fns';
 import RichText from './RichText';
 import LuminaStreakBadge from './LuminaStreakBadge';
+import PostReactions from './PostReactions';
+import PostComments from './PostComments';
 
 export default function PostCard({ post, user, onDmUser, onViewProfile, onHashtagClick }) {
   const [showComments, setShowComments] = useState(false);
   const [authorStreak, setAuthorStreak] = useState(null);
   const [commentText, setCommentText] = useState('');
-  const [editingCommentId, setEditingCommentId] = useState(null);
-  const [editText, setEditText] = useState('');
-  const [replyingTo, setReplyingTo] = useState(null);
-  const [replyText, setReplyText] = useState('');
   const [summary, setSummary] = useState('');
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -200,8 +198,6 @@ Provide a brief analysis in JSON format:
     },
   });
 
-  const reactionEmojis = ['👍', '❤️', '💡', '😂'];
-
   const { data: comments = [] } = useQuery({
     queryKey: ['comments', post.id],
     queryFn: () => base44.entities.Comment.filter({ post_id: post.id }, 'created_date', 50),
@@ -209,26 +205,32 @@ Provide a brief analysis in JSON format:
   });
 
   const toggleReactionMutation = useMutation({
-    mutationFn: (emoji) => {
-      const reactions = post.reactions || {};
-      const userReactions = reactions[emoji] || [];
-      const hasReacted = userReactions.includes(user.email);
+    mutationFn: ({ emoji, prevEmoji }) => {
+      const reactions = { ...(post.reactions || {}) };
 
-      const newReactions = { ...reactions };
-      if (hasReacted) {
-        newReactions[emoji] = userReactions.filter(e => e !== user.email);
-        if (newReactions[emoji].length === 0) delete newReactions[emoji];
-      } else {
-        newReactions[emoji] = [...userReactions, user.email];
+      // Remove previous reaction from all emojis (single reaction per user)
+      if (prevEmoji && prevEmoji !== emoji) {
+        const prev = reactions[prevEmoji] || [];
+        reactions[prevEmoji] = prev.filter(e => e !== user.email);
+        if (reactions[prevEmoji].length === 0) delete reactions[prevEmoji];
       }
 
-      return base44.entities.Post.update(post.id, { reactions: newReactions });
+      // Toggle selected emoji
+      const current = reactions[emoji] || [];
+      const alreadyReacted = current.includes(user.email);
+      if (alreadyReacted) {
+        reactions[emoji] = current.filter(e => e !== user.email);
+        if (reactions[emoji].length === 0) delete reactions[emoji];
+      } else {
+        reactions[emoji] = [...current, user.email];
+      }
+
+      return base44.entities.Post.update(post.id, { reactions });
     },
-    onSuccess: async (_, emoji) => {
+    onSuccess: async (_, { emoji, prevEmoji }) => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
-      const userReactions = post.reactions?.[emoji] || [];
-      const hasReacted = userReactions.includes(user.email);
-      if (!hasReacted && post.author_email && post.author_email !== user.email) {
+      const alreadyReacted = (post.reactions?.[emoji] || []).includes(user.email);
+      if (!alreadyReacted && post.author_email && post.author_email !== user.email) {
         await base44.entities.Notification.create({
           to_email: post.author_email,
           from_name: user.full_name || user.email,
@@ -271,44 +273,6 @@ Provide a brief analysis in JSON format:
   const deleteCommentMutation = useMutation({
     mutationFn: (commentId) => base44.entities.Comment.delete(commentId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['comments', post.id] }),
-  });
-
-  const editCommentMutation = useMutation({
-    mutationFn: ({ id, content }) => base44.entities.Comment.update(id, { content }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments', post.id] });
-      setEditingCommentId(null);
-      setEditText('');
-    },
-  });
-
-  const replyMutation = useMutation({
-    mutationFn: ({ content, parentId, replyToName }) => base44.entities.Comment.create({
-      post_id: post.id,
-      post_author_email: post.author_email,
-      content,
-      author_name: user.full_name || user.email,
-      author_email: user.email,
-      author_avatar: user.avatar_url || '',
-      parent_id: parentId,
-      reply_to_name: replyToName,
-    }),
-    onSuccess: async (_, { replyToEmail }) => {
-      queryClient.invalidateQueries({ queryKey: ['comments', post.id] });
-      setReplyingTo(null);
-      setReplyText('');
-      if (replyToEmail && replyToEmail !== user.email) {
-        await base44.entities.Notification.create({
-          to_email: replyToEmail,
-          from_name: user.full_name || user.email,
-          type: 'comment',
-          message: `${user.full_name || user.email} replied to your comment`,
-          post_id: post.id,
-          read: false,
-        });
-        queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      }
-    },
   });
 
   const followMutation = useMutation({
@@ -611,26 +575,12 @@ Provide a brief analysis in JSON format:
               </div>
             )}
 
-            {(post.reactions && Object.keys(post.reactions).length > 0) && (
-              <div className="flex items-center gap-1.5 flex-wrap mb-3 pb-2 border-b border-white/5">
-                {Object.entries(post.reactions).map(([emoji, users]) => {
-                  const userReacted = users?.includes(user?.email);
-                  return (
-                    <button
-                      key={emoji}
-                      onClick={() => user && toggleReactionMutation.mutate(emoji)}
-                      className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all ${
-                        userReacted
-                          ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/50'
-                          : 'bg-white/5 text-zinc-400 hover:bg-white/10 border border-white/10'
-                      }`}
-                    >
-                      <span>{emoji}</span>
-                      <span>{users?.length || 0}</span>
-                    </button>
-                  );
-                })}
-              </div>
+            {user && (
+              <PostReactions
+                post={post}
+                user={user}
+                onToggle={(emoji, prevEmoji) => toggleReactionMutation.mutate({ emoji, prevEmoji })}
+              />
             )}
 
             <div className="mb-3">
@@ -682,25 +632,12 @@ Provide a brief analysis in JSON format:
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-              <div className="flex items-center gap-0.5 sm:gap-1">
-                {reactionEmojis.map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => user && toggleReactionMutation.mutate(emoji)}
-                    className="p-1.5 sm:p-2 rounded-lg hover:bg-white/5 text-base sm:text-lg transition-all active:scale-95"
-                    title={`React with ${emoji}`}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-
               <button
                 onClick={() => setShowComments(s => !s)}
-                className="flex items-center gap-2 text-zinc-400 hover:text-indigo-400 transition-colors ml-2"
+                className={`flex items-center gap-1.5 text-sm transition-colors ${showComments ? 'text-indigo-400' : 'text-zinc-400 hover:text-indigo-400'}`}
               >
-                <MessageCircle className="w-5 h-5" />
-                <span className="text-sm">{comments.length || 0}</span>
+                <MessageCircle className="w-4 h-4" />
+                <span>{comments.length > 0 ? `${comments.length} comment${comments.length !== 1 ? 's' : ''}` : 'Comment'}</span>
               </button>
 
               <div className="relative">
@@ -780,126 +717,15 @@ Provide a brief analysis in JSON format:
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="mt-4 space-y-3 overflow-hidden"
+                  className="overflow-hidden"
                 >
-                  {comments.filter(c => !c.parent_id).map(c => {
-                    const replies = comments.filter(r => r.parent_id === c.id);
-                    return (
-                      <div key={c.id}>
-                        <div className="flex items-start gap-3 group">
-                          <Avatar className="w-8 h-8 flex-shrink-0">
-                            <AvatarImage src={c.author_avatar} />
-                            <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs">
-                              {c.author_name?.[0]?.toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="bg-white/5 rounded-xl px-3 py-2 flex-1 relative">
-                            <p className="text-xs font-semibold text-indigo-400 mb-0.5">{c.author_name}</p>
-                            {editingCommentId === c.id ? (
-                              <div className="flex gap-2 mt-1">
-                                <Input
-                                  value={editText}
-                                  onChange={e => setEditText(e.target.value)}
-                                  className="bg-white/5 border-white/10 text-white text-sm h-7"
-                                  autoFocus
-                                />
-                                <Button size="sm" className="h-7 px-2 text-xs bg-indigo-600 hover:bg-indigo-700" onClick={() => editCommentMutation.mutate({ id: c.id, content: editText })} disabled={!editText.trim()}>Save</Button>
-                                <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingCommentId(null)}>Cancel</Button>
-                              </div>
-                            ) : (
-                              <p className="text-sm text-zinc-300">{c.content}</p>
-                            )}
-                            <div className="flex gap-3 mt-1">
-                              {user && (
-                                <button onClick={() => { setReplyingTo({ id: c.id, name: c.author_name, email: c.author_email }); setReplyText(''); }} className="text-xs text-zinc-500 hover:text-indigo-400 transition-colors">Reply</button>
-                              )}
-                              {user && c.author_email === user.email && editingCommentId !== c.id && (
-                                <button onClick={() => { setEditingCommentId(c.id); setEditText(c.content); }} className="text-xs text-zinc-500 hover:text-blue-400 transition-colors">Edit</button>
-                              )}
-                              {user && c.author_email === user.email && (
-                                <button onClick={() => deleteCommentMutation.mutate(c.id)} disabled={deleteCommentMutation.isPending} className="text-xs text-zinc-500 hover:text-red-400 transition-colors">Delete</button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {replies.length > 0 && (
-                          <div className="ml-11 mt-2 space-y-2">
-                            {replies.map(r => (
-                              <div key={r.id} className="flex items-start gap-2 group">
-                                <Avatar className="w-6 h-6 flex-shrink-0">
-                                  <AvatarImage src={r.author_avatar} />
-                                  <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-600 text-white text-xs">{r.author_name?.[0]?.toUpperCase()}</AvatarFallback>
-                                </Avatar>
-                                <div className="bg-white/5 rounded-xl px-3 py-1.5 flex-1">
-                                  <p className="text-xs font-semibold text-purple-400">{r.author_name} <span className="text-zinc-500 font-normal">→ {r.reply_to_name}</span></p>
-                                  {editingCommentId === r.id ? (
-                                    <div className="flex gap-2 mt-1">
-                                      <Input value={editText} onChange={e => setEditText(e.target.value)} className="bg-white/5 border-white/10 text-white text-xs h-6" autoFocus />
-                                      <Button size="sm" className="h-6 px-2 text-xs bg-indigo-600" onClick={() => editCommentMutation.mutate({ id: r.id, content: editText })} disabled={!editText.trim()}>Save</Button>
-                                      <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => setEditingCommentId(null)}>Cancel</Button>
-                                    </div>
-                                  ) : (
-                                    <p className="text-xs text-zinc-300">{r.content}</p>
-                                  )}
-                                  <div className="flex gap-3 mt-1">
-                                    {user && r.author_email === user.email && editingCommentId !== r.id && (
-                                      <button onClick={() => { setEditingCommentId(r.id); setEditText(r.content); }} className="text-xs text-zinc-500 hover:text-blue-400 transition-colors">Edit</button>
-                                    )}
-                                    {user && r.author_email === user.email && (
-                                      <button onClick={() => deleteCommentMutation.mutate(r.id)} className="text-xs text-zinc-500 hover:text-red-400 transition-colors">Delete</button>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {replyingTo?.id === c.id && user && (
-                          <div className="ml-11 mt-2 flex items-center gap-2">
-                            <Input
-                              value={replyText}
-                              onChange={e => setReplyText(e.target.value)}
-                              onKeyDown={e => e.key === 'Enter' && replyText.trim() && replyMutation.mutate({ content: replyText, parentId: c.id, replyToName: replyingTo.name, replyToEmail: replyingTo.email })}
-                              placeholder={`Reply to ${replyingTo.name}...`}
-                              className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500 text-xs h-8"
-                              autoFocus
-                            />
-                            <Button size="sm" className="h-8 px-2 bg-indigo-600 hover:bg-indigo-700" disabled={!replyText.trim()} onClick={() => replyMutation.mutate({ content: replyText, parentId: c.id, replyToName: replyingTo.name, replyToEmail: replyingTo.email })}><Send className="w-3 h-3" /></Button>
-                            <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => setReplyingTo(null)}><X className="w-3 h-3" /></Button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {user && (
-                    <div className="flex items-center gap-2 pt-1">
-                      <Avatar className="w-8 h-8 flex-shrink-0">
-                        <AvatarImage src={user.avatar_url} />
-                        <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs">
-                          {user.full_name?.[0] || user.email?.[0]?.toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 flex items-center gap-2">
-                        <Input
-                          value={commentText}
-                          onChange={e => setCommentText(e.target.value)}
-                          onKeyDown={e => e.key === 'Enter' && commentText.trim() && commentMutation.mutate(commentText)}
-                          placeholder="Write a comment..."
-                          className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500 text-sm"
-                        />
-                        <Button
-                          size="icon"
-                          disabled={!commentText.trim()}
-                          onClick={() => commentMutation.mutate(commentText)}
-                          className="btn-primary rounded-full flex-shrink-0 w-8 h-8"
-                        >
-                          <Send className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  <PostComments
+                    post={post}
+                    user={user}
+                    comments={comments}
+                    onComment={(text) => commentMutation.mutate(text)}
+                    onDelete={(id) => deleteCommentMutation.mutate(id)}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
