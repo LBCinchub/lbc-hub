@@ -2,11 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import LuminaStreakBadge from '../components/social/LuminaStreakBadge';
 import VideoGenerator from '../components/lumina/VideoGenerator';
+import LuminaCallMode from '../components/lumina/LuminaCallMode';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, ArrowUp, ArrowDown, Image as ImageIcon, X, PenLine, MapPin, Hash, Share2, Code, Copy, Check } from 'lucide-react';
+import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, Phone, ArrowUp, ArrowDown, Image as ImageIcon, X, PenLine, MapPin, Hash, Share2, Code, Copy, Check } from 'lucide-react';
 import ImageEditor from '../components/social/ImageEditor';
 import LinkText from '../components/ui/LinkText';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useVoice } from '@/hooks/useVoice';
 
 export default function LuminaAI() {
   const [messages, setMessages] = useState([]);
@@ -16,10 +18,7 @@ export default function LuminaAI() {
   const [usageCount, setUsageCount] = useState(0);
   const [usageLimit] = useState(30); // 30 requests per day
   const [chatId, setChatId] = useState(null);
-  const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const [voiceChatMode, setVoiceChatMode] = useState(false);
+  const [callMode, setCallMode] = useState(false);
   const [uploadedImages, setUploadedImages] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
@@ -35,8 +34,16 @@ export default function LuminaAI() {
   const [showVideoGenerator, setShowVideoGenerator] = useState(false);
   const bottomRef = useRef(null);
   const topRef = useRef(null);
-  const recognitionRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  const voice = useVoice({
+    onTranscript: (t) => setInput(t),
+    onFinalTranscript: (t) => {
+      setInput('');
+      handleSend(t);
+    },
+    continuous: false,
+  });
 
   const scrollToTop = () => {
     topRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -122,109 +129,7 @@ export default function LuminaAI() {
     }
   }, [messages]);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = true;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'en-US';
 
-      recognitionRef.current.onresult = (event) => {
-        const transcript = event.results[event.results.length - 1][0].transcript;
-        if (voiceChatMode) {
-          handleSend(transcript);
-        } else {
-          setInput(transcript);
-          setIsListening(false);
-        }
-      };
-
-      recognitionRef.current.onerror = () => {
-        if (!voiceChatMode) setIsListening(false);
-      };
-
-      recognitionRef.current.onend = () => {
-        if (voiceChatMode) {
-          recognitionRef.current.start();
-        } else {
-          setIsListening(false);
-        }
-      };
-    }
-
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      window.speechSynthesis.cancel();
-    };
-  }, [voiceChatMode]);
-
-  const toggleListening = async () => {
-    if (!recognitionRef.current) {
-      alert('Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari.');
-      return;
-    }
-
-    if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    } else {
-      try {
-        // Request microphone permission
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (error) {
-        alert('Microphone access denied. Please allow microphone permissions in your browser settings.');
-        console.error('Microphone error:', error);
-      }
-    }
-  };
-
-  const toggleVoiceChat = async () => {
-    if (!recognitionRef.current) {
-      alert('Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari.');
-      return;
-    }
-
-    if (voiceChatMode) {
-      recognitionRef.current.stop();
-      window.speechSynthesis.cancel();
-      setVoiceChatMode(false);
-      setIsListening(false);
-      setIsSpeaking(false);
-    } else {
-      try {
-        // Request microphone permission
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        setVoiceChatMode(true);
-        setVoiceEnabled(true);
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (error) {
-        alert('Microphone access denied. Please allow microphone permissions in your browser settings.');
-        console.error('Microphone error:', error);
-      }
-    }
-  };
-
-  const speakText = (text) => {
-    if (!voiceEnabled || !text) return;
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-
-    window.speechSynthesis.speak(utterance);
-  };
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files || []);
@@ -585,7 +490,8 @@ User: ${text}`,
       // Clear uploaded images after sending
       setUploadedImages([]);
 
-      // Voice disabled for Lumina
+      // Speak Lumina's reply if not muted
+      if (!voice.isMuted) voice.speak(aiMessage.content);
 
       // Save chat history
       if (chatId) {
@@ -618,6 +524,10 @@ User: ${text}`,
       setLoading(false);
     }
   };
+
+  if (callMode) {
+    return <LuminaCallMode onEnd={() => setCallMode(false)} />;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col">
@@ -927,85 +837,71 @@ User: ${text}`,
             </div>
           )}
           
-          {voiceChatMode && (
-            <div className="glass rounded-2xl p-6 border border-green-500/30 bg-green-500/10">
-              <div className="flex items-center justify-between gap-3 text-green-400">
-                <div className="flex items-center gap-3">
-                  <Mic className="w-6 h-6 animate-pulse" />
-                  <div className="text-center">
-                    <p className="font-semibold">Voice Chat Active</p>
-                    <p className="text-sm text-zinc-400">Speak to chat with Lumina</p>
-                  </div>
-                </div>
-                <button
-                  onClick={toggleVoiceChat}
-                  className="flex-shrink-0 w-10 h-10 rounded-lg bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
-                  title="Stop voice chat"
-                >
-                  <X className="w-5 h-5 text-white" />
-                </button>
-              </div>
+          {/* Listening indicator */}
+          {voice.isListening && (
+            <div className="flex items-center gap-2 mb-1">
+              <motion.div className="w-2 h-2 rounded-full bg-red-400" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }} />
+              <span className="text-xs text-red-400">Listening... speak now</span>
             </div>
           )}
-          
-          {!voiceChatMode && (
-            <form
-              onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-              className="relative space-y-3"
-            >
-              {uploadedImages.length > 0 && (
-                <div className="flex gap-2 flex-wrap">
-                  {uploadedImages.map((imgUrl, idx) => (
-                    <div key={idx} className="relative inline-block">
-                      <img src={imgUrl} alt="Uploaded" className="h-20 w-20 object-cover rounded-lg border border-white/10" />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(idx)}
-                        className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors"
-                      >
-                        <X className="w-3 h-3 text-white" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="flex items-center gap-3 glass rounded-2xl p-3 border border-white/10">
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={loading || uploadingImage}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={loading || uploadingImage}
-                  className="w-10 h-10 rounded-xl bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center disabled:opacity-40 transition-all"
-                  title="Add photos from gallery"
-                >
-                  {uploadingImage ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <ImageIcon className="w-5 h-5 text-white" />}
-                </button>
-                <input
-                   value={input}
-                   onChange={(e) => setInput(e.target.value)}
-                   placeholder="Ask Lumina..."
-                   disabled={loading}
-                   className="flex-1 bg-transparent text-white placeholder:text-zinc-600 outline-none text-sm"
-                 />
-                <button
-                  type="submit"
-                  disabled={!input.trim() || loading}
-                  className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center disabled:opacity-40 hover:scale-105 transition-transform"
-                >
-                  <Send className="w-4 h-4 text-white" />
-                </button>
+          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative space-y-3">
+            {uploadedImages.length > 0 && (
+              <div className="flex gap-2 flex-wrap">
+                {uploadedImages.map((imgUrl, idx) => (
+                  <div key={idx} className="relative inline-block">
+                    <img src={imgUrl} alt="Uploaded" className="h-20 w-20 object-cover rounded-lg border border-white/10" />
+                    <button type="button" onClick={() => removeImage(idx)} className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors">
+                      <X className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
+                ))}
               </div>
-            </form>
-          )}
+            )}
+            <div className="flex items-center gap-2 glass rounded-2xl p-3 border border-white/10">
+              <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleImageUpload} disabled={loading || uploadingImage} className="hidden" />
+              <button type="button" onClick={() => fileInputRef.current?.click()} disabled={loading || uploadingImage}
+                className="w-10 h-10 rounded-xl bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center disabled:opacity-40 transition-all" title="Add photos">
+                {uploadingImage ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <ImageIcon className="w-5 h-5 text-white" />}
+              </button>
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={voice.isListening ? 'Speak now...' : 'Ask Lumina...'}
+                disabled={loading}
+                className="flex-1 bg-transparent text-white placeholder:text-zinc-600 outline-none text-sm"
+              />
+              {/* Mic button */}
+              <button type="button" onClick={voice.toggleListening}
+                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
+                style={{
+                  background: voice.isListening ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'rgba(255,255,255,0.08)',
+                  boxShadow: voice.isListening ? '0 0 14px rgba(239,68,68,0.5)' : 'none',
+                }} title={voice.isListening ? 'Stop listening' : 'Voice input'}>
+                {voice.isListening ? <MicOff className="w-5 h-5 text-white" /> : <Mic className="w-5 h-5 text-white" />}
+              </button>
+              {/* Mute toggle */}
+              <button type="button" onClick={voice.isSpeaking ? voice.stopSpeaking : voice.toggleMute}
+                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-white/5 hover:bg-white/10"
+                title={voice.isMuted ? 'Unmute Lumina' : voice.isSpeaking ? 'Stop speaking' : 'Mute Lumina'}>
+                {voice.isMuted ? <VolumeX className="w-5 h-5 text-zinc-500" /> : voice.isSpeaking ? (
+                  <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.5, repeat: Infinity }}>
+                    <Volume2 className="w-5 h-5 text-purple-400" />
+                  </motion.div>
+                ) : <Volume2 className="w-5 h-5 text-zinc-300" />}
+              </button>
+              {/* Call button */}
+              <button type="button" onClick={() => setCallMode(true)}
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center hover:scale-105 transition-transform" title="Call Lumina">
+                <Phone className="w-4 h-4 text-white" />
+              </button>
+              {/* Send */}
+              <button type="submit" disabled={!input.trim() || loading}
+                className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center disabled:opacity-40 hover:scale-105 transition-transform">
+                <Send className="w-4 h-4 text-white" />
+              </button>
+            </div>
+          </form>
 
           {/* Video & Code Controls */}
           <div className="flex items-center justify-center gap-3 mt-3">
