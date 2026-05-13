@@ -1,0 +1,85 @@
+{
+  "name": "UserMemory",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User's unique ID (email)"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "User's display name"
+    },
+    "key_facts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Important facts learned about the user"
+    },
+    "preferences": {
+      "type": "object",
+      "description": "User's likes, dislikes, habits",
+      "additionalProperties": true
+    },
+    "past_requests": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Summary of previous requests and topics"
+    },
+    "important_dates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "Birthdays, appointments, important events"
+    },
+    "last_seen": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time the user chatted with Lumina"
+    },
+    "conversation_summary": {
+      "type": "string",
+      "description": "Summary of the last conversation"
+    },
+    "pinned_notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Things the user explicitly asked Lumina to remember"
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.email}}"
+    },
+    "read": {
+      "data.user_id": "{{user.email}}"
+    },
+    "update": {
+      "data.user_id": "{{user.email}}"
+    },
+    "delete": {
+      "data.user_id": "{{user.email}}"
+    }
+  }
+}
