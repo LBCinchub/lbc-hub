@@ -9,6 +9,7 @@ import UserProfileModal from './components/social/UserProfileModal';
 import FloatingDM from './components/social/FloatingDM';
 import FloatingLumina from './components/social/FloatingLumina';
 import CallManager from './components/social/CallManager';
+import LuminaChatWidget from './components/lumina/LuminaChatWidget';
 
 const navItems = [
   { name: 'Lumina AI', icon: Home, page: 'LuminaAI' },
@@ -252,6 +253,9 @@ export default function Layout({ children, currentPageName }) {
 
       {/* WebRTC Call Manager */}
       {user && <CallManager user={user} />}
+
+      {/* Lumina Chat Widget — global, all pages */}
+      <LuminaChatWidget />
 
       {/* Main Content */}
       <main className="pt-16 bg-zinc-950">
