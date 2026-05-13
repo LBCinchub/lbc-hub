@@ -23,6 +23,12 @@ export default function LuminaCallMode({ onEnd }) {
 
   const formatTime = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
+  const handleSpeakEnd = () => {
+    setCallState('listening');
+    if (!micMuted) voice.startListening();
+    isBusyRef.current = false;
+  };
+
   const handleFinal = async (text) => {
     if (isBusyRef.current || !text.trim()) return;
     isBusyRef.current = true;
@@ -35,16 +41,8 @@ export default function LuminaCallMode({ onEnd }) {
       const reply = res.data?.reply || "I'm here!";
       setTranscript(prev => [...prev, { role: 'lumina', content: reply }]);
       setCallState('speaking');
+      // speak() will call onSpeakEnd when done, which resumes listening
       voice.speak(reply);
-      // After speaking, wait then resume listening
-      const checkDone = setInterval(() => {
-        if (!voice.isSpeaking) {
-          clearInterval(checkDone);
-          setCallState('listening');
-          if (!micMuted) voice.startListening();
-          isBusyRef.current = false;
-        }
-      }, 300);
     } catch {
       setCallState('listening');
       if (!micMuted) voice.startListening();
@@ -55,6 +53,7 @@ export default function LuminaCallMode({ onEnd }) {
   const voice = useVoice({
     onTranscript: () => {},
     onFinalTranscript: handleFinal,
+    onSpeakEnd: handleSpeakEnd,
     continuous: false,
   });
 

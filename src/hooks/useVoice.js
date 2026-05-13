@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 /**
  * Shared voice hook — SpeechRecognition + SpeechSynthesis
  */
-export function useVoice({ onTranscript, onFinalTranscript, continuous = false }) {
+export function useVoice({ onTranscript, onFinalTranscript, onSpeakEnd, continuous = false }) {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -11,6 +11,17 @@ export function useVoice({ onTranscript, onFinalTranscript, continuous = false }
   const recognitionRef = useRef(null);
   const autoSendTimer = useRef(null);
   const supported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+  const voicesRef = useRef([]);
+
+  // Load voices on mount and when they change
+  useEffect(() => {
+    const loadVoices = () => {
+      voicesRef.current = window.speechSynthesis.getVoices();
+    };
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    return () => { window.speechSynthesis.onvoiceschanged = null; };
+  }, []);
 
   useEffect(() => {
     if (!supported) return;
@@ -86,14 +97,21 @@ export function useVoice({ onTranscript, onFinalTranscript, continuous = false }
 
   const speak = useCallback((text) => {
     if (!text || isMuted || typeof window === 'undefined') return;
+    
+    // Ensure voices are loaded
+    if (voicesRef.current.length === 0) {
+      voicesRef.current = window.speechSynthesis.getVoices();
+    }
+    
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
     utterance.rate = 0.95;
     utterance.pitch = 1.1;
+    utterance.volume = 1;
 
     // Pick best female voice
-    const voices = window.speechSynthesis.getVoices();
+    const voices = voicesRef.current.length > 0 ? voicesRef.current : window.speechSynthesis.getVoices();
     const preferred = ['Samantha', 'Google UK English Female', 'Microsoft Zira'];
     let chosen = null;
     for (const name of preferred) {
@@ -104,10 +122,13 @@ export function useVoice({ onTranscript, onFinalTranscript, continuous = false }
     if (chosen) utterance.voice = chosen;
 
     utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      onSpeakEnd?.();
+    };
     utterance.onerror = () => setIsSpeaking(false);
     window.speechSynthesis.speak(utterance);
-  }, [isMuted]);
+  }, [isMuted, onSpeakEnd]);
 
   const stopSpeaking = useCallback(() => {
     window.speechSynthesis.cancel();
