@@ -98,43 +98,79 @@ export default function LuminaCallMode({ onEnd }) {
   const speakReply = (text) => {
     console.log('🔊 Speaking reply...');
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.95;
-    utterance.pitch = 1.1;
-    utterance.volume = 1;
 
-    const setVoiceAndSpeak = () => {
-      const voices = window.speechSynthesis.getVoices();
-      const preferred = voices.find(v =>
-        v.name.includes('Samantha') ||
-        v.name.includes('Google UK English Female') ||
-        v.name.includes('Zira') ||
-        (v.lang.startsWith('en') && v.name.includes('Female'))
+    const getPreferredVoice = (voices) => {
+      const preferred = [
+        'Google UK English Female',
+        'Microsoft Aria Online',
+        'Microsoft Zira',
+        'Samantha',
+        'Karen',
+        'Moira',
+        'Tessa',
+      ];
+      for (const name of preferred) {
+        const voice = voices.find(v => v.name.includes(name));
+        if (voice) return voice;
+      }
+      // Fallback: any English female voice
+      let voice = voices.find(v =>
+        v.lang.startsWith('en') &&
+        (v.name.includes('Female') || v.name.includes('female'))
       );
-      if (preferred) utterance.voice = preferred;
-
-      utterance.onend = () => {
-        console.log('🔁 Looping back to listen');
-        setCallState('listening');
-        isBusyRef.current = false;
-        if (!micMuted && recognitionRef.current) {
-          recognitionRef.current.start();
-        }
-      };
-
-      utterance.onerror = () => {
-        console.error('❌ Speech synthesis error');
-        setCallState('listening');
-        isBusyRef.current = false;
-      };
-
-      window.speechSynthesis.speak(utterance);
+      if (!voice) voice = voices.find(v => v.lang.startsWith('en'));
+      return voice || null;
     };
 
-    if (window.speechSynthesis.getVoices().length > 0) {
-      setVoiceAndSpeak();
+    const speakSentences = (voices) => {
+      const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+      let sentenceIndex = 0;
+
+      const speakNext = () => {
+        if (sentenceIndex >= sentences.length) {
+          console.log('🔁 Looping back to listen');
+          setCallState('listening');
+          isBusyRef.current = false;
+          if (!micMuted && recognitionRef.current) {
+            recognitionRef.current.start();
+          }
+          return;
+        }
+
+        const sentence = sentences[sentenceIndex].trim();
+        const utterance = new SpeechSynthesisUtterance(sentence);
+        utterance.rate = 0.88;
+        utterance.pitch = 1.15;
+        utterance.volume = 1.0;
+        utterance.lang = 'en-US';
+
+        const voice = getPreferredVoice(voices);
+        if (voice) utterance.voice = voice;
+
+        utterance.onend = () => {
+          sentenceIndex++;
+          setTimeout(speakNext, 200);
+        };
+
+        utterance.onerror = () => {
+          console.error('❌ Speech synthesis error');
+          setCallState('listening');
+          isBusyRef.current = false;
+        };
+
+        window.speechSynthesis.speak(utterance);
+      };
+
+      speakNext();
+    };
+
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      speakSentences(voices);
     } else {
-      window.speechSynthesis.onvoiceschanged = setVoiceAndSpeak;
+      window.speechSynthesis.onvoiceschanged = () => {
+        speakSentences(window.speechSynthesis.getVoices());
+      };
     }
   };
 

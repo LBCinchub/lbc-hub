@@ -104,30 +104,75 @@ export function useVoice({ onTranscript, onFinalTranscript, onSpeakEnd, continuo
     }
     
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.95;
-    utterance.pitch = 1.1;
-    utterance.volume = 1;
 
-    // Pick best female voice
-    const voices = voicesRef.current.length > 0 ? voicesRef.current : window.speechSynthesis.getVoices();
-    const preferred = ['Samantha', 'Google UK English Female', 'Microsoft Zira'];
-    let chosen = null;
-    for (const name of preferred) {
-      chosen = voices.find(v => v.name.includes(name));
-      if (chosen) break;
-    }
-    if (!chosen) chosen = voices.find(v => v.lang.startsWith('en') && /female|woman|girl/i.test(v.name));
-    if (chosen) utterance.voice = chosen;
-
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      onSpeakEnd?.();
+    const getPreferredVoice = (voices) => {
+      const preferred = [
+        'Google UK English Female',
+        'Microsoft Aria Online',
+        'Microsoft Zira',
+        'Samantha',
+        'Karen',
+        'Moira',
+        'Tessa',
+      ];
+      for (const name of preferred) {
+        const voice = voices.find(v => v.name.includes(name));
+        if (voice) return voice;
+      }
+      // Fallback: any English female voice
+      let voice = voices.find(v =>
+        v.lang.startsWith('en') &&
+        (v.name.includes('Female') || v.name.includes('female'))
+      );
+      if (!voice) voice = voices.find(v => v.lang.startsWith('en'));
+      return voice || null;
     };
-    utterance.onerror = () => setIsSpeaking(false);
-    window.speechSynthesis.speak(utterance);
+
+    const speakSentences = (voices) => {
+      const sentences = text.length > 200
+        ? (text.match(/[^.!?]+[.!?]+/g) || [text])
+        : [text];
+      let sentenceIndex = 0;
+
+      const speakNext = () => {
+        if (sentenceIndex >= sentences.length) {
+          setIsSpeaking(false);
+          onSpeakEnd?.();
+          return;
+        }
+
+        const sentence = sentences[sentenceIndex].trim();
+        const utterance = new SpeechSynthesisUtterance(sentence);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.88;
+        utterance.pitch = 1.15;
+        utterance.volume = 1.0;
+
+        const voice = getPreferredVoice(voices);
+        if (voice) utterance.voice = voice;
+
+        utterance.onstart = () => setIsSpeaking(true);
+        utterance.onend = () => {
+          sentenceIndex++;
+          setTimeout(speakNext, 200);
+        };
+        utterance.onerror = () => setIsSpeaking(false);
+
+        window.speechSynthesis.speak(utterance);
+      };
+
+      speakNext();
+    };
+
+    const voices = voicesRef.current.length > 0 ? voicesRef.current : window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      speakSentences(voices);
+    } else {
+      window.speechSynthesis.onvoiceschanged = () => {
+        voicesRef.current = window.speechSynthesis.getVoices();
+        speakSentences(voicesRef.current);
+      };
+    }
   }, [isMuted, onSpeakEnd]);
 
   const stopSpeaking = useCallback(() => {
