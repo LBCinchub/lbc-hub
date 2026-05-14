@@ -15,7 +15,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'No comment data in payload' }, { status: 400 });
     }
 
-    // The post author to notify is stored on the comment as post_author_email
     const user_email = comment.post_author_email;
 
     if (!user_email) {
@@ -30,17 +29,66 @@ Deno.serve(async (req) => {
 
     const commenterName = comment.author_name || 'Someone';
     const preview = comment.content?.slice(0, 80) || '';
+    const title = `${commenterName} commented on your post`;
 
-    const result = await base44.asServiceRole.functions.invoke('sendPushNotification', {
+    // Get all active push subscriptions for the post author
+    const subscriptions = await base44.asServiceRole.entities.PushSubscription.filter({
       user_email,
-      title: `${commenterName} commented on your post`,
+      is_active: true
+    });
+
+    if (!subscriptions || subscriptions.length === 0) {
+      console.log(`No active push subscriptions for ${user_email}`);
+      return Response.json({ message: 'No active subscriptions found' });
+    }
+
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
+    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
+
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      console.error('VAPID keys not configured');
+      return Response.json({ error: 'Push notification service not configured' }, { status: 500 });
+    }
+
+    const notificationPayload = JSON.stringify({
+      title,
       body: preview,
       url: '/Social',
       type: 'comment',
-      tag: `comment-${comment.post_id}`,
+      tag: `comment-${comment.post_id}`
     });
 
-    return Response.json({ success: true, result });
+    const results = [];
+    const errors = [];
+
+    for (const sub of subscriptions) {
+      try {
+        const response = await fetch(sub.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': notificationPayload.length.toString(),
+            'TTL': '24'
+          },
+          body: notificationPayload
+        });
+
+        if (!response.ok) {
+          if (response.status === 410) {
+            await base44.asServiceRole.entities.PushSubscription.update(sub.id, { is_active: false });
+          }
+          errors.push({ subscription_id: sub.id, status: response.status });
+        } else {
+          results.push({ subscription_id: sub.id, status: 'sent' });
+        }
+      } catch (err) {
+        console.error(`Error sending to ${sub.endpoint}:`, err.message);
+        errors.push({ subscription_id: sub.id, error: err.message });
+      }
+    }
+
+    console.log(`Notification sent to ${user_email}: ${results.length} success, ${errors.length} failed`);
+    return Response.json({ success: true, user_email, sent: results.length, failed: errors.length });
   } catch (error) {
     console.error('onNewComment error:', error);
     return Response.json({ error: error.message }, { status: 500 });
