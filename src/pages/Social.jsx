@@ -89,7 +89,11 @@ export default function Social() {
 
   const { data: chatMessages = [] } = useQuery({
     queryKey: ['chatMessages'],
-    queryFn: () => base44.entities.ChatMessage.list('-created_date', 50),
+    queryFn: async () => {
+      const msgs = await base44.entities.ChatMessage.list('-created_date', 50);
+      // Only show community messages (no session_id = public chat, not private Lumina chat)
+      return msgs.filter(m => !m.session_id);
+    },
     refetchInterval: false,
     retry: false,
     staleTime: Infinity,
