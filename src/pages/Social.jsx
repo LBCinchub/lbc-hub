@@ -118,21 +118,40 @@ export default function Social() {
   });
 
   const sendChatMutation = useMutation({
-    retry: 1,
-    retryDelay: 2000,
     mutationFn: async ({ content }) => {
       const res = await base44.functions.invoke('sendCommunityChat', { content });
       return res.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chatMessages'] });
+    onMutate: ({ content }) => {
+      // Optimistically add the message immediately
+      const optimistic = {
+        id: `optimistic-${Date.now()}`,
+        content,
+        author_name: user?.full_name || user?.email,
+        author_email: user?.email,
+        created_date: new Date().toISOString(),
+      };
+      queryClient.setQueryData(['chatMessages'], (old = []) => [optimistic, ...old]);
       setChatMessage('');
+      return { optimistic };
+    },
+    onSuccess: (data, _vars, context) => {
+      // Replace optimistic message with real one
+      queryClient.setQueryData(['chatMessages'], (old = []) =>
+        old.map(m => m.id === context.optimistic.id ? (data?.message || m) : m)
+      );
+    },
+    onError: (_err, _vars, context) => {
+      // Remove optimistic message on failure
+      queryClient.setQueryData(['chatMessages'], (old = []) =>
+        old.filter(m => m.id !== context?.optimistic?.id)
+      );
     }
   });
 
   const handleSendChat = (e) => {
     e.preventDefault();
-    if (!chatMessage.trim() || !user) return;
+    if (!chatMessage.trim() || !user || sendChatMutation.isPending) return;
     sendChatMutation.mutate({ content: chatMessage });
   };
 
