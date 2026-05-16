@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Send, X, ArrowLeft, Minus, Plus, Search, Users, ShoppingBag, Bell, Phone, Video, Pin, Trash2, UserX, Shield } from 'lucide-react';
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -23,19 +23,35 @@ export default function FloatingDM({ user }) {
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
   const panelRef = useRef(null);
-  const queryClient = useQueryClient();
 
-  const { data: allMessages = [] } = useQuery({
-    queryKey: ['dms', user?.email],
-    queryFn: async () => {
-      const sent = await base44.entities.DirectMessage.filter({ from_email: user.email }, '-created_date', 100);
-      const received = await base44.entities.DirectMessage.filter({ to_email: user.email }, '-created_date', 100);
-      return [...sent, ...received].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
-    },
-    enabled: !!user?.email,
-    refetchInterval: 5000,
-    retry: false,
-  });
+  const [allMessages, setAllMessages] = useState([]);
+
+  useEffect(() => {
+    if (!user?.email) return;
+    // Initial load
+    const load = async () => {
+      const [sent, received] = await Promise.all([
+        base44.entities.DirectMessage.filter({ from_email: user.email }, '-created_date', 100),
+        base44.entities.DirectMessage.filter({ to_email: user.email }, '-created_date', 100),
+      ]);
+      setAllMessages([...sent, ...received].sort((a, b) => new Date(a.created_date) - new Date(b.created_date)));
+    };
+    load();
+    // Subscribe to real-time updates instead of polling
+    const unsub = base44.entities.DirectMessage.subscribe((event) => {
+      const msg = event.data;
+      if (!msg) return;
+      if (msg.from_email === user.email || msg.to_email === user.email) {
+        setAllMessages(prev => {
+          if (event.type === 'delete') return prev.filter(m => m.id !== event.id);
+          const existing = prev.findIndex(m => m.id === event.id);
+          if (existing >= 0) { const next = [...prev]; next[existing] = msg; return next; }
+          return [...prev, msg].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
+        });
+      }
+    });
+    return unsub;
+  }, [user?.email]);
 
 
 
@@ -43,7 +59,7 @@ export default function FloatingDM({ user }) {
     queryKey: ['chatMessages'],
     queryFn: () => base44.entities.ChatMessage.list('-created_date', 50),
     enabled: !!user?.email && activeTab === 'community',
-    refetchInterval: 10000,
+    staleTime: 2 * 60 * 1000,
     retry: false,
   });
 
@@ -55,7 +71,7 @@ export default function FloatingDM({ user }) {
       return [...asBuyer, ...asSeller].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
     },
     enabled: !!user?.email && activeTab === 'marketplace',
-    refetchInterval: 15000,
+    staleTime: 5 * 60 * 1000,
     retry: false,
   });
 
@@ -63,7 +79,7 @@ export default function FloatingDM({ user }) {
     queryKey: ['serviceRequests', user?.email],
     queryFn: () => base44.entities.ServiceBooking.filter({ email: user.email }, '-created_date', 50),
     enabled: !!user?.email && activeTab === 'requests',
-    refetchInterval: 15000,
+    staleTime: 5 * 60 * 1000,
     retry: false,
   });
 
@@ -79,22 +95,19 @@ export default function FloatingDM({ user }) {
 
   const sendCommunityMutation = useMutation({
     mutationFn: (content) => base44.entities.ChatMessage.create({ content, author_name: user.full_name || user.email, author_email: user.email, author_avatar: user.avatar_url || '' }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['chatMessages'] }); setText(''); }
+    onSuccess: () => { setText(''); }
   });
 
   const deleteMessageMutation = useMutation({
     mutationFn: (id) => base44.entities.ChatMessage.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chatMessages'] }),
   });
 
   const pinMessageMutation = useMutation({
     mutationFn: ({ id, pinned }) => base44.entities.ChatMessage.update(id, { is_pinned: pinned }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chatMessages'] }),
   });
 
   const muteUserMutation = useMutation({
     mutationFn: (email) => base44.entities.MutedUser.create({ email, muted_by: user.email }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mutedUsers'] }),
   });
 
   const unmuteUserMutation = useMutation({
@@ -102,7 +115,6 @@ export default function FloatingDM({ user }) {
       const record = mutedUsers.find(m => m.email === email);
       return record ? base44.entities.MutedUser.delete(record.id) : Promise.resolve();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mutedUsers'] }),
   });
 
   const threads = {};
@@ -121,13 +133,16 @@ export default function FloatingDM({ user }) {
       const unreadMsgs = allMessages.filter(m => m.from_email === email && m.to_email === user.email && !m.read);
       await Promise.all(unreadMsgs.map(m => base44.entities.DirectMessage.update(m.id, { read: true })));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dms'] }),
+    onSuccess: (_, email) => {
+      setAllMessages(prev => prev.map(m =>
+        m.from_email === email && m.to_email === user.email ? { ...m, read: true } : m
+      ));
+    },
   });
 
   const sendMutation = useMutation({
     mutationFn: (data) => base44.entities.DirectMessage.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dms'] });
       setText('');
       base44.entities.Notification.create({
         to_email: activeConvo || newRecipient,
