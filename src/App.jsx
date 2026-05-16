@@ -31,16 +31,7 @@ const AuthenticatedApp = () => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth) {
-    return (
-      <div className="fixed inset-0 bg-zinc-950 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-zinc-700 border-t-indigo-500 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  // Handle authentication errors
+  // Handle authentication errors (only block if explicitly auth_required)
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
