@@ -122,6 +122,8 @@ export default function Social() {
   });
 
   const sendChatMutation = useMutation({
+    retry: 1,
+    retryDelay: 2000,
     mutationFn: async (data) => {
       const msg = await base44.entities.ChatMessage.create(data);
       const isNew = !knownChatters.has(data.author_email);
@@ -480,12 +482,15 @@ export default function Social() {
                     <Button
                       type="submit"
                       size="icon"
-                      disabled={!chatMessage.trim()}
+                      disabled={!chatMessage.trim() || sendChatMutation.isPending}
                       className="btn-primary rounded-full flex-shrink-0"
                     >
-                      <Send className="w-4 h-4" />
+                      {sendChatMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                     </Button>
                   </div>
+                  {sendChatMutation.isError && (
+                    <p className="text-xs text-red-400 mt-1">Failed to send. Please try again in a moment.</p>
+                  )}
                 </form>
               ) : (
                 <div className="p-4 border-t border-white/10 text-center">
