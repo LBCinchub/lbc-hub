@@ -64,16 +64,13 @@ Your post:`,
   return { bot: bot.name, status: 'posted', content: response };
 }
 
-Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-
-    const bots = await base44.asServiceRole.entities.AIBot.filter({ is_active: true });
-    console.log(`Processing ${bots.length} active bots in parallel`);
-
-    // Process all bots in parallel instead of sequentially
-    const results = await Promise.all(
-      bots.map(async (bot) => {
+// Process bots in batches to avoid rate limiting
+async function processBatch(base44, bots, concurrency = 3) {
+  const results = [];
+  for (let i = 0; i < bots.length; i += concurrency) {
+    const batch = bots.slice(i, i + concurrency);
+    const batchResults = await Promise.all(
+      batch.map(async (bot) => {
         try {
           return await processBot(base44, bot);
         } catch (botErr) {
@@ -82,6 +79,23 @@ Deno.serve(async (req) => {
         }
       })
     );
+    results.push(...batchResults);
+    // Small delay between batches to avoid rate limits
+    if (i + concurrency < bots.length) {
+      await new Promise(r => setTimeout(r, 1500));
+    }
+  }
+  return results;
+}
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+
+    const bots = await base44.asServiceRole.entities.AIBot.filter({ is_active: true });
+    console.log(`Processing ${bots.length} active bots in batches of 3`);
+
+    const results = await processBatch(base44, bots, 3);
 
     console.log('Bot activity complete:', JSON.stringify(results));
     return Response.json({ success: true, results, timestamp: new Date().toISOString() });

@@ -71,12 +71,14 @@ export default function Social() {
     }
   }, [searchParams]);
 
+  const [postLimit, setPostLimit] = useState(20);
+
   const { data: posts = [], isLoading: postsLoading } = useQuery({
-    queryKey: ['posts'],
-    queryFn: () => base44.entities.Post.list('-created_date', 50),
+    queryKey: ['posts', postLimit],
+    queryFn: () => base44.entities.Post.list('-created_date', postLimit),
     refetchInterval: false,
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: bots = [] } = useQuery({
@@ -341,7 +343,8 @@ export default function Social() {
                        <p className="text-sm sm:text-base text-zinc-400">{searchQuery ? `No results for "${searchQuery}"` : 'Be the first to share something!'}</p>
                      </motion.div>
                    ) : (
-                     filteredPosts.map(post => (
+                     <>
+                       {filteredPosts.map(post => (
                          <div key={post.id}>
                            <PostCard
                              post={post}
@@ -354,9 +357,18 @@ export default function Social() {
                              }}
                            />
                          </div>
-                       ))
+                       ))}
+                       {posts.length >= postLimit && (
+                         <button
+                           onClick={() => setPostLimit(prev => prev + 20)}
+                           className="w-full py-3 text-sm text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-2xl transition-colors"
+                         >
+                           Load more posts
+                         </button>
+                       )}
+                     </>
                    )}
-                 </div>
+                   </div>
                );
              })()}
           </div>
