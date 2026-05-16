@@ -432,7 +432,7 @@ export default function Social() {
               <ScrollArea className="h-[340px] p-4">
                 <div className="space-y-4">
                   {[...chatMessages].reverse().map((msg) => {
-                    const isAIMod = msg.author_email === 'ai.mod@lbchub.ai';
+                    const isAIMod = msg.author_email === 'ai.mod@lbchub.ai' || msg.author_email === 'community.bot@lbchub.ai';
                     const isMine = msg.author_email === user?.email;
                     return (
                     <div
