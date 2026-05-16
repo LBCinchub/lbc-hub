@@ -22,12 +22,18 @@ async function processBot(base44, bot) {
   const now = new Date();
   const lastPost = bot.last_post_date ? new Date(bot.last_post_date) : new Date(0);
   const hoursSinceLastPost = (now - lastPost) / (1000 * 60 * 60);
+  const baseFrequency = bot.post_frequency_hours || 8;
 
-  if (hoursSinceLastPost < (bot.post_frequency_hours || 1)) {
+  // Add per-bot jitter: ±30% of frequency, seeded by bot email so each bot has a stable offset
+  const seed = bot.email.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const jitterFraction = ((seed % 100) / 100 - 0.5) * 0.6; // -30% to +30%
+  const effectiveFrequency = baseFrequency * (1 + jitterFraction);
+
+  if (hoursSinceLastPost < effectiveFrequency) {
     return {
       bot: bot.name,
       status: 'skipped',
-      reason: `Posted ${hoursSinceLastPost.toFixed(1)}h ago, next post in ${((bot.post_frequency_hours || 1) - hoursSinceLastPost).toFixed(1)}h`
+      reason: `Posted ${hoursSinceLastPost.toFixed(1)}h ago, next post in ${(effectiveFrequency - hoursSinceLastPost).toFixed(1)}h`
     };
   }
 
