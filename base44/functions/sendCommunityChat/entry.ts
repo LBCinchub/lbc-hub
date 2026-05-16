@@ -19,15 +19,6 @@ Deno.serve(async (req) => {
       author_email: user.email,
     });
 
-    // Fire-and-forget AI moderator
-    base44.asServiceRole.functions.invoke('aiModerator', {
-      message_id: msg.id,
-      content: content.trim(),
-      author_name: user.full_name || user.email,
-      author_email: user.email,
-      is_new_user: false,
-    }).catch(() => {});
-
     return Response.json({ success: true, message: msg });
   } catch (error) {
     console.error('sendCommunityChat error:', error.message);
