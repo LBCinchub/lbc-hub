@@ -28,7 +28,7 @@ export default function FloatingDM({ user }) {
 
   useEffect(() => {
     if (!user?.email) return;
-    // Initial load
+    // Delay initial load to avoid competing with page startup queries
     const load = async () => {
       const [sent, received] = await Promise.all([
         base44.entities.DirectMessage.filter({ from_email: user.email }, '-created_date', 100),
@@ -36,7 +36,7 @@ export default function FloatingDM({ user }) {
       ]);
       setAllMessages([...sent, ...received].sort((a, b) => new Date(a.created_date) - new Date(b.created_date)));
     };
-    load();
+    const loadTimer = setTimeout(load, 3000);
     // Subscribe to real-time updates instead of polling
     const unsub = base44.entities.DirectMessage.subscribe((event) => {
       const msg = event.data;
@@ -50,7 +50,7 @@ export default function FloatingDM({ user }) {
         });
       }
     });
-    return unsub;
+    return () => { clearTimeout(loadTimer); unsub(); };
   }, [user?.email]);
 
 

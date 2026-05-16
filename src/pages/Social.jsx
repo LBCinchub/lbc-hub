@@ -43,10 +43,13 @@ export default function Social() {
   const [selectedPost, setSelectedPost] = useState(null);
   const [searchParams] = useSearchParams();
 
+  const [userLoaded, setUserLoaded] = useState(false);
+  const [postsReady, setPostsReady] = useState(false);
+
   const { data: follows = [] } = useQuery({
     queryKey: ['follows', user?.email],
     queryFn: () => base44.entities.Follow.filter({ follower_email: user.email }),
-    enabled: !!user,
+    enabled: !!user && postsReady, // delay until posts loaded
     retry: false,
     staleTime: Infinity,
   });
@@ -57,17 +60,24 @@ export default function Social() {
   useEffect(() => {
     base44.auth.me().then(u => {
       setUser(u);
-      base44.entities.LuminaStreak.filter({ user_email: u.email }).then(records => {
-        if (records.length > 0) setStreakData(records[0]);
-      }).catch(() => {});
-    }).catch(() => {});
+      setUserLoaded(true);
+      // Delay streak fetch so it doesn't compete with posts
+      setTimeout(() => {
+        base44.entities.LuminaStreak.filter({ user_email: u.email }).then(records => {
+          if (records.length > 0) setStreakData(records[0]);
+        }).catch(() => {});
+      }, 2000);
+    }).catch(() => { setUserLoaded(true); });
     window.scrollTo(0, 0);
     const postId = searchParams.get('post');
     if (postId) {
       setSelectedPostId(postId);
-      base44.entities.Post.filter({ id: postId }).then(res => {
-        if (res.length > 0) setSelectedPost(res[0]);
-      }).catch(() => {});
+      // Delay post lookup to avoid burst on load
+      setTimeout(() => {
+        base44.entities.Post.filter({ id: postId }).then(res => {
+          if (res.length > 0) setSelectedPost(res[0]);
+        }).catch(() => {});
+      }, 1000);
     }
   }, [searchParams]);
 
@@ -75,7 +85,11 @@ export default function Social() {
 
   const { data: posts = [], isLoading: postsLoading } = useQuery({
     queryKey: ['posts', postLimit],
-    queryFn: () => base44.entities.Post.list('-created_date', postLimit),
+    queryFn: async () => {
+      const result = await base44.entities.Post.list('-created_date', postLimit);
+      setPostsReady(true);
+      return result;
+    },
     refetchInterval: false,
     retry: false,
     staleTime: 5 * 60 * 1000,
@@ -84,6 +98,7 @@ export default function Social() {
   const { data: bots = [] } = useQuery({
     queryKey: ['aiBots'],
     queryFn: () => base44.entities.AIBot.filter({ is_active: true }, '-created_date', 10),
+    enabled: postsReady, // only after posts loaded
     refetchInterval: false,
     retry: false,
     staleTime: Infinity,
@@ -96,6 +111,7 @@ export default function Social() {
       // Only show community messages (no session_id = public chat, not private Lumina chat)
       return msgs.filter(m => !m.session_id);
     },
+    enabled: postsReady, // only after posts loaded
     refetchInterval: false,
     retry: false,
     staleTime: Infinity,
