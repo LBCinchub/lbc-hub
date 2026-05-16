@@ -26,17 +26,26 @@ export default function FloatingDM({ user }) {
 
   const [allMessages, setAllMessages] = useState([]);
 
+  const [dmLoaded, setDmLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!user?.email || !open || dmLoaded) return;
+    const load = async () => {
+      try {
+        const sent = await base44.entities.DirectMessage.filter({ from_email: user.email }, '-created_date', 100);
+        await new Promise(r => setTimeout(r, 800));
+        const received = await base44.entities.DirectMessage.filter({ to_email: user.email }, '-created_date', 100);
+        setAllMessages([...sent, ...received].sort((a, b) => new Date(a.created_date) - new Date(b.created_date)));
+        setDmLoaded(true);
+      } catch (e) {
+        console.warn('DM load failed, will retry on next open');
+      }
+    };
+    load();
+  }, [user?.email, open]);
+
   useEffect(() => {
     if (!user?.email) return;
-    // Delay initial load to avoid competing with page startup queries
-    const load = async () => {
-      const sent = await base44.entities.DirectMessage.filter({ from_email: user.email }, '-created_date', 100);
-      await new Promise(r => setTimeout(r, 500));
-      const received = await base44.entities.DirectMessage.filter({ to_email: user.email }, '-created_date', 100);
-      setAllMessages([...sent, ...received].sort((a, b) => new Date(a.created_date) - new Date(b.created_date)));
-    };
-    const loadTimer = setTimeout(load, 5000);
-    // Subscribe to real-time updates instead of polling
     const unsub = base44.entities.DirectMessage.subscribe((event) => {
       const msg = event.data;
       if (!msg) return;
@@ -49,7 +58,7 @@ export default function FloatingDM({ user }) {
         });
       }
     });
-    return () => { clearTimeout(loadTimer); unsub(); };
+    return () => unsub();
   }, [user?.email]);
 
 
