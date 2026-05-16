@@ -21,20 +21,22 @@
     "content": {
       "type": "string",
       "description": "Message text"
+    },
+    "author_name": {
+      "type": "string",
+      "description": "Display name of the author"
+    },
+    "author_email": {
+      "type": "string",
+      "description": "Email of the author"
     }
   },
   "required": [
-    "user_id",
-    "role",
     "content"
   ],
   "rls": {
-    "create": {
-      "data.user_id": "{{user.email}}"
-    },
-    "read": {
-      "data.user_id": "{{user.email}}"
-    },
+    "create": {},
+    "read": {},
     "update": {
       "data.user_id": "{{user.email}}"
     },

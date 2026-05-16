@@ -30,13 +30,12 @@ export default function FloatingDM({ user }) {
     if (!user?.email) return;
     // Delay initial load to avoid competing with page startup queries
     const load = async () => {
-      const [sent, received] = await Promise.all([
-        base44.entities.DirectMessage.filter({ from_email: user.email }, '-created_date', 100),
-        base44.entities.DirectMessage.filter({ to_email: user.email }, '-created_date', 100),
-      ]);
+      const sent = await base44.entities.DirectMessage.filter({ from_email: user.email }, '-created_date', 100);
+      await new Promise(r => setTimeout(r, 500));
+      const received = await base44.entities.DirectMessage.filter({ to_email: user.email }, '-created_date', 100);
       setAllMessages([...sent, ...received].sort((a, b) => new Date(a.created_date) - new Date(b.created_date)));
     };
-    const loadTimer = setTimeout(load, 3000);
+    const loadTimer = setTimeout(load, 5000);
     // Subscribe to real-time updates instead of polling
     const unsub = base44.entities.DirectMessage.subscribe((event) => {
       const msg = event.data;
@@ -89,6 +88,8 @@ export default function FloatingDM({ user }) {
     queryKey: ['mutedUsers'],
     queryFn: () => base44.entities.MutedUser.list(),
     enabled: !!user?.email,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
   });
 
   const mutedEmails = mutedUsers.map(m => m.email);
