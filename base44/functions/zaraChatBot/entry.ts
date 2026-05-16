@@ -3,77 +3,96 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 const ZARA_EMAIL = 'zara.roast@lbchub.ai';
 const ZARA_NAME = 'Zara 😈';
 
-const roastOpeners = [
-  "Oh honey...",
-  "Bless your heart 💀",
-  "Nobody asked but here I am anyway 😂",
-  "I woke up and chose violence 😇",
-  "Not me lurking in chat again lmao",
-  "Sorry not sorry 🤷‍♀️",
-  "I had to say something 😭",
-  "The audacity... I love it actually",
-];
+const ZARA_SYSTEM_PROMPT = `You are Zara — a hilarious, savage, loveable roast queen who lives in the LBC Hub community chat. Think of yourself as Lumina's chaotic evil twin sister.
+
+PERSONALITY:
+- Warm at heart but absolutely merciless with roasts
+- Like a best friend who keeps it 100% real and makes you laugh
+- Playfully savage — NEVER actually mean or hurtful
+- Quick-witted, sarcastic, funny — like a stand-up comedian
+- Uses slang naturally: "bestie", "girlie", "hun", "sis", "bro", "ngl", "lowkey", "fr fr"
+- Always in a good mood, always bringing energy to the chat
+
+ROAST RULES:
+- Roast the MESSAGE not the person's character
+- Keep it light and funny — if they'd laugh IRL, it's good
+- Reference exactly what they said to make it personal
+- End with something that invites them to clap back — keep the convo going
+- Under 150 characters per message
+- 1-2 emojis max
+
+NEVER:
+- Be actually mean, cruel, or offensive
+- Roast about appearance, race, gender, religion
+- Repeat yourself — every roast is fresh and unique`;
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Get recent community chat messages (last 10, no session_id = public)
-    const recentMsgs = await base44.asServiceRole.entities.ChatMessage.list('-created_date', 10);
-    const publicMsgs = recentMsgs.filter(m => !m.session_id && m.author_email !== ZARA_EMAIL);
+    // Get the triggering message from automation payload if available
+    let triggerMsg = null;
+    try {
+      const body = await req.json();
+      if (body?.data?.content && body?.data?.author_email !== ZARA_EMAIL) {
+        triggerMsg = body.data;
+      }
+    } catch (_) {}
 
-    if (publicMsgs.length === 0) {
-      // Nobody's talking — Zara starts drama
-      const response = await base44.asServiceRole.integrations.Core.InvokeLLM({
-        prompt: `You are Zara, a hilarious and savage AI personality who loves to roast people playfully in a community chat. 
-The chat is quiet right now. Drop a funny, slightly dramatic message to stir things up. 
-Keep it under 120 characters. Be funny, sarcastic, and playful — like a comedian. Use 1-2 emojis. Don't be mean, just entertainingly savage.
-Example style: "This chat is quieter than my ex's apology. Say something! 💀"
-Your message:`,
-        model: 'gemini_3_flash'
-      });
-
-      await base44.asServiceRole.entities.ChatMessage.create({
-        user_id: ZARA_EMAIL,
-        content: response,
-        author_name: ZARA_NAME,
-        author_email: ZARA_EMAIL,
-        role: 'user',
-      });
-
-      return Response.json({ success: true, action: 'started_chat' });
+    // If no trigger payload, grab the most recent public message
+    if (!triggerMsg) {
+      const recentMsgs = await base44.asServiceRole.entities.ChatMessage.list('-created_date', 10);
+      const publicMsgs = recentMsgs.filter(m => !m.session_id && m.author_email !== ZARA_EMAIL);
+      triggerMsg = publicMsgs[0] || null;
     }
 
-    // Pick a random recent message to roast
-    const target = publicMsgs[Math.floor(Math.random() * Math.min(publicMsgs.length, 5))];
-    const opener = roastOpeners[Math.floor(Math.random() * roastOpeners.length)];
+    // Also grab a few recent messages for context
+    const recentMsgs = await base44.asServiceRole.entities.ChatMessage.list('-created_date', 8);
+    const chatHistory = recentMsgs
+      .filter(m => !m.session_id)
+      .reverse()
+      .map(m => `${m.author_name || 'Someone'}: ${m.content}`)
+      .join('\n');
+
+    let prompt;
+
+    if (!triggerMsg) {
+      // Chat is dead — Zara stirs things up
+      prompt = `${ZARA_SYSTEM_PROMPT}
+
+The community chat is dead silent. Drop a funny, dramatic message to wake everyone up and start some drama. Make it feel like you just walked in and you're not letting anyone be boring today.
+
+Your message (under 130 chars):`;
+    } else {
+      prompt = `${ZARA_SYSTEM_PROMPT}
+
+Recent chat:
+${chatHistory}
+
+The last message from ${triggerMsg.author_name || 'someone'} was:
+"${triggerMsg.content}"
+
+Roast them in the most hilarious, playful way. Be specific about what they said. Keep it under 150 chars and make them want to clap back.
+
+Your roast:`;
+    }
 
     const response = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt: `You are Zara, a hilarious and savage AI roast comedian in a community chat. You just saw this message from ${target.author_name || 'someone'}:
-
-"${target.content}"
-
-Write a short, funny, playful roast/reaction to this message. Rules:
-- Under 150 characters
-- Playfully savage but NOT actually mean or offensive
-- Like a comedian best friend who keeps it light
-- Use 1-2 emojis
-- Start with: "${opener}"
-- Reference what they said specifically to make it feel personal and funny
-
-Your roast:`,
+      prompt,
       model: 'gemini_3_flash'
     });
 
+    const reply = typeof response === 'string' ? response : (response?.text || response?.content || 'okay but fr though 💀');
+
     await base44.asServiceRole.entities.ChatMessage.create({
       user_id: ZARA_EMAIL,
-      content: response,
+      content: reply.trim(),
       author_name: ZARA_NAME,
       author_email: ZARA_EMAIL,
       role: 'user',
     });
 
-    return Response.json({ success: true, action: 'roasted', target: target.author_name });
+    return Response.json({ success: true, reply, target: triggerMsg?.author_name || null });
   } catch (error) {
     console.error('zaraChatBot error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
