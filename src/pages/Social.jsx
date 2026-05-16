@@ -104,18 +104,24 @@ export default function Social() {
     staleTime: Infinity,
   });
 
-  const { data: chatMessages = [] } = useQuery({
-    queryKey: ['chatMessages'],
-    queryFn: async () => {
-      const msgs = await base44.entities.ChatMessage.list('-created_date', 50);
-      // Only show community messages (no session_id = public chat, not private Lumina chat)
-      return msgs.filter(m => !m.session_id);
-    },
-    enabled: postsReady, // only after posts loaded
-    refetchInterval: false,
-    retry: false,
-    staleTime: Infinity,
-  });
+  const [chatMessages, setChatMessages] = useState([]);
+  useEffect(() => {
+    // Initial load
+    base44.entities.ChatMessage.list('-created_date', 50).then(msgs => {
+      setChatMessages(msgs.filter(m => !m.session_id));
+    }).catch(() => {});
+
+    // Real-time subscription — Zara and others appear instantly
+    const unsub = base44.entities.ChatMessage.subscribe((event) => {
+      if (event.data?.session_id) return; // skip private chats
+      if (event.type === 'create') {
+        setChatMessages(prev => [event.data, ...prev].slice(0, 50));
+      } else if (event.type === 'delete') {
+        setChatMessages(prev => prev.filter(m => m.id !== event.id));
+      }
+    });
+    return () => unsub();
+  }, []);
 
   const sendChatMutation = useMutation({
     mutationFn: async ({ content }) => {
