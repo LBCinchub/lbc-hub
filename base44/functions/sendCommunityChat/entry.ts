@@ -14,9 +14,11 @@ Deno.serve(async (req) => {
     }
 
     const msg = await base44.asServiceRole.entities.ChatMessage.create({
+      user_id: user.email,
       content: content.trim(),
       author_name: user.full_name || user.email,
       author_email: user.email,
+      role: 'user',
     });
 
     return Response.json({ success: true, message: msg });
