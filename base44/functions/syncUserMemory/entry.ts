@@ -41,12 +41,22 @@ Deno.serve(async (req) => {
         conversation_summary: lumina_response.substring(0, 100)
       });
     } else {
-      // Update existing memory — deduplicate facts (skip if similar fact already exists)
+      // Update existing memory — deduplicate (exact + similar keyword overlap)
       const existingFacts = memory.key_facts || [];
-      const filteredNew = newFacts.filter(newFact => {
-        const normalized = newFact.toLowerCase().trim();
-        return !existingFacts.some(ef => ef.toLowerCase().trim() === normalized);
-      });
+      const isSimilar = (a, b) => {
+        const na = a.toLowerCase().trim();
+        const nb = b.toLowerCase().trim();
+        if (na === nb) return true;
+        // Overlap: if 60%+ of words in new fact exist in an existing fact
+        const wordsA = na.split(/\s+/).filter(w => w.length > 3);
+        const wordsB = nb.split(/\s+/).filter(w => w.length > 3);
+        if (wordsA.length === 0) return false;
+        const overlap = wordsA.filter(w => nb.includes(w)).length;
+        return overlap / wordsA.length >= 0.6;
+      };
+      const filteredNew = newFacts.filter(newFact =>
+        !existingFacts.some(ef => isSimilar(newFact, ef))
+      );
       const updatedFacts = [...existingFacts, ...filteredNew];
       memory = await base44.entities.UserMemory.update(memory.id, {
         key_facts: updatedFacts,

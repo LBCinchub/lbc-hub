@@ -62,12 +62,20 @@ Deno.serve(async (req) => {
 
       const existing = records[0];
 
-      // Merge arrays — deduplicate by exact and normalized match
+      // Merge arrays — deduplicate by exact match + keyword similarity
+      const isSimilar = (a, b) => {
+        const na = a.toLowerCase().trim();
+        const nb = b.toLowerCase().trim();
+        if (na === nb) return true;
+        const wordsA = na.split(/\s+/).filter(w => w.length > 3);
+        if (wordsA.length === 0) return false;
+        const overlap = wordsA.filter(w => nb.includes(w)).length;
+        return overlap / wordsA.length >= 0.6;
+      };
       const mergeArray = (existing = [], incoming = []) => {
-        const filteredNew = incoming.filter(newItem => {
-          const normalized = newItem.toLowerCase().trim();
-          return !existing.some(e => e.toLowerCase().trim() === normalized);
-        });
+        const filteredNew = incoming.filter(newItem =>
+          !existing.some(e => isSimilar(newItem, e))
+        );
         return [...existing, ...filteredNew].slice(-50);
       };
 
