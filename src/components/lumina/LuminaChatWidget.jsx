@@ -74,9 +74,11 @@ export default function LuminaChatWidget() {
       const chatMessages = await base44.entities.ChatMessage.filter(
         { user_id: user.email },
         '-created_date',
-        20
+        40
       );
-      const history = chatMessages.reverse();
+      // Only keep private Lumina chat messages (no session_id = community chat, skip those)
+      const privateMsgs = chatMessages.filter(m => !m.session_id && (m.role === 'user' || m.role === 'lumina'));
+      const history = privateMsgs.reverse();
 
       // Load user memory for greeting context
       const memories = await base44.entities.UserMemory.filter({ user_id: user.email });
