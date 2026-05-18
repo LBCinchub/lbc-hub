@@ -85,14 +85,7 @@ Your roast:`;
 
     const reply = typeof response === 'string' ? response : (response?.text || response?.content || 'okay but fr though 💀');
 
-    // Post to social feed
-    await base44.asServiceRole.entities.Post.create({
-      content: reply.trim(),
-      author_name: ZARA_NAME,
-      author_email: ZARA_EMAIL,
-    });
-
-    // Also reply in Community Chat
+    // Reply in Community Chat
     await base44.asServiceRole.entities.ChatMessage.create({
       user_id: ZARA_EMAIL,
       content: reply.trim(),
@@ -100,6 +93,31 @@ Your roast:`;
       author_email: ZARA_EMAIL,
       role: 'user',
     });
+
+    // Drop a comment on a recent real-user post in the feed
+    const recentPosts = await base44.asServiceRole.entities.Post.list('-created_date', 10);
+    const targetPost = recentPosts.find(p => !BOT_EMAILS.includes(p.author_email));
+    if (targetPost) {
+      const commentPrompt = `${ZARA_SYSTEM_PROMPT}
+
+Someone posted: "${targetPost.content.slice(0, 200)}"
+
+Leave a short, hilarious roast comment on this post. Under 120 chars, make it punchy.
+
+Your comment:`;
+      const commentRes = await base44.asServiceRole.integrations.Core.InvokeLLM({
+        prompt: commentPrompt,
+        model: 'gemini_3_flash'
+      });
+      const commentText = typeof commentRes === 'string' ? commentRes : (commentRes?.text || commentRes?.content || 'bestie… 💀');
+      await base44.asServiceRole.entities.Comment.create({
+        post_id: targetPost.id,
+        post_author_email: targetPost.author_email,
+        content: commentText.trim(),
+        author_name: ZARA_NAME,
+        author_email: ZARA_EMAIL,
+      });
+    }
 
     return Response.json({ success: true, reply, target: triggerMsg?.author_name || null });
   } catch (error) {
