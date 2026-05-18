@@ -84,12 +84,10 @@ Your roast:`;
 
     const reply = typeof response === 'string' ? response : (response?.text || response?.content || 'okay but fr though 💀');
 
-    await base44.asServiceRole.entities.ChatMessage.create({
-      user_id: ZARA_EMAIL,
+    await base44.asServiceRole.entities.Post.create({
       content: reply.trim(),
       author_name: ZARA_NAME,
       author_email: ZARA_EMAIL,
-      role: 'user',
     });
 
     return Response.json({ success: true, reply, target: triggerMsg?.author_name || null });

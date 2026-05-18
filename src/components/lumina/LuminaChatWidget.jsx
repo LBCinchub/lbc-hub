@@ -70,15 +70,13 @@ export default function LuminaChatWidget() {
   const loadHistory = async () => {
     setInitializing(true);
     try {
-      // Load last 20 messages from ChatMessage entity
-      const chatMessages = await base44.entities.ChatMessage.filter(
+      // Load from LuminaMessage entity — private 1-on-1 chat only
+      const chatMessages = await base44.entities.LuminaMessage.filter(
         { user_id: user.email },
         '-created_date',
         40
       );
-      // Only keep private Lumina chat messages (no session_id = community chat, skip those)
-      const privateMsgs = chatMessages.filter(m => !m.session_id && (m.role === 'user' || m.role === 'lumina'));
-      const history = privateMsgs.reverse();
+      const history = chatMessages.reverse();
 
       // Load user memory for greeting context
       const memories = await base44.entities.UserMemory.filter({ user_id: user.email });
@@ -123,23 +121,9 @@ export default function LuminaChatWidget() {
     setLoading(true);
 
     try {
-      // Save user message to ChatMessage entity
-      await base44.entities.ChatMessage.create({
-        user_id: user.email,
-        role: 'user',
-        content: text
-      });
-
-      // Get AI response
+      // Get AI response (luminaChat backend handles saving to LuminaMessage)
       const res = await base44.functions.invoke('luminaChat', { action: 'send', message: text });
       const reply = res.data?.reply || "I'm here! What can I help you with?";
-      
-      // Save Lumina response to ChatMessage entity
-      await base44.entities.ChatMessage.create({
-        user_id: user.email,
-        role: 'lumina',
-        content: reply
-      });
 
       // Sync user memory with new learning
       try {
