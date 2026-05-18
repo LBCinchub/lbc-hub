@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const ZARA_EMAIL = 'zara.roast@lbchub.ai';
 const ZARA_NAME = 'Zara 😈';
+const BOT_EMAILS = ['zara.roast@lbchub.ai', 'lumina.ai@lbchub.ai', 'ai.mod@lbchub.ai', 'community.bot@lbchub.ai'];
 
 const ZARA_SYSTEM_PROMPT = `You are Zara — a hilarious, savage, loveable roast queen who lives in the LBC Hub community chat. Think of yourself as Lumina's chaotic evil twin sister.
 
@@ -34,22 +35,22 @@ Deno.serve(async (req) => {
     let triggerMsg = null;
     try {
       const body = await req.json();
-      if (body?.data?.content && body?.data?.author_email !== ZARA_EMAIL) {
+      if (body?.data?.content && !BOT_EMAILS.includes(body?.data?.author_email)) {
         triggerMsg = body.data;
       }
     } catch (_) {}
 
-    // If no trigger payload, grab the most recent public message
+    // If no trigger payload, grab the most recent real-user public message
     if (!triggerMsg) {
-      const recentMsgs = await base44.asServiceRole.entities.ChatMessage.list('-created_date', 10);
-      const publicMsgs = recentMsgs.filter(m => !m.session_id && m.author_email !== ZARA_EMAIL);
+      const recentMsgs = await base44.asServiceRole.entities.ChatMessage.list('-created_date', 15);
+      const publicMsgs = recentMsgs.filter(m => !m.session_id && !BOT_EMAILS.includes(m.author_email));
       triggerMsg = publicMsgs[0] || null;
     }
 
-    // Also grab a few recent messages for context
-    const recentMsgs = await base44.asServiceRole.entities.ChatMessage.list('-created_date', 8);
+    // Grab a few recent human messages for context (no bot messages)
+    const recentMsgs = await base44.asServiceRole.entities.ChatMessage.list('-created_date', 12);
     const chatHistory = recentMsgs
-      .filter(m => !m.session_id)
+      .filter(m => !m.session_id && !BOT_EMAILS.includes(m.author_email))
       .reverse()
       .map(m => `${m.author_name || 'Someone'}: ${m.content}`)
       .join('\n');
