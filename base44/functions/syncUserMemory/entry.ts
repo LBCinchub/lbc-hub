@@ -41,8 +41,8 @@ Deno.serve(async (req) => {
         conversation_summary: lumina_response.substring(0, 100)
       });
     } else {
-      // Update existing memory
-      const updatedFacts = [...(memory.key_facts || []), ...newFacts];
+      // Update existing memory — deduplicate facts
+      const updatedFacts = [...new Set([...(memory.key_facts || []), ...newFacts])];
       memory = await base44.entities.UserMemory.update(memory.id, {
         key_facts: updatedFacts,
         last_seen: new Date().toISOString(),
