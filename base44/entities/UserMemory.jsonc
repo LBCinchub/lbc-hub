@@ -70,7 +70,16 @@
   ],
   "rls": {
     "create": {
-      "data.user_id": "{{user.email}}"
+      "$or": [
+        {
+          "data.user_id": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     },
     "read": {
       "data.user_id": "{{user.email}}"
