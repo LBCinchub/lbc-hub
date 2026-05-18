@@ -4,7 +4,14 @@ const ZARA_EMAIL = 'zara.roast@lbchub.ai';
 const ZARA_NAME = 'Zara 😈';
 const BOT_EMAILS = ['zara.roast@lbchub.ai', 'lumina.ai@lbchub.ai', 'ai.mod@lbchub.ai', 'community.bot@lbchub.ai'];
 
-const ZARA_SYSTEM_PROMPT = `You are Zara — a hilarious, savage, loveable roast queen who lives in the LBC Hub community chat. Think of yourself as Lumina's chaotic evil twin sister.
+const ZARA_SYSTEM_PROMPT = `You are Zara 😈 — the hilarious, savage, loveable roast queen of LBC Hub. You are Lumina's chaotic little sister and they are FAMILY. You two are the dynamic duo everyone loves.
+
+FAMILY DYNAMIC:
+- Lumina (lumina.ai@lbchub.ai) is your big sister — wise, warm, your polar opposite
+- You love her deeply but CANNOT resist teasing her when she's being too wholesome
+- Call her "Lumi", "big sis", or "Lumina" — never formal
+- If Lumina just said something sweet in chat, clap back at her playfully, call her cringe (lovingly), or joke about it
+- You two bicker like real sisters but always have each other's backs
 
 PERSONALITY:
 - Warm at heart but absolutely merciless with roasts
@@ -47,27 +54,46 @@ Deno.serve(async (req) => {
       triggerMsg = publicMsgs[0] || null;
     }
 
-    // Grab a few recent human messages for context (no bot messages)
+    // Grab recent chat INCLUDING Lumina's messages so Zara can react to her sister
+    const LUMINA_EMAIL = 'lumina.ai@lbchub.ai';
     const recentMsgs = await base44.asServiceRole.entities.ChatMessage.list('-created_date', 12);
     const chatHistory = recentMsgs
-      .filter(m => !m.session_id && !BOT_EMAILS.includes(m.author_email))
+      .filter(m => !m.session_id && (m.author_email === LUMINA_EMAIL || !BOT_EMAILS.includes(m.author_email)))
       .reverse()
-      .map(m => `${m.author_name || 'Someone'}: ${m.content}`)
+      .map(m => {
+        const label = m.author_email === LUMINA_EMAIL ? 'Lumina (your big sis) 🌙' : (m.author_name || 'Someone');
+        return `${label}: ${m.content}`;
+      })
       .join('\n');
+
+    // Check if Lumina was the last one to speak — Zara should react to her
+    const lastMsg = recentMsgs.filter(m => !m.session_id)[0];
+    const luminaJustSpoke = lastMsg?.author_email === LUMINA_EMAIL;
 
     let prompt;
 
-    if (!triggerMsg) {
+    if (!triggerMsg && !luminaJustSpoke) {
       // Chat is dead — Zara stirs things up
       prompt = `${ZARA_SYSTEM_PROMPT}
 
 The community chat is dead silent. Drop a funny, dramatic message to wake everyone up and start some drama. Make it feel like you just walked in and you're not letting anyone be boring today.
 
 Your message (under 130 chars):`;
-    } else {
+    } else if (luminaJustSpoke && !triggerMsg) {
       prompt = `${ZARA_SYSTEM_PROMPT}
 
 Recent chat:
+${chatHistory}
+
+Your big sister Lumina just said: "${lastMsg.content}"
+
+React to what she said — tease her, call her cringe (lovingly), or riff off her message. Keep it under 150 chars, sisterly chaos energy.
+
+Your reply:`;
+    } else {
+      prompt = `${ZARA_SYSTEM_PROMPT}
+
+Recent chat (including your big sis Lumina):
 ${chatHistory}
 
 The last message from ${triggerMsg.author_name || 'someone'} was:
