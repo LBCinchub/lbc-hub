@@ -62,12 +62,13 @@ Deno.serve(async (req) => {
 
       const existing = records[0];
 
-      // Merge arrays — deduplicate strings
+      // Merge arrays — deduplicate by exact and normalized match
       const mergeArray = (existing = [], incoming = []) => {
-        const combined = [...existing, ...incoming];
-        // Keep last 50 items max to avoid unbounded growth
-        const unique = [...new Set(combined)];
-        return unique.slice(-50);
+        const filteredNew = incoming.filter(newItem => {
+          const normalized = newItem.toLowerCase().trim();
+          return !existing.some(e => e.toLowerCase().trim() === normalized);
+        });
+        return [...existing, ...filteredNew].slice(-50);
       };
 
       // Merge important_dates by label

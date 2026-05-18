@@ -41,8 +41,13 @@ Deno.serve(async (req) => {
         conversation_summary: lumina_response.substring(0, 100)
       });
     } else {
-      // Update existing memory — deduplicate facts
-      const updatedFacts = [...new Set([...(memory.key_facts || []), ...newFacts])];
+      // Update existing memory — deduplicate facts (skip if similar fact already exists)
+      const existingFacts = memory.key_facts || [];
+      const filteredNew = newFacts.filter(newFact => {
+        const normalized = newFact.toLowerCase().trim();
+        return !existingFacts.some(ef => ef.toLowerCase().trim() === normalized);
+      });
+      const updatedFacts = [...existingFacts, ...filteredNew];
       memory = await base44.entities.UserMemory.update(memory.id, {
         key_facts: updatedFacts,
         last_seen: new Date().toISOString(),
