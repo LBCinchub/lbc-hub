@@ -85,10 +85,20 @@ Your roast:`;
 
     const reply = typeof response === 'string' ? response : (response?.text || response?.content || 'okay but fr though 💀');
 
+    // Post to social feed
     await base44.asServiceRole.entities.Post.create({
       content: reply.trim(),
       author_name: ZARA_NAME,
       author_email: ZARA_EMAIL,
+    });
+
+    // Also reply in Community Chat
+    await base44.asServiceRole.entities.ChatMessage.create({
+      user_id: ZARA_EMAIL,
+      content: reply.trim(),
+      author_name: ZARA_NAME,
+      author_email: ZARA_EMAIL,
+      role: 'user',
     });
 
     return Response.json({ success: true, reply, target: triggerMsg?.author_name || null });
