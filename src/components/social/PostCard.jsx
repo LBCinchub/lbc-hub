@@ -30,6 +30,7 @@ export default function PostCard({ post, user, onDmUser, onViewProfile, onHashta
   const [luminaLoading, setLuminaLoading] = useState(false);
   const [showLumina, setShowLumina] = useState(false);
   const [showPostMenu, setShowPostMenu] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [isEditingPost, setIsEditingPost] = useState(false);
   const [editedContent, setEditedContent] = useState(post?.content || '');
   const queryClient = useQueryClient();
@@ -315,7 +316,7 @@ Provide a brief analysis in JSON format:
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass rounded-xl sm:rounded-2xl overflow-hidden shadow-lg"
+      className="glass rounded-xl sm:rounded-2xl overflow-hidden shadow-lg border border-white/10"
     >
       {post.is_live && (
         <div className="bg-rose-600 px-4 py-1.5 flex items-center gap-2 text-sm font-medium">
@@ -407,14 +408,6 @@ Provide a brief analysis in JSON format:
               )}
             </div>
 
-            {post.topics?.length > 0 && (
-              <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-2">
-                {post.topics.map(t => (
-                  <span key={t} className="px-1.5 sm:px-2 py-0.5 rounded-full bg-indigo-600/20 text-indigo-300 text-[10px] sm:text-xs font-medium">#{t}</span>
-                ))}
-              </div>
-            )}
-
             {isEditingPost ? (
               <div className="mb-4 flex flex-col gap-2">
                 <textarea
@@ -443,9 +436,26 @@ Provide a brief analysis in JSON format:
                 </div>
               </div>
             ) : (
-              <p className="text-sm sm:text-base text-zinc-200 mb-2">
-                <RichText text={post.content} onHashtagClick={onHashtagClick} />
-              </p>
+              <div className="mb-2">
+                <p className="text-sm text-zinc-200" style={{ lineHeight: '1.6' }}>
+                  <RichText
+                    text={expanded || (post.content?.length || 0) <= 300 ? post.content : post.content?.slice(0, 300) + '\u2026'}
+                    onHashtagClick={onHashtagClick}
+                  />
+                </p>
+                {(post.content?.length || 0) > 300 && (
+                  <button onClick={() => setExpanded(e => !e)} className="text-xs text-indigo-400 hover:text-indigo-300 mt-1 transition-colors">
+                    {expanded ? 'See less' : 'See more'}
+                  </button>
+                )}
+              </div>
+            )}
+            {post.topics?.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2 mb-3">
+                {post.topics.map(t => (
+                  <span key={t} className="px-2 py-0.5 rounded-full bg-indigo-600/20 text-indigo-300 text-xs font-medium">#{t}</span>
+                ))}
+              </div>
             )}
 
             {isLongPost && (
@@ -532,6 +542,19 @@ Provide a brief analysis in JSON format:
                       )}
                     </div>
                   )
+                ) : post.media_urls.length > 1 && post.media_urls.length <= 4 ? (
+                  <div className={`grid gap-1 ${post.media_urls.length === 2 ? 'grid-cols-2' : 'grid-cols-2'}`}>
+                    {post.media_urls.map((url, idx) => (
+                      <img
+                        key={idx}
+                        src={url}
+                        alt=""
+                        onClick={() => { setLightboxIndex(idx); setLightboxOpen(true); }}
+                        className="w-full object-cover rounded-lg cursor-pointer bg-zinc-900"
+                        style={{ aspectRatio: '1/1' }}
+                      />
+                    ))}
+                  </div>
                 ) : (
                   <div className="relative">
                     <div className="relative">
@@ -555,18 +578,6 @@ Provide a brief analysis in JSON format:
                           >
                             <ChevronRight className="w-4 h-4" />
                           </button>
-                          <div className="absolute bottom-2 right-2 bg-black/60 px-2 py-1 rounded-lg text-xs text-white">
-                            {carouselIndex + 1} / {post.media_urls.length}
-                          </div>
-                          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                            {post.media_urls.map((_, i) => (
-                              <button
-                                key={i}
-                                onClick={() => setCarouselIndex(i)}
-                                className={`h-1.5 rounded-full transition-all ${i === carouselIndex ? 'bg-white w-4' : 'bg-white/40 w-1.5'}`}
-                              />
-                            ))}
-                          </div>
                         </>
                       )}
                     </div>
@@ -631,7 +642,7 @@ Provide a brief analysis in JSON format:
               </AnimatePresence>
             </div>
 
-            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+            <div className="border-t border-white/10 pt-3 mt-1 flex items-center gap-1 sm:gap-2 flex-wrap">
               <button
                 onClick={() => setShowComments(s => !s)}
                 className={`flex items-center gap-1.5 text-sm transition-colors ${showComments ? 'text-indigo-400' : 'text-zinc-400 hover:text-indigo-400'}`}
