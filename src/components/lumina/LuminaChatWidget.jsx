@@ -4,6 +4,7 @@ import { X, Send, Minimize2, Mic, MicOff, Volume2, VolumeX, Phone, Sparkles } fr
 import { base44 } from '@/api/base44Client';
 import { useVoice } from '@/hooks/useVoice';
 import LuminaCallMode from './LuminaCallMode';
+import MessageActionBar from './MessageActionBar';
 
 const LUMINA_AVATAR = 'https://images.unsplash.com/photo-1635002962487-2c1d4d2f63c2?w=80&h=80&fit=crop&crop=face';
 
@@ -324,13 +325,16 @@ function MessageBubble({ msg }) {
       {isLumina && (
         <img src={LUMINA_AVATAR} alt="Lumina" className="w-6 h-6 rounded-full object-cover mr-2 mt-1 flex-shrink-0" />
       )}
-      <div
-        className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
-          isLumina ? 'rounded-tl-sm text-white' : 'rounded-tr-sm text-white bg-zinc-700'
-        }`}
-        style={isLumina ? { background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)' } : {}}
-      >
-        {msg.content}
+      <div className={`max-w-[80%] ${isLumina ? 'space-y-0.5' : ''}`}>
+        <div
+          className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
+            isLumina ? 'rounded-tl-sm text-white' : 'rounded-tr-sm text-white bg-zinc-700'
+          }`}
+          style={isLumina ? { background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)' } : {}}
+        >
+          {msg.content}
+        </div>
+        {isLumina && msg.content && <MessageActionBar content={msg.content} />}
       </div>
     </div>
   );

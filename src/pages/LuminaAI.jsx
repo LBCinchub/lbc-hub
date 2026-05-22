@@ -8,6 +8,7 @@ import ChatSidebar from '../components/lumina/ChatSidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, Phone, ArrowUp, ArrowDown, Image as ImageIcon, X, PenLine, MapPin, Hash, Share2, Code, Copy, Check } from 'lucide-react';
 import ImageEditor from '../components/social/ImageEditor';
+import MessageActionBar from '../components/lumina/MessageActionBar';
 import LinkText from '../components/ui/LinkText';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useVoice } from '@/hooks/useVoice';
@@ -891,6 +892,9 @@ User: ${text}`,
                          </div>
                        )}
                      </div>
+                     {msg.role === 'assistant' && !msg.isImageLoading && msg.content && (
+                       <MessageActionBar content={msg.content} />
+                     )}
                     </div>
                   </motion.div>
                 ))}
