@@ -612,7 +612,7 @@ User: ${text}`,
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex">
+    <div className="h-[calc(100vh-4rem)] bg-zinc-950 flex overflow-hidden">
       {editingImage && <ImageEditor imageUrl={editingImage} user={user} onClose={() => setEditingImage(null)} />}
       {showVideoGenerator && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -644,7 +644,7 @@ User: ${text}`,
             <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/15 rounded-full blur-[120px]" />
           </div>
           
-          <div className="relative z-10 max-w-4xl mx-auto px-4 py-12 text-center">
+          <div className="relative z-10 max-w-[800px] mx-auto px-4 py-4 sm:py-8 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -695,7 +695,7 @@ User: ${text}`,
               </button>
             </div>
           )}
-          <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="max-w-[800px] mx-auto px-4 py-6">
             <div ref={topRef} />
             {messages.length === 0 ? (
               <motion.div
@@ -921,8 +921,8 @@ User: ${text}`,
         </div>
 
         {/* Input Bar */}
-        <div className="border-t border-white/5 bg-zinc-950/80 backdrop-blur-xl sticky bottom-0">
-          <div className="max-w-4xl mx-auto px-4 py-4 w-full">
+        <div className="border-t border-white/5 bg-zinc-950/80 backdrop-blur-xl flex-shrink-0">
+          <div className="max-w-[800px] mx-auto px-4 py-3 w-full">
             {user && (
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-zinc-600">
