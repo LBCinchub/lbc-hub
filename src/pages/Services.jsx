@@ -17,6 +17,19 @@ import {
 
 const services = [
   {
+    icon: Wrench,
+    title: 'LBC Auto — Shop Management',
+    category: 'lbc-auto',
+    description: 'Full auto shop management software — repair orders, estimates, invoices, customer portal & AI diagnostics. Built for modern repair shops.',
+    gradient: 'from-teal-500 to-teal-600',
+    bg: 'bg-teal-500/10',
+    border: 'border-teal-500/20',
+    price: 'From $200/mo',
+    externalLink: 'https://lbchub.tech',
+    badge: 'LIVE',
+    learnMoreColor: '#14b8a6'
+  },
+  {
     icon: Monitor,
     title: 'Tech Support',
     category: 'tech-support',
@@ -107,7 +120,7 @@ const services = [
 ];
 
 const stats = [
-  { icon: Users, label: 'Active Clients', value: '2,400+' },
+  { icon: Users, label: 'Active Users', value: '2,400+' },
   { icon: Star, label: 'Avg. Rating', value: '4.9/5' },
   { icon: CheckCircle, label: 'Projects Done', value: '8,700+' },
   { icon: Zap, label: 'Response Time', value: '< 2hrs' },
@@ -234,16 +247,19 @@ export default function Services() {
               key={service.category}
               initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.06 }}
               className={`group glass rounded-2xl p-6 cursor-pointer transition-all duration-300 border ${service.border} hover:border-opacity-60 card-hover`}
-              onClick={() => setActiveService(activeService?.category === service.category ? null : service)}
+              onClick={() => service.externalLink ? window.open(service.externalLink, '_blank', 'noopener,noreferrer') : setActiveService(activeService?.category === service.category ? null : service)}
             >
               <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${service.gradient} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
                 <service.icon className="w-7 h-7 text-white" />
               </div>
+              {service.badge && (
+                <span className="inline-block px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-[10px] font-bold tracking-wider mb-2">{service.badge}</span>
+              )}
               <h3 className="text-lg font-bold mb-2">{service.title}</h3>
               <p className="text-zinc-400 text-sm leading-relaxed mb-4 line-clamp-2">{service.description}</p>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-zinc-500">{service.price}</span>
-                <span className={`text-xs font-medium bg-gradient-to-r ${service.gradient} bg-clip-text text-transparent flex items-center gap-1`}>
+                <span className="text-xs font-medium flex items-center gap-1" style={{ color: service.learnMoreColor || undefined }}>
                   Learn More <ArrowRight className="w-3 h-3" />
                 </span>
               </div>
