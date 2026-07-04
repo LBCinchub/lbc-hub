@@ -50,6 +50,7 @@
 import FollowedPosts from './pages/FollowedPosts';
 import Home from './pages/Home';
 import Jobs from './pages/Jobs';
+import LbcAutoProfile from './pages/LbcAutoProfile';
 import Marketplace from './pages/Marketplace';
 import Riding from './pages/Riding';
 import Services from './pages/Services';
@@ -63,6 +64,7 @@ export const PAGES = {
     "FollowedPosts": FollowedPosts,
     "Home": Home,
     "Jobs": Jobs,
+    "LbcAutoProfile": LbcAutoProfile,
     "Marketplace": Marketplace,
     "Riding": Riding,
     "Services": Services,
