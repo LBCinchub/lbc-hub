@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useMutation } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -202,6 +204,7 @@ function BookingDialog({ service, open, onClose }) {
 }
 
 export default function Services() {
+  const navigate = useNavigate();
   const [activeService, setActiveService] = useState(null);
   const [bookingService, setBookingService] = useState(null);
 
@@ -247,7 +250,7 @@ export default function Services() {
               key={service.category}
               initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.06 }}
               className={`group glass rounded-2xl p-6 cursor-pointer transition-all duration-300 border ${service.border} hover:border-opacity-60 card-hover`}
-              onClick={() => service.externalLink ? window.open(service.externalLink, '_blank', 'noopener,noreferrer') : setActiveService(activeService?.category === service.category ? null : service)}
+              onClick={() => service.category === 'lbc-auto' ? navigate(createPageUrl('LbcAutoProfile')) : (service.externalLink ? window.open(service.externalLink, '_blank', 'noopener,noreferrer') : setActiveService(activeService?.category === service.category ? null : service))}
             >
               <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${service.gradient} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
                 <service.icon className="w-7 h-7 text-white" />
