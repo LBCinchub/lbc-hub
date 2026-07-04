@@ -4,18 +4,31 @@ import { useMutation } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Wrench, Phone, Mail, ArrowRight, ArrowLeft, CheckCircle, Loader2,
-  Send, Users, Car, Clock, DollarSign, Gift, MessageCircle, ExternalLink, ShieldCheck
+  Send, Users, Car, Clock, DollarSign, Gift, MessageCircle, ExternalLink, ShieldCheck, Store
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
-// LBC Auto — hardcoded for v1 (single-shop). Extend to a lookup table for multi-shop later.
+// LBC Auto — all shops run on the same app, scoped by owner email (RLS).
 const SHOP_APP_ID = "69b0bd497bfce90f18df6cdd";
-const SHOP_EMAIL = "mokhtartareksamara@gmail.com";
-const SHOP_NAME = "LBC Auto";
 const FN_BASE = `https://base44.app/api/apps/${SHOP_APP_ID}/functions`;
+
+const SHOPS = {
+  mokhtar: { email: "mokhtartareksamara@gmail.com", name: "LBC Auto", tagline: "Full auto shop management — repair orders, estimates, invoices & AI diagnostics." },
+  belal: { email: "belalautoservices@gmail.com", name: "Belal Auto Services", tagline: "Trusted repairs and maintenance, powered by LBC Auto." },
+  haj: { email: "hajwheels@gmail.com", name: "Haj Wheels", tagline: "Quality auto care, powered by LBC Auto." },
+  aka: { email: "aka.auto.group@gmail.com", name: "AKA Auto Group", tagline: "Reliable auto service, powered by LBC Auto." },
+};
+const DEFAULT_SLUG = "mokhtar";
+
+function getShopSlugFromUrl() {
+  if (typeof window === "undefined") return DEFAULT_SLUG;
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get("shop");
+  return SHOPS[slug] ? slug : DEFAULT_SLUG;
+}
 
 async function callShopFn(name, payload) {
   const res = await fetch(`${FN_BASE}/${name}`, {
@@ -56,7 +69,27 @@ function StatCard({ icon: Icon, label, value, tone = "text-white" }) {
   );
 }
 
-function TrackVehiclePanel() {
+function ShopSwitcher({ activeSlug }) {
+  return (
+    <div className="flex flex-wrap justify-center gap-2 mb-8">
+      {Object.entries(SHOPS).map(([slug, shop]) => (
+        <a
+          key={slug}
+          href={`?shop=${slug}`}
+          className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+            slug === activeSlug
+              ? "bg-teal-500 text-white border-teal-500"
+              : "bg-white/5 text-zinc-400 border-white/10 hover:border-teal-500/40 hover:text-white"
+          }`}
+        >
+          {shop.name}
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function TrackVehiclePanel({ shopEmail }) {
   const [step, setStep] = useState("phone"); // phone | choose | dashboard | notfound
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
@@ -68,13 +101,18 @@ function TrackVehiclePanel() {
   const [sending, setSending] = useState(false);
   const threadEndRef = useRef(null);
 
+  // Reset flow whenever the shop changes
+  useEffect(() => {
+    setStep("phone"); setPhone(""); setError(""); setProfiles([]); setCustomer(null); setData(null);
+  }, [shopEmail]);
+
   useEffect(() => {
     if (threadEndRef.current) threadEndRef.current.scrollIntoView({ behavior: "smooth" });
   }, [data?.messages?.length]);
 
   const loadCustomerData = async (cust) => {
     setCustomer(cust);
-    const res = await callShopFn("customerData", { customer_id: cust.id, shop_email: SHOP_EMAIL });
+    const res = await callShopFn("customerData", { customer_id: cust.id, shop_email: shopEmail });
     setData(res);
     setStep("dashboard");
   };
@@ -85,7 +123,7 @@ function TrackVehiclePanel() {
     setLoading(true);
     setError("");
     try {
-      const result = await callShopFn("customerLogin", { shop_email: SHOP_EMAIL, phone: cleaned });
+      const result = await callShopFn("customerLogin", { shop_email: shopEmail, phone: cleaned });
       if (result?.success && result?.customer) {
         await loadCustomerData(result.customer);
       } else if (result?.multiple && result?.profiles?.length > 0) {
@@ -105,7 +143,7 @@ function TrackVehiclePanel() {
     setError("");
     try {
       const cleaned = phone.replace(/\D/g, "");
-      const result = await callShopFn("customerLogin", { shop_email: SHOP_EMAIL, phone: cleaned, customer_id: profileId });
+      const result = await callShopFn("customerLogin", { shop_email: shopEmail, phone: cleaned, customer_id: profileId });
       if (result?.success && result?.customer) {
         await loadCustomerData(result.customer);
       } else {
@@ -123,7 +161,7 @@ function TrackVehiclePanel() {
     setSending(true);
     try {
       await callShopFn("customerSendMessage", {
-        shop_owner_email: SHOP_EMAIL,
+        shop_owner_email: shopEmail,
         customer_id: customer.id,
         customer_phone: customer.phone,
         customer_name: customer.full_name,
@@ -286,7 +324,7 @@ function TrackVehiclePanel() {
   );
 }
 
-function QuickContactCard() {
+function QuickContactCard({ shopSlug, shopName }) {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const [done, setDone] = useState(false);
 
@@ -297,7 +335,7 @@ function QuickContactCard() {
 
   const submit = () => {
     if (!form.name || !form.email) return;
-    mutation.mutate({ service_category: 'lbc-auto', ...form });
+    mutation.mutate({ service_category: `lbc-auto-${shopSlug}`, ...form, message: `[${shopName}] ${form.message || ""}` });
   };
 
   return (
@@ -306,7 +344,7 @@ function QuickContactCard() {
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center">
           <ShieldCheck className="w-5 h-5 text-white" />
         </div>
-        <h2 className="text-xl font-bold text-white">Contact The Shop</h2>
+        <h2 className="text-xl font-bold text-white">Contact {shopName}</h2>
       </div>
 
       <div className="space-y-2 mb-5">
@@ -357,25 +395,51 @@ function QuickContactCard() {
 }
 
 export default function LbcAutoProfile() {
+  const [slug, setSlug] = useState(getShopSlugFromUrl());
+  const shop = SHOPS[slug] || SHOPS[DEFAULT_SLUG];
+
+  useEffect(() => {
+    const onPop = () => setSlug(getShopSlugFromUrl());
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  // Intercept switcher clicks without a full page reload
+  useEffect(() => {
+    const handler = (e) => {
+      const a = e.target.closest?.("a[href^='?shop=']");
+      if (!a) return;
+      e.preventDefault();
+      const url = new URL(a.href);
+      window.history.pushState({}, "", url);
+      setSlug(getShopSlugFromUrl());
+    };
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, []);
+
   return (
     <div className="min-h-screen bg-zinc-950 py-8 px-4">
       <div className="max-w-5xl mx-auto">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold tracking-wider mb-4">
             LIVE
           </div>
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center mx-auto mb-4">
             <Wrench className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{SHOP_NAME}</h1>
-          <p className="text-zinc-400 max-w-xl mx-auto">
-            Full auto shop management — repair orders, estimates, invoices & AI diagnostics. Track your vehicle's status right here, no download needed.
-          </p>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{shop.name}</h1>
+          <p className="text-zinc-400 max-w-xl mx-auto">{shop.tagline}</p>
         </motion.div>
 
+        <div className="flex items-center justify-center gap-1.5 text-zinc-500 text-xs mb-3">
+          <Store className="w-3.5 h-3.5" /> Other LBC Auto shops
+        </div>
+        <ShopSwitcher activeSlug={slug} />
+
         <div className="grid md:grid-cols-2 gap-6">
-          <TrackVehiclePanel />
-          <QuickContactCard />
+          <TrackVehiclePanel key={shop.email} shopEmail={shop.email} />
+          <QuickContactCard shopSlug={slug} shopName={shop.name} />
         </div>
       </div>
     </div>
