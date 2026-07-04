@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Home, Users, ShoppingBag, Car, Plane, Briefcase, Wrench, Menu, X, LogOut, ChevronLeft } from 'lucide-react';
+import { Home, Users, ShoppingBag, Car, Plane, Briefcase, Wrench, Menu, X, LogOut, ChevronLeft, GitPullRequest } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -18,6 +18,7 @@ const navItems = [
   { name: 'Services', icon: Wrench, page: 'Services' },
   { name: 'Riding', icon: Car, page: 'Riding' },
   { name: 'Travel', icon: Plane, page: 'Travel' },
+  { name: 'PR Reviews', icon: GitPullRequest, page: 'PullRequests' },
 ];
 
 export default function Layout({ children, currentPageName }) {

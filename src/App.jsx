@@ -14,6 +14,7 @@ import Settings from './pages/Settings';
 import Challenges from './pages/Challenges';
 import Analytics from './pages/Analytics';
 import Gallery from './pages/Gallery';
+import PullRequests from './pages/PullRequests';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -89,6 +90,11 @@ const AuthenticatedApp = () => {
       <Route path="/Gallery" element={
         <LayoutWrapper currentPageName="Gallery">
           <Gallery />
+        </LayoutWrapper>
+      } />
+      <Route path="/PullRequests" element={
+        <LayoutWrapper currentPageName="PullRequests">
+          <PullRequests />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />
