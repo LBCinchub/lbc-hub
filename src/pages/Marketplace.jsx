@@ -12,12 +12,24 @@ import { Badge } from "@/components/ui/badge";
 import SellerDashboard from '../components/marketplace/SellerDashboard';
 import ProductModal from '../components/marketplace/ProductModal';
 
-const categories = [
-  { id: 'all', label: 'All Items', icon: ShoppingBag },
-  { id: 'products', label: 'Products', icon: Package },
-  { id: 'services', label: 'Services', icon: Briefcase },
-  { id: 'branded', label: 'Branded', icon: Award },
-];
+const MODES = {
+  items: {
+    label: 'Shop Items',
+    icon: ShoppingBag,
+    categories: [
+      { id: 'all', label: 'All Items', icon: ShoppingBag },
+      { id: 'products', label: 'Products', icon: Package },
+      { id: 'branded', label: 'Branded', icon: Award },
+    ],
+  },
+  services: {
+    label: 'Book Services',
+    icon: Briefcase,
+    categories: [
+      { id: 'all', label: 'All Services', icon: Briefcase },
+    ],
+  },
+};
 
 const demoProducts = [
   { id: 'd1', name: 'Premium Headphones', description: 'Wireless noise-canceling audio experience', price: 299, category: 'products', image_url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop', seller_name: 'TechPro', avg_rating: 4.8, review_count: 24 },
@@ -29,6 +41,7 @@ const demoProducts = [
 ];
 
 export default function Marketplace() {
+  const [mode, setMode] = useState('items');
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState(null);
@@ -48,14 +61,16 @@ export default function Marketplace() {
 
   const allProducts = products.length > 0 ? products : demoProducts;
 
+  const modeCategories = MODES[mode].categories.map(c => c.id).filter(id => id !== 'all');
   const displayProducts = selectedSeller 
     ? allProducts.filter(p => p.seller_name === selectedSeller)
     : allProducts.filter(p => {
+        const matchesMode = mode === 'services' ? p.category === 'services' : p.category !== 'services';
         const matchesCategory = activeCategory === 'all' || p.category === activeCategory;
         const matchesSearch = !searchQuery ||
           p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           p.description?.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesCategory && matchesSearch;
+        return matchesMode && matchesCategory && matchesSearch;
       });
 
   return (
@@ -88,6 +103,31 @@ export default function Marketplace() {
           )}
         </div>
 
+        {/* Items vs Services toggle */}
+        <motion.div
+          className="mb-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="inline-flex p-1.5 rounded-2xl bg-white/5 border border-white/10 gap-1">
+            {Object.entries(MODES).map(([id, m]) => (
+              <button
+                key={id}
+                onClick={() => { setMode(id); setActiveCategory('all'); setSelectedSeller(null); }}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                  mode === id ? 'btn-primary border-0' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <m.icon className="w-4 h-4" />
+                {m.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-zinc-500 text-xs mt-2">
+            {mode === 'items' ? 'Browse physical products & branded merch — no services mixed in.' : 'Browse bookable services only — no products mixed in.'}
+          </p>
+        </motion.div>
+
         {/* Search & Filters */}
         <motion.div
           className="glass rounded-2xl p-6 mb-8"
@@ -106,7 +146,7 @@ export default function Marketplace() {
               />
             </div>
             <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
-              {categories.map((category) => (
+              {MODES[mode].categories.map((category) => (
                 <Button
                   key={category.id}
                   variant={activeCategory === category.id ? "default" : "outline"}
