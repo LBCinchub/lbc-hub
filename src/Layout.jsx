@@ -272,7 +272,7 @@ export default function Layout({ children, currentPageName }) {
             <div className="flex items-center gap-6 text-sm text-zinc-500">
               <a href="#" className="hover:text-white transition-colors">Privacy</a>
               <a href="#" className="hover:text-white transition-colors">Terms</a>
-              <a href="#" className="hover:text-white transition-colors">Support</a>
+              <a href="mailto:lbchubteam@gmail.com?subject=LBC%20Hub%20Support" className="hover:text-white transition-colors">Support</a>
             </div>
           </div>
         </div>

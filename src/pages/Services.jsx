@@ -357,7 +357,11 @@ export default function Services() {
                 Book a Service
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
-              <Button variant="outline" className="rounded-full px-8 py-4 text-lg border-white/20 bg-transparent hover:bg-white/10">
+              <Button
+                variant="outline"
+                onClick={() => window.open('mailto:lbchubteam@gmail.com?subject=LBC%20Hub%20-%20Talk%20to%20an%20Expert', '_blank')}
+                className="rounded-full px-8 py-4 text-lg border-white/20 bg-transparent hover:bg-white/10"
+              >
                 Talk to an Expert
               </Button>
             </div>
