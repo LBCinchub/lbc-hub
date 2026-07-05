@@ -270,8 +270,8 @@ export default function Layout({ children, currentPageName }) {
               <span className="text-zinc-400 text-sm">© 2026 LBC Hub. All rights reserved.</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-zinc-500">
-              <a href="#" className="hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms</a>
+              <Link to={createPageUrl('Privacy')} className="hover:text-white transition-colors">Privacy</Link>
+              <Link to={createPageUrl('Terms')} className="hover:text-white transition-colors">Terms</Link>
               <a href="mailto:lbchubteam@gmail.com?subject=LBC%20Hub%20Support" className="hover:text-white transition-colors">Support</a>
             </div>
           </div>

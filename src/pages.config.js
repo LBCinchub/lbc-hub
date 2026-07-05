@@ -57,6 +57,8 @@ import Services from './pages/Services';
 import SharedTrip from './pages/SharedTrip';
 import Social from './pages/Social';
 import Travel from './pages/Travel';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 import __Layout from './Layout.jsx';
 
 
@@ -71,6 +73,8 @@ export const PAGES = {
     "SharedTrip": SharedTrip,
     "Social": Social,
     "Travel": Travel,
+    "Privacy": Privacy,
+    "Terms": Terms,
 }
 
 export const pagesConfig = {
