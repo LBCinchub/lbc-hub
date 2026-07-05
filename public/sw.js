@@ -3,8 +3,8 @@ self.addEventListener('push', (event) => {
   const data = event.data?.json() || {};
   const options = {
     body: data.body || 'You have a new notification',
-    icon: '/favicon.svg',
-    badge: '/favicon.svg',
+    icon: 'https://media.base44.com/images/public/69bf714ed416ae287c020410/e842c1104_generated_image.png',
+    badge: 'https://media.base44.com/images/public/69bf714ed416ae287c020410/e842c1104_generated_image.png',
     tag: data.tag || 'notification',
     requireInteraction: false,
     data: {

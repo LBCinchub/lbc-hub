@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Settings as SettingsIcon, LogOut, Twitter, Linkedin, Facebook, Instagram, Video, MessageCircle, Github, Loader2, Check, Trash2, AlertCircle, ExternalLink } from 'lucide-react';
+import { Settings as SettingsIcon, LogOut, Twitter, Linkedin, Facebook, Instagram, Video, MessageCircle, Github, Loader2, Check, Trash2, AlertCircle, ExternalLink, Bell, BellOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ManualAccountConnect from '@/components/social/ManualAccountConnect';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 const PLATFORMS = [
   { 
@@ -87,6 +88,7 @@ export default function Settings() {
   const [connecting, setConnecting] = useState(null);
   const [showManualConnect, setShowManualConnect] = useState(null);
   const queryClient = useQueryClient();
+  const { isSupported: pushSupported, isSubscribed: pushSubscribed, isLoading: pushLoading, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePushNotifications(user);
 
   React.useEffect(() => {
     base44.auth.me()
@@ -194,6 +196,48 @@ export default function Settings() {
             <LogOut className="w-4 h-4" />
             Sign Out
           </Button>
+        </motion.div>
+
+        {/* Notifications Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="glass rounded-2xl p-6 sm:p-8 mb-6"
+        >
+          <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
+            <Bell className="w-5 h-5 text-indigo-400" />
+            Push Notifications
+          </h2>
+          <p className="text-sm text-zinc-400 mb-6">
+            Get notified instantly for likes, comments, and messages — even when LBC Hub isn't open
+          </p>
+
+          {!pushSupported ? (
+            <div className="flex items-center gap-3 p-4 bg-zinc-900/50 border border-white/10 rounded-lg text-sm text-zinc-400">
+              <BellOff className="w-5 h-5 flex-shrink-0" />
+              Push notifications aren't supported in this browser.
+            </div>
+          ) : (
+            <div className="flex items-center justify-between p-4 bg-zinc-900/50 border border-white/10 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${pushSubscribed ? 'bg-emerald-500/20' : 'bg-white/10'}`}>
+                  {pushSubscribed ? <Bell className="w-5 h-5 text-emerald-400" /> : <BellOff className="w-5 h-5 text-zinc-400" />}
+                </div>
+                <div>
+                  <p className="font-medium text-sm">{pushSubscribed ? 'Notifications enabled' : 'Notifications disabled'}</p>
+                  <p className="text-xs text-zinc-500">{pushSubscribed ? 'You\'ll get real-time alerts on this device' : 'Turn on to get real-time alerts on this device'}</p>
+                </div>
+              </div>
+              <Button
+                onClick={() => pushSubscribed ? pushUnsubscribe() : pushSubscribe()}
+                disabled={pushLoading}
+                className={pushSubscribed ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}
+              >
+                {pushLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : pushSubscribed ? 'Turn Off' : 'Turn On'}
+              </Button>
+            </div>
+          )}
         </motion.div>
 
         {/* Connected Accounts Section */}
