@@ -559,6 +559,7 @@ Provide a brief analysis in JSON format:
                         key={idx}
                         src={url}
                         alt=""
+                        loading="lazy"
                         onClick={() => { setLightboxIndex(idx); setLightboxOpen(true); }}
                         className="w-full object-cover rounded-lg cursor-pointer bg-zinc-900"
                         style={{ aspectRatio: '1/1' }}
@@ -571,6 +572,7 @@ Provide a brief analysis in JSON format:
                       <img
                         src={post.media_urls[carouselIndex]}
                         alt=""
+                        loading="lazy"
                         onClick={() => { setLightboxIndex(carouselIndex); setLightboxOpen(true); }}
                         className="w-full object-cover rounded-xl max-h-80 cursor-pointer bg-zinc-900"
                       />

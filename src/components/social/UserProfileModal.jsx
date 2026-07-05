@@ -338,7 +338,7 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
                   <div key={post.id} className="bg-white/5 rounded-2xl p-4">
                     <p className="text-sm text-zinc-200 leading-relaxed line-clamp-3">{post.content}</p>
                     {post.media_urls?.length > 0 && (
-                      <img src={post.media_urls[0]} alt="" className="mt-2 rounded-xl w-full h-32 object-cover" />
+                      <img src={post.media_urls[0]} alt="" loading="lazy" className="mt-2 rounded-xl w-full h-32 object-cover" />
                     )}
                     <div className="flex items-center gap-3 mt-2 text-xs text-zinc-500">
                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{format(new Date(post.created_date), 'MMM d, yyyy')}</span>

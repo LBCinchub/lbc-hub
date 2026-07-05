@@ -117,7 +117,7 @@ function ReviewForm({ productId, sellerEmail, user, onDone }) {
             <div className="grid grid-cols-4 gap-2">
               {photos.map((url, i) => (
                 <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-white/5 group">
-                  <img src={url} alt={`Review photo ${i+1}`} className="w-full h-full object-cover" />
+                  <img src={url} alt={`Review photo ${i+1}`} loading="lazy" className="w-full h-full object-cover" />
                   <button
                     onClick={() => setPhotos(photos.filter((_, idx) => idx !== i))}
                     className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
@@ -299,7 +299,7 @@ export default function ProductModal({ product, user, onClose }) {
           {/* Image */}
           <div className="relative aspect-video">
             {product.image_url ? (
-              <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+              <img src={product.image_url} alt={product.name} loading="lazy" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
                 <Package className="w-20 h-20 text-zinc-600" />
@@ -476,7 +476,7 @@ export default function ProductModal({ product, user, onClose }) {
                               rel="noopener noreferrer"
                               className="aspect-square rounded-lg overflow-hidden bg-white/5 hover:ring-2 hover:ring-indigo-500 transition-all group"
                             >
-                              <img src={url} alt={`Review photo ${i+1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                              <img src={url} alt={`Review photo ${i+1}`} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                             </a>
                           ))}
                         </div>

@@ -19,9 +19,9 @@ export default function MemberSearch({ onSelectMember, onViewProfile }) {
     const searchMembers = async () => {
       setLoading(true);
       try {
-        // Fetch all users
-        const allUsers = await base44.entities.User.list();
-        
+        // Bounded, field-projected fetch — avoid pulling the entire User table on every keystroke
+        const allUsers = await base44.entities.User.list('-created_date', 300, 0, ['full_name', 'email', 'avatar_url']);
+
         const query = searchQuery.toLowerCase();
         const filtered = allUsers.filter(user =>
           user.full_name?.toLowerCase().includes(query) ||

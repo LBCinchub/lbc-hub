@@ -113,6 +113,7 @@ export default function Gallery() {
               <img
                 src={post.media_urls?.[0]}
                 alt="AI Art"
+                loading="lazy"
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
               {/* Overlay */}

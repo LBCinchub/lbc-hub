@@ -85,7 +85,7 @@ Provide a short, actionable sales analysis in 3-4 sentences covering: performanc
         {/* Header */}
         <div className="flex items-start gap-4 p-6 border-b border-white/10">
           {product.image_url ? (
-            <img src={product.image_url} alt={product.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+            <img src={product.image_url} alt={product.name} loading="lazy" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
           ) : (
             <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
               <Package className="w-7 h-7 text-zinc-500" />

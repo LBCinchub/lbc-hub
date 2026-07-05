@@ -292,7 +292,7 @@ export default function SellerDashboard({ user, onClose, openAddListing = false 
                     ) : (
                       <div className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl hover:bg-white/8 transition-colors">
                         {product.image_url ? (
-                          <img src={product.image_url} alt={product.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+                          <img src={product.image_url} alt={product.name} loading="lazy" className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
                         ) : (
                           <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
                             <Package className="w-6 h-6 text-zinc-500" />

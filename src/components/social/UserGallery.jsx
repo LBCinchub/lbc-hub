@@ -116,7 +116,7 @@ export default function UserGallery({ isOpen, onClose, onSelectMedia }) {
                         <span className="text-xs text-zinc-400">Video</span>
                       </div>
                     ) : (
-                      <img src={item.url} alt="" className="w-full h-24 object-cover" />
+                      <img src={item.url} alt="" loading="lazy" className="w-full h-24 object-cover" />
                     )}
                     {selectedItems.find(i => i.id === item.id) && (
                       <div className="absolute inset-0 bg-indigo-500/30 flex items-center justify-center">
