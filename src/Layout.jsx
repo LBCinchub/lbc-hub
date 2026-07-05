@@ -149,7 +149,7 @@ export default function Layout({ children, currentPageName }) {
             </div>
 
             {/* Desktop Nav */}
-            <div className="hidden md:flex items-center gap-8">
+            <div className="hidden lg:flex items-center gap-6 xl:gap-8">
               {navItems.map((item) => (
                 <Link
                   key={item.name}
@@ -167,7 +167,7 @@ export default function Layout({ children, currentPageName }) {
             </div>
 
             {/* User / CTA */}
-            <div className="hidden md:flex items-center gap-4">
+            <div className="hidden lg:flex items-center gap-4">
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -204,7 +204,7 @@ export default function Layout({ children, currentPageName }) {
 
             {/* Mobile Menu Button */}
             <button 
-              className="md:hidden p-2"
+              className="lg:hidden p-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -214,7 +214,7 @@ export default function Layout({ children, currentPageName }) {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden glass border-t border-white/5">
+          <div className="lg:hidden glass border-t border-white/5">
             <div className="px-4 py-4 space-y-2">
               {navItems.map((item) => (
                 <Link
