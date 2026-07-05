@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Share2, MoreHorizontal, Radio, Bookmark, Sparkles, Loader2, Plane, MapPin, Calendar, ArrowRight, Copy, Check, X, ChevronLeft, ChevronRight, UserPlus, UserCheck, Trash2, Edit } from 'lucide-react';
+import { MessageCircle, Share2, MoreHorizontal, Radio, Bookmark, Sparkles, Loader2, Plane, MapPin, Calendar, ArrowRight, Copy, Check, X, ChevronLeft, ChevronRight, UserPlus, UserCheck, Trash2, Edit, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -346,6 +346,17 @@ Provide a brief analysis in JSON format:
                  {authorStreak && <div className="mt-1"><LuminaStreakBadge streak={authorStreak.current_streak} sparks={authorStreak.total_sparks} compact /></div>}
                  <p className="text-[10px] sm:text-xs text-zinc-500">{format(new Date(post.created_date), 'MMM d, h:mm a')}</p>
               </div>
+              {user && post.author_email !== user.email && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => onDmUser?.(post.author_email, post.author_name)}
+                  title={`Message ${post.author_name || 'user'}`}
+                  className="text-zinc-400 hover:text-white hover:bg-white/10 rounded-full h-7 w-7 mr-1"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                </Button>
+              )}
               {user && post.author_email !== user.email && (
                 <Button
                   size="sm"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
@@ -54,6 +54,7 @@ const highlights = [
 ];
 
 export default function Home() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [user, setUser] = useState(null);
   const showPostsLayout = searchParams.get('photo') !== null;
@@ -102,8 +103,8 @@ export default function Home() {
                     key={post.id}
                     post={post}
                     user={user}
-                    onDmUser={() => {}}
-                    onViewProfile={() => {}}
+                    onDmUser={(email, name) => window.__openDM?.(email, name)}
+                    onViewProfile={(profile) => navigate(`${createPageUrl('Profile')}?email=${encodeURIComponent(profile.email)}`)}
                   />
                 ))
             )}

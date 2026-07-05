@@ -32,7 +32,6 @@ export default function Social() {
   const [chatMessage, setChatMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [goLiveOpen, setGoLiveOpen] = useState(false);
-  const [dmTarget, setDmTarget] = useState(null);
   const [profileTarget, setProfileTarget] = useState(null);
   const [activeTopic, setActiveTopic] = useState(null);
   const [feedTab, setFeedTab] = useState('forYou'); // 'forYou' | 'following' | 'videos' | 'photos'
@@ -177,7 +176,7 @@ export default function Social() {
 
   const handleDmUser = (email, name) => {
     if (!user || email === user.email) return;
-    setDmTarget({ email, name });
+    window.__openDM?.(email, name);
   };
 
   const handleViewProfile = (targetUser) => {
