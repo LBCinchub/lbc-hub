@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Wrench, Phone, Mail, ArrowRight, ArrowLeft, CheckCircle, Loader2,
-  Send, Users, Car, Clock, DollarSign, Gift, MessageCircle, ExternalLink, ShieldCheck, Store
+  Send, Users, Car, DollarSign, Gift, MessageCircle, ExternalLink, ShieldCheck, Store
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

@@ -7,7 +7,6 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { format } from 'date-fns';
 import RichText from './RichText';
 import LuminaStreakBadge from './LuminaStreakBadge';

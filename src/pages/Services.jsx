@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Monitor, Pen, BarChart2, BookOpen, Megaphone,
   Wrench, Camera, Globe, Shield, ArrowRight, X,
-  CheckCircle, Star, Users, Zap
+  CheckCircle, Star, Users, Zap, TrendingUp
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,19 @@ const services = [
     externalLink: 'https://lbchub.tech',
     badge: 'LIVE',
     learnMoreColor: '#14b8a6'
+  },
+  {
+    icon: TrendingUp,
+    title: 'LBC AI Trader',
+    category: 'lbc-ai-trader',
+    description: 'AI-powered crypto trading assistant for BTCUSDT — live market analysis, disciplined risk-managed setups, and optional full-auto execution on your exchange account.',
+    features: ['Live market scans every 2 hours', 'Entry/SL/TP with full risk math', 'Optional full-auto execution', 'Weekly performance reviews'],
+    gradient: 'from-amber-400 to-yellow-500',
+    bg: 'bg-amber-400/10',
+    border: 'border-amber-400/20',
+    price: 'From $99/mo',
+    badge: 'LIVE',
+    learnMoreColor: '#f59e0b'
   },
   {
     icon: Monitor,

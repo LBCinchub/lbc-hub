@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Users, Heart, BarChart2 } from 'lucide-react';
-import { format, subDays, parseISO, startOfDay } from 'date-fns';
+import { format, subDays, parseISO } from 'date-fns';
 
 export default function Analytics() {
   const [user, setUser] = useState(null);

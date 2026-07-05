@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Target, Users, Calendar, TrendingUp, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';

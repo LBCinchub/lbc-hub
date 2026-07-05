@@ -6,8 +6,7 @@ import ProductSalesAnalytics from './ProductSalesAnalytics';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Package, MessageSquare, TrendingUp,
-  Plus, Pencil, Trash2, X, Star, DollarSign, ShoppingBag,
-  ChevronRight, CheckCircle, Clock, AlertCircle, Send, Upload, Loader2
+  Plus, Pencil, Trash2, X, Star, DollarSign, CheckCircle, Clock, Send, Upload, Loader2
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

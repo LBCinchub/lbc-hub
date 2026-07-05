@@ -3,8 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, MapPin, Briefcase, Clock, DollarSign,
-  Building2, ArrowRight, Plus, Filter, Star, ChevronDown
+  Search, MapPin, Briefcase, Clock, DollarSign, ArrowRight, Plus, Star
 } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

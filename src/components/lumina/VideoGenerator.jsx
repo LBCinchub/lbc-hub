@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Sparkles, Download, Share2, X } from 'lucide-react';
+import { Loader2, Sparkles, Download, X } from 'lucide-react';
 import VideoPlayer from './VideoPlayer';
 
 export default function VideoGenerator({ onClose }) {

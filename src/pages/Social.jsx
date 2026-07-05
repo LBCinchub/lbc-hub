@@ -7,9 +7,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { format } from 'date-fns';
 
 import CreatePost from '../components/social/CreatePost';
 import PostCard from '../components/social/PostCard';

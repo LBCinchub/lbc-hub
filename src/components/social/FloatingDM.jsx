@@ -3,8 +3,6 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Send, X, ArrowLeft, Minus, Plus, Search, Users, ShoppingBag, Bell, Phone, Video, Pin, Trash2, UserX, Shield } from 'lucide-react';
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
 import { format } from 'date-fns';
 
 export default function FloatingDM({ user }) {

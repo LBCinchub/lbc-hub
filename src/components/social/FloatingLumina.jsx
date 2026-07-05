@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Send, Loader2, Minimize2, Image, PenLine, Upload, MapPin, Hash, Share2, Code, Copy, Check } from 'lucide-react';
+import { Sparkles, X, Send, Loader2, Minimize2, Image, PenLine, Upload, Share2, Code, Copy, Check } from 'lucide-react';
 import LuminaStreakBadge from './LuminaStreakBadge';
 import ImageEditor from '../social/ImageEditor';
 import LinkText from '../ui/LinkText';

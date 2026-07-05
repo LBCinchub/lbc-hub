@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import LuminaStreakBadge from '../components/social/LuminaStreakBadge';
 import VideoGenerator from '../components/lumina/VideoGenerator';
 import LuminaCallMode from '../components/lumina/LuminaCallMode';
 import ChatSidebar from '../components/lumina/ChatSidebar';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, Phone, ArrowUp, ArrowDown, Image as ImageIcon, X, PenLine, MapPin, Hash, Share2, Code, Copy, Check } from 'lucide-react';
 import ImageEditor from '../components/social/ImageEditor';
 import MessageActionBar from '../components/lumina/MessageActionBar';
