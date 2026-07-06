@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Wrench, Phone, Mail, ArrowRight, ArrowLeft, CheckCircle, Loader2,
-  Send, Users, Car, DollarSign, Gift, MessageCircle, ExternalLink, ShieldCheck, Store,
+  Send, Users, Car, DollarSign, Gift, MessageCircle, ShieldCheck, Store,
   FileText, CalendarClock
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ const SHOP_APP_ID = "69b0bd497bfce90f18df6cdd";
 const FN_BASE = `https://base44.app/api/apps/${SHOP_APP_ID}/functions`;
 
 const SHOPS = {
-  mokhtar: { email: "mokhtartareksamara@gmail.com", name: "LBC Auto", tagline: "Full auto shop management — repair orders, estimates, invoices & AI diagnostics." },
+  mokhtar: { email: "mokhtartareksamara@gmail.com", name: "LBC Auto", tagline: "Full auto shop management — repair orders, estimates, invoices & AI diagnostics.", phone: "+16133141994" },
   belal: { email: "belalautoservices@gmail.com", name: "Belal Auto Services", tagline: "Trusted repairs and maintenance, powered by LBC Auto." },
   haj: { email: "hajwheels@gmail.com", name: "Haj Wheels", tagline: "Quality auto care, powered by LBC Auto." },
   aka: { email: "aka.auto.group@gmail.com", name: "AKA Auto Group", tagline: "Reliable auto service, powered by LBC Auto." },
@@ -394,7 +394,7 @@ function TrackVehiclePanel({ shopEmail }) {
   );
 }
 
-function QuickContactCard({ shopSlug, shopName }) {
+function QuickContactCard({ shopSlug, shopName, shopEmail, shopPhone }) {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const [done, setDone] = useState(false);
 
@@ -418,14 +418,13 @@ function QuickContactCard({ shopSlug, shopName }) {
       </div>
 
       <div className="space-y-2 mb-5">
-        <a href="tel:+16133141994" className="flex items-center gap-2 text-zinc-300 hover:text-teal-400 text-sm">
-          <Phone className="w-4 h-4" /> +1 (613) 314-1994
-        </a>
-        <a href="mailto:tarek-samara@lbc-hub.com" className="flex items-center gap-2 text-zinc-300 hover:text-teal-400 text-sm">
-          <Mail className="w-4 h-4" /> tarek-samara@lbc-hub.com
-        </a>
-        <a href="https://lbchub.tech" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-zinc-300 hover:text-teal-400 text-sm">
-          <ExternalLink className="w-4 h-4" /> Visit full shop dashboard
+        {shopPhone && (
+          <a href={`tel:${shopPhone}`} className="flex items-center gap-2 text-zinc-300 hover:text-teal-400 text-sm">
+            <Phone className="w-4 h-4" /> {shopPhone.replace(/^\+1(\d{3})(\d{3})(\d{4})$/, "+1 ($1) $2-$3")}
+          </a>
+        )}
+        <a href={`mailto:${shopEmail}`} className="flex items-center gap-2 text-zinc-300 hover:text-teal-400 text-sm">
+          <Mail className="w-4 h-4" /> {shopEmail}
         </a>
       </div>
 
@@ -509,7 +508,7 @@ export default function LbcAutoProfile() {
 
         <div className="grid md:grid-cols-2 gap-6">
           <TrackVehiclePanel key={shop.email} shopEmail={shop.email} />
-          <QuickContactCard shopSlug={slug} shopName={shop.name} />
+          <QuickContactCard shopSlug={slug} shopName={shop.name} shopEmail={shop.email} shopPhone={shop.phone} />
         </div>
       </div>
     </div>
