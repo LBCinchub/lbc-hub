@@ -31,6 +31,15 @@ function getShopSlugFromUrl() {
   return SHOPS[slug] ? slug : DEFAULT_SLUG;
 }
 
+// A direct customer link (shared by a shop) always includes ?shop=<slug> — in that
+// case skip straight to the customer view. A bare visit from the Services page has
+// no shop param, so show the "are you a shop or a customer?" chooser first.
+function hasExplicitShopParam() {
+  if (typeof window === "undefined") return false;
+  const params = new URLSearchParams(window.location.search);
+  return SHOPS[params.get("shop")] != null;
+}
+
 async function callShopFn(name, payload) {
   const res = await fetch(`${FN_BASE}/${name}`, {
     method: "POST",
@@ -81,6 +90,80 @@ function StatCard({ icon: Icon, label, value, tone = "text-white" }) {
         <p className={`text-lg font-bold truncate ${tone}`}>{value}</p>
         <p className="text-xs text-zinc-500">{label}</p>
       </div>
+    </div>
+  );
+}
+
+function ShopOwnerPanel({ onBack }) {
+  return (
+    <div className="max-w-2xl mx-auto">
+      <button onClick={onBack} className="flex items-center gap-1.5 text-zinc-400 hover:text-white text-sm mb-6">
+        <ArrowLeft className="w-4 h-4" /> Back
+      </button>
+      <div className="rounded-2xl border border-teal-500/20 bg-teal-500/5 p-8 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center mx-auto mb-4">
+          <Wrench className="w-7 h-7 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2">Run Your Shop on LBC Auto</h2>
+        <p className="text-zinc-400 mb-6">
+          Full auto shop management — repair orders, estimates, invoices, customer portal & AI diagnostics.
+          Built for modern repair shops.
+        </p>
+        <div className="grid grid-cols-2 gap-3 mb-6 text-left">
+          {[
+            "Repair orders & estimates",
+            "Customer & vehicle history",
+            "Invoicing & payments",
+            "AI diagnostic assistant",
+            "Technician job tracking",
+            "Customer self-service portal",
+          ].map((f) => (
+            <div key={f} className="flex items-center gap-2 text-sm text-zinc-300">
+              <CheckCircle className="w-4 h-4 text-teal-400 flex-shrink-0" /> {f}
+            </div>
+          ))}
+        </div>
+        <div className="text-3xl font-bold text-white mb-6">From $200<span className="text-base font-normal text-zinc-500">/mo per shop</span></div>
+        <Button
+          onClick={() => window.open("https://lbchub.tech", "_blank", "noopener,noreferrer")}
+          className="btn-primary rounded-xl h-11 px-8 font-semibold"
+        >
+          Get Started <ArrowRight className="w-4 h-4 ml-2" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function AudienceChooser({ onChoose }) {
+  return (
+    <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+      <button
+        onClick={() => onChoose("shop")}
+        className="text-left rounded-2xl border border-white/10 bg-white/5 hover:border-teal-500/40 hover:bg-white/[0.07] transition-colors p-8"
+      >
+        <div className="w-12 h-12 rounded-xl bg-teal-500/15 flex items-center justify-center mb-4">
+          <Store className="w-6 h-6 text-teal-400" />
+        </div>
+        <h3 className="text-lg font-bold text-white mb-1">I run an auto shop</h3>
+        <p className="text-zinc-400 text-sm">Sign up or log in to LBC Auto to manage repair orders, estimates, invoices & customers.</p>
+        <div className="mt-4 flex items-center gap-1.5 text-teal-400 text-sm font-semibold">
+          See shop plans <ArrowRight className="w-3.5 h-3.5" />
+        </div>
+      </button>
+      <button
+        onClick={() => onChoose("customer")}
+        className="text-left rounded-2xl border border-white/10 bg-white/5 hover:border-teal-500/40 hover:bg-white/[0.07] transition-colors p-8"
+      >
+        <div className="w-12 h-12 rounded-xl bg-teal-500/15 flex items-center justify-center mb-4">
+          <Car className="w-6 h-6 text-teal-400" />
+        </div>
+        <h3 className="text-lg font-bold text-white mb-1">I'm a shop's customer</h3>
+        <p className="text-zinc-400 text-sm">Check your repair status, invoices, estimates & messages — no app download needed.</p>
+        <div className="mt-4 flex items-center gap-1.5 text-teal-400 text-sm font-semibold">
+          Track my vehicle <ArrowRight className="w-3.5 h-3.5" />
+        </div>
+      </button>
     </div>
   );
 }
@@ -466,6 +549,10 @@ function QuickContactCard({ shopSlug, shopName, shopEmail, shopPhone }) {
 export default function LbcAutoProfile() {
   const [slug, setSlug] = useState(getShopSlugFromUrl());
   const shop = SHOPS[slug] || SHOPS[DEFAULT_SLUG];
+  // A direct customer link (?shop=<slug>) skips the chooser and goes straight to the
+  // customer view. A bare visit (e.g. clicking "LBC Auto" on the Services page) shows
+  // the "shop owner or customer?" chooser first.
+  const [mode, setMode] = useState(() => (hasExplicitShopParam() ? "customer" : "choose"));
 
   useEffect(() => {
     const onPop = () => setSlug(getShopSlugFromUrl());
@@ -497,19 +584,37 @@ export default function LbcAutoProfile() {
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center mx-auto mb-4">
             <Wrench className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{shop.name}</h1>
-          <p className="text-zinc-400 max-w-xl mx-auto">{shop.tagline}</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">LBC Auto</h1>
+          <p className="text-zinc-400 max-w-xl mx-auto">
+            {mode === "choose" ? "Are you a shop owner or a customer?" : shop.tagline}
+          </p>
         </motion.div>
 
-        <div className="flex items-center justify-center gap-1.5 text-zinc-500 text-xs mb-3">
-          <Store className="w-3.5 h-3.5" /> Other LBC Auto shops
-        </div>
-        <ShopSwitcher activeSlug={slug} />
+        {mode === "choose" && <AudienceChooser onChoose={setMode} />}
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <TrackVehiclePanel key={shop.email} shopEmail={shop.email} />
-          <QuickContactCard shopSlug={slug} shopName={shop.name} shopEmail={shop.email} shopPhone={shop.phone} />
-        </div>
+        {mode === "shop" && <ShopOwnerPanel onBack={() => setMode("choose")} />}
+
+        {mode === "customer" && (
+          <>
+            {!hasExplicitShopParam() && (
+              <button
+                onClick={() => setMode("choose")}
+                className="flex items-center gap-1.5 text-zinc-400 hover:text-white text-sm mb-4 mx-auto"
+              >
+                <ArrowLeft className="w-4 h-4" /> Back
+              </button>
+            )}
+            <div className="flex items-center justify-center gap-1.5 text-zinc-500 text-xs mb-3">
+              <Store className="w-3.5 h-3.5" /> Other LBC Auto shops
+            </div>
+            <ShopSwitcher activeSlug={slug} />
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <TrackVehiclePanel key={shop.email} shopEmail={shop.email} />
+              <QuickContactCard shopSlug={slug} shopName={shop.name} shopEmail={shop.email} shopPhone={shop.phone} />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
