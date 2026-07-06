@@ -35,7 +35,7 @@ export default function LuminaAI() {
   const [postLocation, setPostLocation] = useState('');
   const [postingToGallery, setPostingToGallery] = useState(false);
   const [showVideoGenerator, setShowVideoGenerator] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const bottomRef = useRef(null);
   const topRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -678,20 +678,20 @@ User: ${text}`,
         {/* Chat Container */}
         <div className="flex-1 overflow-y-auto relative">
           {messages.length > 0 && (
-            <div className="fixed right-8 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30">
+            <div className="fixed right-3 sm:right-8 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30">
               <button
                 onClick={scrollToTop}
-                className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+                className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
                 title="Scroll to top"
               >
-                <ArrowUp className="w-5 h-5 text-white" />
+                <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </button>
               <button
                 onClick={scrollToBottom}
-                className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+                className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
                 title="Scroll to bottom"
               >
-                <ArrowDown className="w-5 h-5 text-white" />
+                <ArrowDown className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </button>
             </div>
           )}
@@ -954,29 +954,29 @@ User: ${text}`,
                   ))}
                 </div>
               )}
-              <div className="flex items-center gap-2 glass rounded-2xl p-3 border border-white/10">
+              <div className="flex items-center gap-1 sm:gap-2 glass rounded-2xl p-2 sm:p-3 border border-white/10">
                 <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleImageUpload} disabled={loading || uploadingImage} className="hidden" />
                 <button type="button" onClick={() => fileInputRef.current?.click()} disabled={loading || uploadingImage}
-                  className="w-10 h-10 rounded-xl bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center disabled:opacity-40 transition-all" title="Add photos">
-                  {uploadingImage ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <ImageIcon className="w-5 h-5 text-white" />}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center disabled:opacity-40 transition-all flex-shrink-0" title="Add photos">
+                  {uploadingImage ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-white animate-spin" /> : <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />}
                 </button>
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={voice.isListening ? 'Speak now...' : 'Ask Lumina...'}
                   disabled={loading}
-                  className="flex-1 bg-transparent text-white placeholder:text-zinc-600 outline-none text-sm"
+                  className="flex-1 min-w-0 bg-transparent text-white placeholder:text-zinc-600 outline-none text-sm"
                 />
                 <button type="button" onClick={voice.toggleListening}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0"
                   style={{
                     background: voice.isListening ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'rgba(255,255,255,0.08)',
                     boxShadow: voice.isListening ? '0 0 14px rgba(239,68,68,0.5)' : 'none',
                   }} title={voice.isListening ? 'Stop listening' : 'Voice input'}>
-                  {voice.isListening ? <MicOff className="w-5 h-5 text-white" /> : <Mic className="w-5 h-5 text-white" />}
+                  {voice.isListening ? <MicOff className="w-4 h-4 sm:w-5 sm:h-5 text-white" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5 text-white" />}
                 </button>
                 <button type="button" onClick={voice.isSpeaking ? voice.stopSpeaking : voice.toggleMute}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-white/5 hover:bg-white/10"
+                  className="hidden sm:flex w-10 h-10 rounded-xl items-center justify-center transition-all bg-white/5 hover:bg-white/10 flex-shrink-0"
                   title={voice.isMuted ? 'Unmute Lumina' : voice.isSpeaking ? 'Stop speaking' : 'Mute Lumina'}>
                   {voice.isMuted ? <VolumeX className="w-5 h-5 text-zinc-500" /> : voice.isSpeaking ? (
                     <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.5, repeat: Infinity }}>
@@ -985,20 +985,20 @@ User: ${text}`,
                   ) : <Volume2 className="w-5 h-5 text-zinc-300" />}
                 </button>
                 <button type="button" onClick={() => setCallMode(true)}
-                  className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center hover:scale-105 transition-transform" title="Call Lumina">
-                  <Phone className="w-4 h-4 text-white" />
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center hover:scale-105 transition-transform flex-shrink-0" title="Call Lumina">
+                  <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                 </button>
                 <button type="submit" disabled={!input.trim() || loading}
-                  className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center disabled:opacity-40 hover:scale-105 transition-transform">
-                  <Send className="w-4 h-4 text-white" />
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center disabled:opacity-40 hover:scale-105 transition-transform flex-shrink-0">
+                  <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                 </button>
               </div>
             </form>
 
-            <div className="flex items-center justify-center gap-3 mt-3">
+            <div className="flex items-center justify-start sm:justify-center gap-2 sm:gap-3 mt-3 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
              <button
                onClick={() => setShowVideoGenerator(!showVideoGenerator)}
-               className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-xs flex items-center gap-2 text-zinc-400"
+               className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-xs flex items-center gap-2 text-zinc-400 flex-shrink-0 whitespace-nowrap"
                title="Generate AI video"
              >
                <Sparkles className="w-4 h-4" />
@@ -1006,7 +1006,7 @@ User: ${text}`,
              </button>
              <button
                onClick={() => setCodingMode(!codingMode)}
-               className={`p-2 rounded-lg transition-colors text-xs flex items-center gap-2 ${codingMode ? 'bg-green-500/20 text-green-400' : 'bg-white/5 hover:bg-white/10 text-zinc-400'}`}
+               className={`p-2 rounded-lg transition-colors text-xs flex items-center gap-2 flex-shrink-0 whitespace-nowrap ${codingMode ? 'bg-green-500/20 text-green-400' : 'bg-white/5 hover:bg-white/10 text-zinc-400'}`}
                title={codingMode ? 'Exit Code Master mode' : 'Enter Code Master mode'}
              >
                <Code className="w-4 h-4" />
@@ -1015,7 +1015,7 @@ User: ${text}`,
              <button
                onClick={handleGenerateImage}
                disabled={generatingImage || !user}
-               className={`p-2 rounded-lg transition-colors text-xs flex items-center gap-2 ${generatingImage ? 'bg-purple-500/20 text-purple-400 animate-pulse' : 'bg-white/5 hover:bg-white/10 text-zinc-400'} disabled:opacity-50`}
+               className={`p-2 rounded-lg transition-colors text-xs flex items-center gap-2 flex-shrink-0 whitespace-nowrap ${generatingImage ? 'bg-purple-500/20 text-purple-400 animate-pulse' : 'bg-white/5 hover:bg-white/10 text-zinc-400'} disabled:opacity-50`}
                title="Generate AI image from conversation"
               >
                 <ImageIcon className="w-4 h-4" />
