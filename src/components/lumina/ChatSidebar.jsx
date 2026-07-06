@@ -115,23 +115,22 @@ export default function ChatSidebar({ currentSessionId, onNewChat, onSelectSessi
 
       {/* Sidebar */}
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-zinc-950 border-r border-white/5 flex flex-col transform transition-transform duration-200 md:transform-none ${
+        className={`fixed md:static top-16 bottom-0 md:inset-y-0 left-0 z-[60] w-64 bg-zinc-950 border-r border-white/5 flex flex-col transform transition-transform duration-200 md:transform-none ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/5">
-          <div className="flex-1" />
+        <div className="flex items-center gap-2 p-4 border-b border-white/5">
           <button
             onClick={onNewChat}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors text-sm w-full justify-center"
+            className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors text-sm justify-center"
           >
             <Plus className="w-4 h-4" />
             New Chat
           </button>
           <button
-            onClick={onMobileClose}
-            className="md:hidden p-2 rounded hover:bg-white/10"
+            onClick={() => onMobileClose?.(false)}
+            className="md:hidden p-2 rounded hover:bg-white/10 flex-shrink-0 relative z-10"
           >
             <X className="w-4 h-4" />
           </button>
