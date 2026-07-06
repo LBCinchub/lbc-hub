@@ -250,8 +250,10 @@ export default function Layout({ children, currentPageName }) {
       {/* WebRTC Call Manager */}
       {user && <CallManager user={user} />}
 
-      {/* Lumina Chat Widget — global, all pages */}
-      <LuminaChatWidget />
+      {/* Lumina Chat Widget — global on every page EXCEPT the dedicated Lumina AI
+          page itself, where it would float redundantly on top of the full chat UI
+          (different backing data model too — LuminaMessage vs ChatMessage/ChatSession) */}
+      {currentPageName !== 'LuminaAI' && <LuminaChatWidget />}
 
       {/* Main Content */}
       <main className="pt-16 bg-zinc-950">
