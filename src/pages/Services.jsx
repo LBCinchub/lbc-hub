@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle
 } from "@/components/ui/dialog";
+import LbcAutoProfile from './LbcAutoProfile';
 
 const services = [
   {
@@ -220,6 +221,14 @@ export default function Services() {
   const navigate = useNavigate();
   const [activeService, setActiveService] = useState(null);
   const [bookingService, setBookingService] = useState(null);
+
+  // LBC Auto shops share a direct customer link like lbc-hub.com/services?shop=<slug>
+  // (rather than a separate route) so it always resolves — render that view instead
+  // of the marketplace grid whenever a shop param is present.
+  const shopParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("shop") : null;
+  if (shopParam) {
+    return <LbcAutoProfile />;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 py-8 px-4">
