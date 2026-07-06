@@ -1,20 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  Wrench, Phone, Mail, ArrowRight, ArrowLeft, CheckCircle, Loader2,
-  Send, Users, Car, DollarSign, Gift, MessageCircle, ExternalLink, ShieldCheck, Store
+  Wrench, Phone, Mail, ArrowRight, CheckCircle, Car, ExternalLink, ShieldCheck, Store
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 
 // LBC Auto — all shops run on the same app, scoped by owner email (RLS).
-const SHOP_APP_ID = "69b0bd497bfce90f18df6cdd";
-const FN_BASE = `https://base44.app/api/apps/${SHOP_APP_ID}/functions`;
-
 const SHOPS = {
   mokhtar: { email: "mokhtartareksamara@gmail.com", name: "LBC Auto", tagline: "Full auto shop management — repair orders, estimates, invoices & AI diagnostics." },
   belal: { email: "belalautoservices@gmail.com", name: "Belal Auto Services", tagline: "Trusted repairs and maintenance, powered by LBC Auto." },
@@ -28,45 +23,6 @@ function getShopSlugFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const slug = params.get("shop");
   return SHOPS[slug] ? slug : DEFAULT_SLUG;
-}
-
-async function callShopFn(name, payload) {
-  const res = await fetch(`${FN_BASE}/${name}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  return res.json();
-}
-
-const roStatusColors = {
-  waiting: "bg-zinc-500/20 text-zinc-300",
-  in_progress: "bg-amber-500/20 text-amber-400",
-  waiting_for_parts: "bg-orange-500/20 text-orange-400",
-  completed: "bg-emerald-500/20 text-emerald-400",
-  delivered: "bg-teal-500/20 text-teal-400",
-};
-
-const roStatusLabels = {
-  waiting: "Waiting",
-  in_progress: "In Progress",
-  waiting_for_parts: "Waiting for Parts",
-  completed: "Completed",
-  delivered: "Delivered",
-};
-
-function StatCard({ icon: Icon, label, value, tone = "text-white" }) {
-  return (
-    <div className="glass rounded-xl p-4 border border-white/10 flex items-center gap-3">
-      <div className="w-10 h-10 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center flex-shrink-0">
-        <Icon className="w-5 h-5 text-teal-400" />
-      </div>
-      <div className="min-w-0">
-        <p className={`text-lg font-bold truncate ${tone}`}>{value}</p>
-        <p className="text-xs text-zinc-500">{label}</p>
-      </div>
-    </div>
-  );
 }
 
 function ShopSwitcher({ activeSlug }) {
@@ -89,99 +45,8 @@ function ShopSwitcher({ activeSlug }) {
   );
 }
 
-function TrackVehiclePanel({ shopEmail }) {
-  const [step, setStep] = useState("phone"); // phone | choose | dashboard | notfound
-  const [phone, setPhone] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [profiles, setProfiles] = useState([]);
-  const [customer, setCustomer] = useState(null);
-  const [data, setData] = useState(null);
-  const [newMessage, setNewMessage] = useState("");
-  const [sending, setSending] = useState(false);
-  const threadEndRef = useRef(null);
-
-  // Reset flow whenever the shop changes
-  useEffect(() => {
-    setStep("phone"); setPhone(""); setError(""); setProfiles([]); setCustomer(null); setData(null);
-  }, [shopEmail]);
-
-  useEffect(() => {
-    if (threadEndRef.current) threadEndRef.current.scrollIntoView({ behavior: "smooth" });
-  }, [data?.messages?.length]);
-
-  const loadCustomerData = async (cust) => {
-    setCustomer(cust);
-    const res = await callShopFn("customerData", { customer_id: cust.id, shop_email: shopEmail });
-    setData(res);
-    setStep("dashboard");
-  };
-
-  const findVehicle = async () => {
-    const cleaned = phone.replace(/\D/g, "");
-    if (cleaned.length < 7) { setError("Enter your full phone number."); return; }
-    setLoading(true);
-    setError("");
-    try {
-      const result = await callShopFn("customerLogin", { shop_email: shopEmail, phone: cleaned });
-      if (result?.success && result?.customer) {
-        await loadCustomerData(result.customer);
-      } else if (result?.multiple && result?.profiles?.length > 0) {
-        setProfiles(result.profiles);
-        setStep("choose");
-      } else {
-        setStep("notfound");
-      }
-    } catch (e) {
-      setError("Error: " + (e?.message || String(e)));
-    }
-    setLoading(false);
-  };
-
-  const selectProfile = async (profileId) => {
-    setLoading(true);
-    setError("");
-    try {
-      const cleaned = phone.replace(/\D/g, "");
-      const result = await callShopFn("customerLogin", { shop_email: shopEmail, phone: cleaned, customer_id: profileId });
-      if (result?.success && result?.customer) {
-        await loadCustomerData(result.customer);
-      } else {
-        setError("Couldn't load that profile. Try again.");
-        setStep("phone");
-      }
-    } catch (e) {
-      setError("Error: " + (e?.message || String(e)));
-    }
-    setLoading(false);
-  };
-
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !customer) return;
-    setSending(true);
-    try {
-      await callShopFn("customerSendMessage", {
-        shop_owner_email: shopEmail,
-        customer_id: customer.id,
-        customer_phone: customer.phone,
-        customer_name: customer.full_name,
-        sender: "customer",
-        message: newMessage.trim(),
-        sent_at: new Date().toISOString(),
-      });
-      setData(d => ({ ...d, messages: [...(d.messages || []), { sender: "customer", message: newMessage.trim(), sent_at: new Date().toISOString() }] }));
-      setNewMessage("");
-    } catch (e) {
-      // no-op, keep it simple
-    }
-    setSending(false);
-  };
-
-  const reset = () => {
-    setStep("phone"); setPhone(""); setError(""); setProfiles([]); setCustomer(null); setData(null);
-  };
-
-  const latestOrder = data?.orders?.[0];
+function TrackVehiclePanel({ shopEmail, shopName }) {
+  const portalUrl = `https://lbchub.tech/CustomerPortal?shop=${encodeURIComponent(shopEmail)}`;
 
   return (
     <div className="glass rounded-2xl border border-teal-500/20 p-6 md:p-8">
@@ -191,135 +56,18 @@ function TrackVehiclePanel({ shopEmail }) {
         </div>
         <h2 className="text-xl font-bold text-white">Track My Vehicle</h2>
       </div>
-      <p className="text-zinc-400 text-sm mb-6">Check your repair status, invoices & messages — no app download needed.</p>
-
-      <AnimatePresence mode="wait">
-        {step === "phone" && (
-          <motion.div key="phone" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
-            <Label className="text-zinc-300">Your Phone Number</Label>
-            <Input
-              type="tel"
-              value={phone}
-              onChange={e => { setPhone(e.target.value); setError(""); }}
-              onKeyDown={e => e.key === "Enter" && findVehicle()}
-              placeholder="6135551234"
-              className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500 h-12"
-              autoFocus
-            />
-            {error && <p className="text-rose-400 text-sm">{error}</p>}
-            <Button onClick={findVehicle} disabled={loading} className="w-full btn-primary rounded-xl h-12 font-semibold">
-              {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              {loading ? "Checking…" : "Find My Car"}
-              {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
-            </Button>
-            <p className="text-zinc-500 text-xs">Use the same number you gave the shop.</p>
-          </motion.div>
-        )}
-
-        {step === "choose" && (
-          <motion.div key="choose" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
-            <button onClick={reset} className="flex items-center gap-1 text-sm text-teal-400 mb-2"><ArrowLeft className="w-3.5 h-3.5" /> Back</button>
-            <div className="flex items-center gap-2 text-zinc-300 text-sm mb-2">
-              <Users className="w-4 h-4 text-teal-400" /> This number is saved under a few names — which one is you?
-            </div>
-            {profiles.map(p => (
-              <button
-                key={p.id}
-                onClick={() => selectProfile(p.id)}
-                disabled={loading}
-                className="w-full text-left bg-white/5 border border-white/10 rounded-xl px-4 py-3 hover:border-teal-500/40 transition-colors flex items-center justify-between disabled:opacity-50"
-              >
-                <span className="font-semibold text-white">{p.full_name || "Unnamed"}</span>
-                <span className="text-xs text-zinc-500">{p.email || ""}</span>
-              </button>
-            ))}
-            {error && <p className="text-rose-400 text-sm">{error}</p>}
-          </motion.div>
-        )}
-
-        {step === "notfound" && (
-          <motion.div key="notfound" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center py-4">
-            <p className="text-zinc-300 mb-1">We couldn't find that number on file.</p>
-            <p className="text-zinc-500 text-sm mb-4">Double-check it, or reach the shop directly using the contact card →</p>
-            <Button onClick={reset} variant="outline" className="border-white/20 text-white hover:bg-white/10 rounded-xl">Try Again</Button>
-          </motion.div>
-        )}
-
-        {step === "dashboard" && customer && (
-          <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-emerald-400" />
-                <span className="font-semibold text-white">{customer.full_name}</span>
-              </div>
-              <button onClick={reset} className="text-xs text-zinc-500 hover:text-zinc-300">Switch profile</button>
-            </div>
-
-            {latestOrder ? (
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-zinc-400">Latest Repair Order</span>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${roStatusColors[latestOrder.status] || "bg-zinc-500/20 text-zinc-300"}`}>
-                    {roStatusLabels[latestOrder.status] || latestOrder.status}
-                  </span>
-                </div>
-                <p className="text-white font-medium">{latestOrder.vehicle_info || "Vehicle"}</p>
-                <p className="text-zinc-400 text-sm mt-1 line-clamp-2">{latestOrder.description || "—"}</p>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-zinc-400 text-sm">No active repair orders right now.</div>
-            )}
-
-            <div className="grid grid-cols-2 gap-3">
-              <StatCard icon={Car} label="Vehicles on file" value={data?.vehicles?.length || 0} />
-              <StatCard icon={DollarSign} label="Open balance" value={
-                "$" + (data?.invoices || []).reduce((s, i) => s + (i.balance_due || 0), 0).toFixed(2)
-              } />
-            </div>
-
-            {data?.offers?.length > 0 && (
-              <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Gift className="w-4 h-4 text-amber-400" />
-                  <span className="text-sm font-semibold text-amber-300">Active Offer</span>
-                </div>
-                <p className="text-white text-sm">{data.offers[0].title}</p>
-              </div>
-            )}
-
-            {/* Message thread */}
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <MessageCircle className="w-4 h-4 text-teal-400" />
-                <span className="text-sm font-semibold text-white">Messages with the shop</span>
-              </div>
-              <div className="max-h-48 overflow-y-auto space-y-2 mb-3 pr-1">
-                {(data?.messages || []).length === 0 && <p className="text-zinc-500 text-xs">No messages yet — say hi!</p>}
-                {(data?.messages || []).map((m, i) => (
-                  <div key={i} className={`flex ${m.sender === "customer" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${m.sender === "customer" ? "bg-teal-600 text-white" : "bg-white/10 text-zinc-200"}`}>
-                      {m.message}
-                    </div>
-                  </div>
-                ))}
-                <div ref={threadEndRef} />
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  value={newMessage}
-                  onChange={e => setNewMessage(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && sendMessage()}
-                  placeholder="Type a message…"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-zinc-500"
-                />
-                <Button onClick={sendMessage} disabled={sending || !newMessage.trim()} className="btn-primary rounded-xl px-4">
-                  {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <p className="text-zinc-400 text-sm mb-6">
+        Check your repair status, invoices &amp; messages with {shopName} — one Customer Portal, no app download needed.
+      </p>
+      <a href={portalUrl} target="_blank" rel="noopener noreferrer">
+        <Button className="w-full btn-primary rounded-xl h-12 font-semibold">
+          Open My Customer Portal
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Button>
+      </a>
+      <p className="text-zinc-500 text-xs mt-3">
+        Opens {shopName}'s Customer Portal — the same portal you'd reach from a direct link, so your history and messages are always in one place.
+      </p>
     </div>
   );
 }
@@ -438,7 +186,7 @@ export default function LbcAutoProfile() {
         <ShopSwitcher activeSlug={slug} />
 
         <div className="grid md:grid-cols-2 gap-6">
-          <TrackVehiclePanel key={shop.email} shopEmail={shop.email} />
+          <TrackVehiclePanel key={shop.email} shopEmail={shop.email} shopName={shop.name} />
           <QuickContactCard shopSlug={slug} shopName={shop.name} />
         </div>
       </div>
