@@ -43,7 +43,7 @@ export default function VideoGenerator({ onClose }) {
         topics: ['video', 'ai-generated']
       });
       alert('Video saved to gallery!');
-    } catch (err) {
+    } catch {
       setError('Failed to save video');
     }
   };
@@ -68,7 +68,7 @@ export default function VideoGenerator({ onClose }) {
         )}
       </div>
 
-      <div className="space-y-3 opacity-50">
+      <div className="relative space-y-3 opacity-50">
         <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-yellow-500/20 border border-yellow-500/50 rounded-lg px-4 py-2 text-yellow-300 text-sm font-medium whitespace-nowrap">
           Coming Soon
         </div>

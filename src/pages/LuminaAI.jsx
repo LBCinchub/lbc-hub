@@ -6,7 +6,7 @@ import VideoGenerator from '../components/lumina/VideoGenerator';
 import LuminaCallMode from '../components/lumina/LuminaCallMode';
 import ChatSidebar from '../components/lumina/ChatSidebar';
 import { motion } from 'framer-motion';
-import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, Phone, ArrowUp, ArrowDown, Image as ImageIcon, X, PenLine, MapPin, Hash, Share2, Code, Copy, Check } from 'lucide-react';
+import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, Phone, ArrowUp, ArrowDown, Image as ImageIcon, X, PenLine, MapPin, Hash, Share2, Code, Copy, Check, Download } from 'lucide-react';
 import ImageEditor from '../components/social/ImageEditor';
 import MessageActionBar from '../components/lumina/MessageActionBar';
 import LinkText from '../components/ui/LinkText';
@@ -120,7 +120,7 @@ export default function LuminaAI() {
           'created_date',
           100
         );
-        setMessages(msgs.map(m => ({ role: m.role, content: m.content, id: m.id })));
+        setMessages(msgs.map(m => ({ role: m.role === 'lumina' ? 'assistant' : m.role, content: m.content, id: m.id })));
       } catch (err) {
         console.error('Failed to load session messages:', err);
       }
@@ -353,15 +353,19 @@ Create something that would impress a professional photographer or art director.
       return;
     }
 
-    // Create session if needed
-    if (!currentSessionId) {
+    // Create session if needed. setCurrentSessionId() won't be reflected until
+    // the next render, so use a local variable for every save in this call —
+    // otherwise the very first message of a new chat gets saved with a null session_id.
+    let effectiveSessionId = currentSessionId;
+    if (!effectiveSessionId) {
       try {
         const session = await base44.entities.ChatSession.create({
           user_id: user.email,
           title: 'New Chat',
           message_count: 0
         });
-        setCurrentSessionId(session.id);
+        effectiveSessionId = session.id;
+        setCurrentSessionId(effectiveSessionId);
       } catch (err) {
         console.error('Failed to create session:', err);
         return;
@@ -389,7 +393,7 @@ Create something that would impress a professional photographer or art director.
       // Save user message
       await base44.entities.ChatMessage.create({
         user_id: user.email,
-        session_id: currentSessionId,
+        session_id: effectiveSessionId,
         role: 'user',
         content: text
       });
@@ -399,7 +403,7 @@ Create something that would impress a professional photographer or art director.
         try {
           const titleRes = await base44.functions.invoke('generateSessionTitle', { firstMessage: text });
           if (titleRes.data?.title) {
-            await base44.entities.ChatSession.update(currentSessionId, { title: titleRes.data.title });
+            await base44.entities.ChatSession.update(effectiveSessionId, { title: titleRes.data.title });
             queryClient.invalidateQueries({ queryKey: ['chatSessions'] });
           }
         } catch (err) {
@@ -548,13 +552,13 @@ User: ${text}`,
       // Save AI response
       await base44.entities.ChatMessage.create({
         user_id: user.email,
-        session_id: currentSessionId,
-        role: 'lumina',
+        session_id: effectiveSessionId,
+        role: 'assistant',
         content: reply
       });
 
       // Update session metadata
-      await base44.entities.ChatSession.update(currentSessionId, {
+      await base44.entities.ChatSession.update(effectiveSessionId, {
         message_count: finalMessages.length,
         last_message_date: new Date().toISOString(),
         last_message_preview: reply.substring(0, 100)
@@ -827,6 +831,12 @@ User: ${text}`,
                                className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium transition-colors"
                              >
                                <PenLine className="w-3 h-3" /> Edit & Save
+                             </button>
+                             <button
+                               onClick={() => downloadImage(msg.image_url, `lumina-${Date.now()}.png`)}
+                               className="flex items-center gap-1 px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs font-medium transition-colors"
+                             >
+                               <Download className="w-3 h-3" /> Download
                              </button>
                              {msg.isSaveable !== false && (
                                <button
