@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
     }
 
     const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')
-      || 'BDM7K2_08BiYFpk1VvgdxuwILoo2gJor4fY8TW55kf-ilZx8r9pfF5r32et1K0IcFQEWNiQg7i0SZw3NWidxK7k';
+      || 'BKFVu7hu6YERDjpDkFE2p0qX7beg2IeJEIO2vwxqpE8NsqcFUbzkJWimQ5cif_2co9sPEtm_yCTOYWobTF3OG4w';
     const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
 
     if (!vapidPrivateKey) {

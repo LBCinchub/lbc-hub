@@ -46,7 +46,7 @@ export function usePushNotifications(user) {
       // Public VAPID key — safe to embed client-side by design (it's the "public" half of the pair;
       // the matching private key lives only in the backend function's environment secrets)
       const VAPID_PUBLIC_KEY = import.meta.env.VITE_PUBLIC_VAPID_KEY
-        || 'BDM7K2_08BiYFpk1VvgdxuwILoo2gJor4fY8TW55kf-ilZx8r9pfF5r32et1K0IcFQEWNiQg7i0SZw3NWidxK7k';
+        || 'BKFVu7hu6YERDjpDkFE2p0qX7beg2IeJEIO2vwxqpE8NsqcFUbzkJWimQ5cif_2co9sPEtm_yCTOYWobTF3OG4w';
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
