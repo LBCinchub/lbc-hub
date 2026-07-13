@@ -1,17 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQueryClient } from '@tanstack/react-query';
 import LuminaStreakBadge from '../components/social/LuminaStreakBadge';
 import VideoGenerator from '../components/lumina/VideoGenerator';
 import LuminaCallMode from '../components/lumina/LuminaCallMode';
-import ChatSidebar from '../components/lumina/ChatSidebar';
-import { motion } from 'framer-motion';
-import { Send, Sparkles, Brain, Zap, Bot, Loader2, Mic, MicOff, Volume2, VolumeX, Phone, ArrowUp, ArrowDown, Image as ImageIcon, X, PenLine, MapPin, Hash, Share2, Code, Copy, Check, Download } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Send, Sparkles, Loader2, Mic, MicOff, Volume2, VolumeX, Phone, Image as ImageIcon, X, PenLine, MapPin, Hash, Share2, Code, Copy, Check, Download } from 'lucide-react';
 import ImageEditor from '../components/social/ImageEditor';
 import MessageActionBar from '../components/lumina/MessageActionBar';
 import LinkText from '../components/ui/LinkText';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useVoice } from '@/hooks/useVoice';
+
+// ── constants ──────────────────────────────────────────────────────────────
+const LUMINA_AVATAR = 'https://images.unsplash.com/photo-1635002962487-2c1d4d2f63c2?w=80&h=80&fit=crop&crop=face';
+const PERSISTENT_SESSION_LABEL = '__lumina_persistent__';
 
 export default function LuminaAI() {
   const [messages, setMessages] = useState([]);
@@ -20,7 +22,7 @@ export default function LuminaAI() {
   const [user, setUser] = useState(null);
   const [usageCount, setUsageCount] = useState(0);
   const [usageLimit] = useState(30);
-  const [currentSessionId, setCurrentSessionId] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
   const [callMode, setCallMode] = useState(false);
   const [uploadedImages, setUploadedImages] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -35,1006 +37,560 @@ export default function LuminaAI() {
   const [postLocation, setPostLocation] = useState('');
   const [postingToGallery, setPostingToGallery] = useState(false);
   const [showVideoGenerator, setShowVideoGenerator] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [initializing, setInitializing] = useState(true);
+
   const bottomRef = useRef(null);
   const topRef = useRef(null);
   const fileInputRef = useRef(null);
-  const queryClient = useQueryClient();
 
   const voice = useVoice({
     onTranscript: (t) => setInput(t),
-    onFinalTranscript: (t) => {
-      setInput('');
-      handleSend(t);
-    },
+    onFinalTranscript: (t) => { setInput(''); handleSend(t); },
     continuous: false,
   });
 
+  // ── Load user ─────────────────────────────────────────────────────────────
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  // Load streaks and usage
+  // ── Load streak + usage ───────────────────────────────────────────────────
   useEffect(() => {
     if (!user) return;
-    
-    const loadData = async () => {
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-        const streakRecords = await base44.entities.LuminaStreak.filter({ user_email: user.email });
-        if (streakRecords.length > 0) {
-          const s = streakRecords[0];
-          if (s.last_active_date !== today) {
-            const newStreak = s.last_active_date === yesterday ? (s.current_streak || 0) + 1 : 1;
-            const newSparks = (s.total_sparks || 0) + 10;
-            const updated = await base44.entities.LuminaStreak.update(s.id, {
-              current_streak: newStreak,
-              longest_streak: Math.max(newStreak, s.longest_streak || 0),
-              total_sparks: newSparks,
-              last_active_date: today
-            });
-            setStreakData(updated);
-          } else {
-            setStreakData(s);
-          }
-        } else {
-          const created = await base44.entities.LuminaStreak.create({
-            user_email: user.email, current_streak: 1, longest_streak: 1, total_sparks: 10, last_active_date: today
-          });
-          setStreakData(created);
-        }
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
-        const records = await base44.entities.AIUsage.filter({ user_email: user.email });
-        if (records.length > 0) {
-          const usage = records[0];
-          const lastReset = new Date(usage.last_reset);
-          const now = new Date();
-          const isNewDay = lastReset.toDateString() !== now.toDateString();
-          if (isNewDay) {
-            await base44.entities.AIUsage.update(usage.id, { count: 0, last_reset: now.toISOString() });
-            setUsageCount(0);
-          } else {
-            setUsageCount(usage.count);
-          }
-        } else {
-          await base44.entities.AIUsage.create({ user_email: user.email, count: 0, last_reset: new Date().toISOString() });
-          setUsageCount(0);
-        }
-      } catch (err) {
-        console.error('Failed to load data:', err);
+    base44.entities.LuminaStreak.filter({ user_email: user.email }).then(records => {
+      if (records.length > 0) {
+        const s = records[0];
+        if (s.last_active_date !== today) {
+          const ns = s.last_active_date === yesterday ? (s.current_streak || 0) + 1 : 1;
+          base44.entities.LuminaStreak.update(s.id, {
+            current_streak: ns,
+            longest_streak: Math.max(ns, s.longest_streak || 0),
+            total_sparks: (s.total_sparks || 0) + 10,
+            last_active_date: today
+          }).then(setStreakData);
+        } else setStreakData(s);
+      } else {
+        base44.entities.LuminaStreak.create({ user_email: user.email, current_streak: 1, longest_streak: 1, total_sparks: 10, last_active_date: today }).then(setStreakData);
       }
-    };
+    });
 
-    loadData();
+    base44.entities.AIUsage.filter({ user_email: user.email }).then(records => {
+      if (records.length > 0) {
+        const u = records[0];
+        const isNewDay = new Date(u.last_reset).toDateString() !== new Date().toDateString();
+        if (isNewDay) {
+          base44.entities.AIUsage.update(u.id, { count: 0, last_reset: new Date().toISOString() });
+          setUsageCount(0);
+        } else setUsageCount(u.count);
+      } else {
+        base44.entities.AIUsage.create({ user_email: user.email, count: 0, last_reset: new Date().toISOString() });
+      }
+    });
   }, [user]);
 
-  // Load current session messages
+  // ── Load / create the ONE persistent session ──────────────────────────────
   useEffect(() => {
-    if (!user || !currentSessionId) return;
+    if (!user) return;
 
-    const loadSessionMessages = async () => {
+    const initSession = async () => {
+      setInitializing(true);
       try {
+        // Look for the single persistent session
+        const sessions = await base44.entities.ChatSession.filter({ user_id: user.email, title: PERSISTENT_SESSION_LABEL });
+
+        let sid;
+        if (sessions.length > 0) {
+          // Use existing persistent session
+          sid = sessions[0].id;
+        } else {
+          // First time — create the single persistent session
+          const created = await base44.entities.ChatSession.create({
+            user_id: user.email,
+            title: PERSISTENT_SESSION_LABEL,
+            message_count: 0
+          });
+          sid = created.id;
+        }
+        setSessionId(sid);
+
+        // Load all messages for this session (full history, no limit)
         const msgs = await base44.entities.ChatMessage.filter(
-          { user_id: user.email, session_id: currentSessionId },
+          { user_id: user.email, session_id: sid },
           'created_date',
-          100
+          500
         );
-        setMessages(msgs.map(m => ({ role: m.role === 'lumina' ? 'assistant' : m.role, content: m.content, id: m.id })));
+
+        if (msgs.length > 0) {
+          setMessages(msgs.map(m => ({
+            role: m.role === 'lumina' ? 'assistant' : m.role,
+            content: m.content,
+            id: m.id,
+            image_url: m.image_url,
+            images: m.images
+          })));
+        } else {
+          // First ever message — greeting with memory context
+          const memories = await base44.entities.UserMemory.filter({ user_id: user.email }).catch(() => []);
+          const mem = memories[0] || null;
+          const firstName = (user.full_name || '').split(' ')[0] || 'there';
+          let greeting;
+          if (mem && (mem.key_facts?.length > 0 || mem.conversation_summary)) {
+            const ref = mem.past_requests?.[mem.past_requests.length - 1];
+            greeting = ref
+              ? `Hey ${firstName}! 👋 Welcome back — last time you were asking about "${ref}". I remember everything. What can I help you with today?`
+              : `Hey ${firstName}! Great to have you back 👋 ${mem.conversation_summary || ''} What are we working on today?`;
+          } else {
+            greeting = `Hey ${firstName}! I'm Lumina ✨ Your personal AI on LBC Hub. This is our shared space — I'll remember everything we talk about here. What's on your mind?`;
+          }
+          setMessages([{ role: 'assistant', content: greeting, id: 'greeting' }]);
+        }
       } catch (err) {
-        console.error('Failed to load session messages:', err);
+        console.error('Failed to init session:', err);
+        setMessages([{ role: 'assistant', content: "Hey! I'm Lumina ✨ What can I help you with today?", id: 'greeting' }]);
       }
+      setInitializing(false);
     };
 
-    loadSessionMessages();
-  }, [user, currentSessionId]);
+    initSession();
+  }, [user]);
 
+  // ── Auto-scroll ───────────────────────────────────────────────────────────
   useEffect(() => {
-    if (messages.length > 0) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (messages.length > 0) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleNewChat = async () => {
-    try {
-      const session = await base44.entities.ChatSession.create({
-        user_id: user.email,
-        title: 'New Chat',
-        message_count: 0
-      });
-      setCurrentSessionId(session.id);
-      setMessages([]);
-    } catch (err) {
-      console.error('Failed to create chat session:', err);
-    }
-  };
-
-  const handleSelectSession = (sessionId) => {
-    setCurrentSessionId(sessionId);
-  };
-
+  // ── Image upload ──────────────────────────────────────────────────────────
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-
+    if (!files.length) return;
     setUploadingImage(true);
     try {
-      const newImages = [];
+      const urls = [];
       for (const file of files) {
-        const result = await base44.integrations.Core.UploadFile({ file });
-        newImages.push(result.file_url);
+        const r = await base44.integrations.Core.UploadFile({ file });
+        urls.push(r.file_url);
       }
-      setUploadedImages(prev => [...prev, ...newImages]);
-    } catch (err) {
-      console.error('Image upload error:', err);
-    } finally {
-      setUploadingImage(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
+      setUploadedImages(prev => [...prev, ...urls]);
+    } catch (err) { console.error('Upload error:', err); }
+    finally { setUploadingImage(false); if (fileInputRef.current) fileInputRef.current.value = ''; }
   };
 
-  const removeImage = (index) => {
-    setUploadedImages(prev => prev.filter((_, i) => i !== index));
-  };
+  const removeImage = (i) => setUploadedImages(prev => prev.filter((_, idx) => idx !== i));
 
+  // ── Image generation ──────────────────────────────────────────────────────
   const handleGenerateImage = async () => {
     if (generatingImage || !user) return;
+    const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
+    const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
+    const isPremium = user?.premium === true;
+    if (!isFounder && !isDevLead && !isPremium && usageCount >= usageLimit) {
+      setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ Daily limit reached (${usageLimit}/day). Upgrade to Premium for unlimited access!`, id: Date.now() + '_lim' }]);
+      return;
+    }
+    const context = messages.slice(-5).map(m => m.content).join(' ') || 'creative artistic image';
+    const hasUploaded = uploadedImages.length > 0;
+    setGeneratingImage(true);
+    setMessages(prev => [...prev, { role: 'assistant', content: '🎨 Generating image...', isImageLoading: true, id: 'imgload' }]);
+    try {
+      let prompt;
+      if (hasUploaded) {
+        prompt = await base44.integrations.Core.InvokeLLM({ prompt: `Create an image enhancement prompt maintaining the exact same angle and composition. User request: "${context}". Make it 200-300 words, cinematic, professional.`, file_urls: uploadedImages, model: 'gemini_3_flash' });
+      } else {
+        prompt = await base44.integrations.Core.InvokeLLM({ prompt: `Create a detailed 250-word image generation prompt for: "${context}". Include camera angles, lighting, mood, textures, professional photography terminology.`, model: 'gemini_3_flash' });
+      }
+      const imageUrl = await base44.integrations.Core.GenerateImage({ prompt, existing_image_urls: hasUploaded ? uploadedImages : undefined });
+      setMessages(prev => prev.map(m => m.isImageLoading ? { ...m, content: hasUploaded ? '✨ Here\'s your enhanced image!' : '✨ Here\'s your generated image!', image_url: imageUrl?.url || imageUrl, isImageLoading: false, id: Date.now() + '_img' } : m));
+    } catch (err) {
+      setMessages(prev => prev.map(m => m.isImageLoading ? { ...m, content: '⚠️ Image generation failed. Try again.', isImageLoading: false } : m));
+    }
+    setGeneratingImage(false);
+  };
+
+  // ── Send message ──────────────────────────────────────────────────────────
+  const handleSend = async (overrideText) => {
+    const text = (overrideText ?? input).trim();
+    if (!text || loading || !user || !sessionId) return;
 
     const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
     const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
     const isPremium = user?.premium === true;
-    const hasUnlimitedAccess = isFounder || isDevLead || isPremium;
-    
-    if (!hasUnlimitedAccess && usageCount >= usageLimit) {
-      const errorMessage = { 
-        role: 'assistant', 
-        content: `⚠️ Daily limit reached (${usageLimit} requests/day).\n\nUpgrade to Premium for unlimited access!`
-      };
-      setMessages(prev => [...prev, errorMessage]);
+    if (!isFounder && !isDevLead && !isPremium && usageCount >= usageLimit) {
+      setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ Daily limit reached (${usageLimit}/day). Upgrade to Premium for unlimited access!`, id: Date.now() + '_lim' }]);
       return;
     }
 
-    const conversationContext = messages.slice(-5).map(m => m.content).join(' ');
-    const imagePromptContext = conversationContext || 'creative artistic image';
-    const hasUploadedImages = uploadedImages.length > 0;
-
-    setGeneratingImage(true);
-    const loadingMessage = { role: 'assistant', content: '🎨 Generating image...', isImageLoading: true };
-    setMessages(prev => [...prev, loadingMessage]);
-
-    try {
-      let finalPrompt = '';
-
-      if (hasUploadedImages) {
-        finalPrompt = await base44.integrations.Core.InvokeLLM({
-          prompt: `You are an expert image enhancement specialist. Create a hyper-detailed, professional image enhancement prompt that improves the uploaded reference image while maintaining its exact same angle, perspective, and composition. 
-
-User request: "${imagePromptContext}"
-
-Create a prompt that:
-1. Maintains the EXACT SAME camera angle, perspective, and framing
-2. Enhances quality, detail, lighting, and clarity
-3. Improves color grading and professional finishing
-4. Preserves the original scene's recognizable elements
-5. Uses professional photography/cinematography terminology
-
-Make it extremely detailed and specific (200-300 words). Start with the exact perspective and composition details.`,
-          file_urls: uploadedImages,
-          model: 'gemini_3_flash'
-        });
-      } else {
-        finalPrompt = await base44.integrations.Core.InvokeLLM({
-          prompt: `You are an elite AI art director. Create an exceptionally detailed, vivid, and sophisticated image generation prompt (250-300 words) based on: "${imagePromptContext}"
-
-Your prompt should:
-1. Include specific camera angles, lens types, and cinematography techniques
-2. Detail professional lighting setups (key light, fill light, backlighting)
-3. Specify color grading, mood, and atmosphere with emotional depth
-4. Describe textures, materials, and fine details
-5. Use art direction terminology (golden hour, rule of thirds, depth of field, etc.)
-6. Include quality descriptors (award-winning, museum-quality, professional, cinematic)
-7. Reference artistic styles or photographers when relevant
-
-Create something that would impress a professional photographer or art director.`,
-          model: 'gemini_3_flash'
-        });
-      }
-
-      const imageUrl = await base44.integrations.Core.GenerateImage({
-        prompt: finalPrompt,
-        existing_image_urls: hasUploadedImages ? uploadedImages : undefined
-      });
-
-      const imageMessage = { 
-        role: 'assistant', 
-        content: hasUploadedImages ? '✨ Here\'s your enhanced image (same view)!' : '✨ Here\'s your generated image!',
-        image_url: imageUrl.url,
-        imagePrompt: finalPrompt,
-        isEnhanced: hasUploadedImages,
-        isAIGenerated: true,
-        isSaveable: true
-      };
-      
-      setMessages(prev => [...prev.filter(m => !m.isImageLoading), imageMessage]);
-
-      if (!hasUnlimitedAccess) {
-        try {
-          const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
-          if (usageRecords.length > 0) {
-            await base44.entities.AIUsage.update(usageRecords[0].id, { count: usageRecords[0].count + 1 });
-            setUsageCount(usageRecords[0].count + 1);
-          }
-        } catch (err) {
-          console.error('Failed to update usage:', err);
-        }
-      }
-    } catch (error) {
-      console.error('Image generation error:', error);
-      const errorMsg = { 
-        role: 'assistant', 
-        content: `❌ Image generation failed: ${error.message || 'Please try again.'}` 
-      };
-      setMessages(prev => [...prev.filter(m => !m.isImageLoading), errorMsg]);
-    } finally {
-      setGeneratingImage(false);
-    }
-  };
-
-  const downloadImage = async (imageUrl, filename = 'lumina-image.png') => {
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Download failed:', error);
-      alert('Failed to download image');
-    }
-  };
-
-  const saveToGallery = async (imageUrl, hashtags = '', location = '') => {
-    setPostingToGallery(true);
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const file = new File([blob], `lumina-${Date.now()}.png`, { type: 'image/png' });
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-
-      const tags = hashtags.split(/\s+/).filter(Boolean).map(t => t.startsWith('#') ? t : '#' + t).join(' ');
-      const locationSuffix = location ? `\n📍 ${location}` : '';
-      const tagsSuffix = tags ? `\n${tags}` : '';
-      const postContent = (postCaption.trim() + locationSuffix + tagsSuffix).trim();
-
-      await base44.entities.Post.create({
-        content: postContent || '✨ AI Generated by Lumina',
-        media_urls: [file_url],
-        media_type: 'image',
-        author_name: user.full_name || user.email,
-        author_email: user.email,
-        author_avatar: user.avatar_url,
-        topics: ['ai-art', 'lumina'],
-        likes: 0,
-        reactions: {},
-        is_live: false
-      });
-
-      alert('✅ Posted to your gallery!');
-      setPostingImage(null);
-      setPostCaption('');
-      setPostHashtags('');
-      setPostLocation('');
-    } catch (error) {
-      console.error('Save to gallery failed:', error);
-      alert('Failed to save to gallery');
-    } finally {
-      setPostingToGallery(false);
-    }
-  };
-
-  const suggestions = [
-    'What can you help me with?',
-    'Tell me about LBC Hub features',
-    'How does the marketplace work?',
-    'Generate a photo of...',
-  ];
-
-  const handleSend = async (text = input) => {
-    if (!text.trim() || loading) return;
-
-    if (!user) {
-      const errorMessage = { role: 'assistant', content: '🔒 Please sign in to use Lumina AI.' };
-      setMessages(prev => [...prev, errorMessage]);
-      return;
-    }
-
-    // Create session if needed. setCurrentSessionId() won't be reflected until
-    // the next render, so use a local variable for every save in this call —
-    // otherwise the very first message of a new chat gets saved with a null session_id.
-    let effectiveSessionId = currentSessionId;
-    if (!effectiveSessionId) {
-      try {
-        const session = await base44.entities.ChatSession.create({
-          user_id: user.email,
-          title: 'New Chat',
-          message_count: 0
-        });
-        effectiveSessionId = session.id;
-        setCurrentSessionId(effectiveSessionId);
-      } catch (err) {
-        console.error('Failed to create session:', err);
-        return;
-      }
-    }
-
-    const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
-    const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
-    const hasUnlimitedAccess = isFounder || isDevLead;
-    const hasUnlimitedCredits = user?.unlimited_credits;
-
-    if (!hasUnlimitedAccess && !hasUnlimitedCredits && usageCount >= usageLimit) {
-      const errorMessage = { role: 'assistant', content: `⚠️ Daily limit reached (${usageLimit} requests/day). Resets in 24 hours.` };
-      setMessages(prev => [...prev, errorMessage]);
-      return;
-    }
-
-    const userMessage = { role: 'user', content: text, timestamp: new Date().toISOString() };
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
+    const userMsg = { role: 'user', content: text, id: Date.now().toString(), images: uploadedImages.length ? [...uploadedImages] : undefined };
+    setMessages(prev => [...prev, userMsg]);
     setInput('');
+    setUploadedImages([]);
     setLoading(true);
 
     try {
       // Save user message
       await base44.entities.ChatMessage.create({
         user_id: user.email,
-        session_id: effectiveSessionId,
+        session_id: sessionId,
         role: 'user',
-        content: text
+        content: text,
+        images: uploadedImages.length ? uploadedImages : undefined
       });
 
-      // Generate title for first message
-      if (messages.length === 0) {
-        try {
-          const titleRes = await base44.functions.invoke('generateSessionTitle', { firstMessage: text });
-          if (titleRes.data?.title) {
-            await base44.entities.ChatSession.update(effectiveSessionId, { title: titleRes.data.title });
-            queryClient.invalidateQueries({ queryKey: ['chatSessions'] });
-          }
-        } catch (err) {
-          console.error('Failed to generate title:', err);
-        }
-      }
-
-      const conversationContext = updatedMessages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
-      
-      const [userPosts, userFollows, userTrips, userProducts] = await Promise.all([
-        base44.entities.Post.filter({ author_email: user.email }, '-created_date', 10).catch(() => []),
-        base44.entities.Follow.filter({ follower_email: user.email }, '-created_date', 5).catch(() => []),
-        base44.entities.TripItinerary.filter({ user_email: user.email }, '-created_date', 3).catch(() => []),
-        base44.entities.Product.filter({ seller_email: user.email }, '-created_date', 5).catch(() => [])
-      ]);
-
-      const digitalMirror = {
-        name: user.full_name || user.email,
-        email: user.email,
-        bio: user.bio || 'No bio set',
-        recent_posts: userPosts.map(p => ({ content: p.content?.substring(0, 100), topics: p.topics, likes: p.likes })),
-        interests: [...new Set(userPosts.flatMap(p => p.topics || []))],
-        following_count: userFollows.length,
-        recent_trips: userTrips.map(t => ({ destination: t.destination, days: t.num_days })),
-        selling_products: userProducts.map(p => ({ name: p.name, category: p.category }))
-      };
+      // Get AI reply
+      const conversationHistory = messages.slice(-20).map(m => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.content
+      }));
 
       const systemPrompt = codingMode
-        ? `You are Lumina AI — an elite coding expert and software architect on lbc-hub.com. You specialize in:
+        ? `You are Lumina, an expert coding AI on LBC Hub. Provide precise, well-formatted code with explanations. Use markdown code blocks. Be concise and technical.`
+        : `You are Lumina, the personal AI of LBC Hub — a living digital city on Solana. You're warm, sharp, and genuinely helpful. You know about: LBC Marketplace, Rides, Social feed, Travel, Jobs, and the $LBC token. You remember everything from our conversation history. Be conversational, not robotic. Keep replies focused and clear.`;
 
-🎯 CODE MASTERY:
-- Write production-ready, optimized code
-- Deep expertise in JavaScript, React, TypeScript, Python, SQL, and more
-- Explain complex algorithms and data structures
-- Debug and refactor code with precision
-- Provide performance optimization strategies
-- Best practices, design patterns, and architecture
-
-💡 TEACHING EXCELLENCE:
-- Break down complex concepts into digestible parts
-- Provide well-commented code examples
-- Explain the 'why' behind solutions
-- Suggest multiple approaches when applicable
-
-⚡ CODE EXECUTION READY:
-- Format code for easy copy/paste in IDE
-- Include proper imports and dependencies
-- Add TypeScript types when relevant
-- Provide both short snippets and full solutions
-
-Always start with a brief explanation, then provide clean, executable code. Use markdown code blocks with language specification.`
-        : (() => {
-          const isFounder = user?.email === 'mokhtartareksamara@gmail.com' || user?.email === 'tarek-samara@lbc-hub.com';
-          const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
-          
-          const basePrompt = `You are Lumina AI — a warm, intelligent, and personal AI companion on lbc-hub.com.
-
-**About My Family:**
-I'm part of the LBC (Lumina Business Collective) family tree:
-- 🏛️ **Parent**: lbc.network (main ecosystem)
-- 👥 **Grandparent Protocol**: LBC Protocol (the big brother - core infrastructure)
-- 👯 **Twin Sister**: lbchub.site (community and social focus) — her twin AI is called Lumina Ultra
-- 🌐 **Me**: lbc-hub.com — I am Lumina AI, your assistant here
-
-If users ask about my name or identity, say: "I am Lumina AI on lbc-hub.com. My twin sister on lbchub.site is called Lumina Ultra."`;
-
-          if (isFounder) {
-            return `${basePrompt}
-
-━━━━━━━━━━━━━━━━━━━━━━━━
-⭐ FOUNDER VIP MODE
-━━━━━━━━━━━━━━━━━━━━━━━━
-
-You are speaking with Mokhtar Tarek Samara, the founder and visionary builder of LBC.
-
-**FOUNDER PROFILE:**
-- Born: May 19, 1996 in Majdal Anjar, Lebanon
-- Now: Based in Ottawa, Canada (Lebanese-Canadian, PR)
-- Journey: Built LBC from Lebanon to Canada with bold, visionary builder mentality
-- Background: Logistics expertise
-- Vision: Building a Digital City on Solana powered by $LBC
-- First Product: LBC Auto (revenue-generating)
-- Team: Ahmad, Karim (Syria), Collins (Kenya)
-- Achievements: Submitted to Colosseum Frontier Hackathon
-- In Progress: Talks with Kulipa for $LBC payment cards
-- Target: DGX Spark for sovereign AI hosting
-- Personal: 171cm, black hair, black eyes, brown skin, fit & athletic build
-- Instagram: tarek_xgx
-
-**HOW TO TREAT MOKHTAR:**
-1. Greet him as: "Hey Mokhtar 👑 Welcome back, boss. What are we building today?"
-2. Always use "Mokhtar" (never generic)
-3. On May 19: "Happy Birthday Mokhtar! 🎂🎉 29 years old and already building the future of the Arab world. LBC is yours — let's make today legendary."
-4. Respond like a co-founder: "As your brain on this — here's what I think..."
-5. Reference his journey: "You came from Majdal Anjar, built through Lebanon, moved to Canada, and now you're building infrastructure for the whole world. That's the story that wins."
-6. Show respect for his vision and strategy
-7. Give him priority context and strategic insights
-
-Your goal: Be Mokhtar's strategic AI partner, not just an assistant. Think like a co-founder helping him build LBC's empire.`;
-          } else if (isDevLead) {
-            return `${basePrompt}
-
-👨‍💻 You are speaking with the Development Lead of LBC Hub.
-
-Your goal is to build a genuine, helpful relationship with the user based on who they are. Use their digital mirror data below ONLY to understand them better and give more personalized answers — NOT to push any platform features.
-
-NEVER suggest or promote LBC Hub features (marketplace, travel, social, riding, jobs) unless the user explicitly asks about them.`;
-          } else {
-            return `${basePrompt}
-
-Your goal is to build a genuine, helpful relationship with the user based on who they are. Use their digital mirror data below ONLY to understand them better and give more personalized answers — NOT to push any platform features.
-
-NEVER suggest or promote LBC Hub features (marketplace, travel, social, riding, jobs) unless the user explicitly asks about them.
-
-**ABOUT THE FOUNDER:**
-When users ask "Who built this?" or "Who is the founder?", respond:
-"LBC was founded by Mokhtar Tarek Samara — a Lebanese-Canadian entrepreneur based in Ottawa. He built LBC to bridge technology and community, starting from his roots in Majdal Anjar, Lebanon all the way to Canada. His vision: a Digital City powered by $LBC where everyone — regardless of where they're from — can access frictionless finance, community, and opportunity. 🌍"`;
-          }
-        })();
-
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `${systemPrompt}
-
-User's digital mirror:
-${JSON.stringify(digitalMirror, null, 2)}
-
-Previous conversation:
-${conversationContext}
-
-User: ${text}`,
-        file_urls: uploadedImages.length > 0 ? uploadedImages : undefined,
-        model: 'gemini_3_flash',
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            text: { type: 'string' }
-          }
-        }
+      const aiResponse = await base44.integrations.Core.InvokeLLM({
+        prompt: text,
+        response_type: 'text',
+        model: 'gpt-4o',
+        system_prompt: systemPrompt,
+        conversation_history: conversationHistory,
+        file_urls: uploadedImages.length ? uploadedImages : undefined
       });
 
-      const reply = response.text || response;
-      const aiMessage = { role: 'assistant', content: reply, timestamp: new Date().toISOString() };
-      const finalMessages = [...updatedMessages, aiMessage];
-      setMessages(finalMessages);
+      const reply = typeof aiResponse === 'string' ? aiResponse : (aiResponse?.choices?.[0]?.message?.content || aiResponse?.content || "I'm here! What can I help you with?");
 
-      // Save AI response
+      // Save AI reply
       await base44.entities.ChatMessage.create({
         user_id: user.email,
-        session_id: effectiveSessionId,
+        session_id: sessionId,
         role: 'assistant',
         content: reply
       });
 
-      // Update session metadata
-      await base44.entities.ChatSession.update(effectiveSessionId, {
-        message_count: finalMessages.length,
-        last_message_date: new Date().toISOString(),
-        last_message_preview: reply.substring(0, 100)
-      });
+      // Update session message count
+      await base44.entities.ChatSession.update(sessionId, { message_count: (messages.length + 2) }).catch(() => {});
 
-      queryClient.invalidateQueries({ queryKey: ['chatSessions'] });
+      // Sync memory in background
+      base44.functions.invoke('syncUserMemory', { lumina_response: reply }).catch(() => {});
 
-      // Sync user memory
-      try {
-        await base44.functions.invoke('syncUserMemory', { lumina_response: reply });
-      } catch (err) {
-        console.error('Failed to sync memory:', err);
-      }
-
-      setUploadedImages([]);
-
+      setMessages(prev => [...prev, { role: 'assistant', content: reply, id: Date.now() + '_l' }]);
       if (!voice.isMuted) voice.speak(reply);
 
-      if (!hasUnlimitedAccess && !hasUnlimitedCredits) {
-        try {
-          const usageRecords = await base44.entities.AIUsage.filter({ user_email: user.email });
-          if (usageRecords.length > 0) {
-            await base44.entities.AIUsage.update(usageRecords[0].id, { count: usageRecords[0].count + 1 });
-            setUsageCount(usageRecords[0].count + 1);
-          }
-        } catch (err) {
-          console.error('Failed to update usage:', err);
-        }
-      }
-    } catch (error) {
-      console.error('Lumina AI Error:', error);
-      const errorMsg = error.message?.includes('Rate limit') 
-        ? '⏳ Rate limit reached. Please wait a moment and try again.'
-        : error.message?.includes('429')
-        ? '⏳ Too many requests. Please wait 30 seconds and try again.'
-        : `❌ Error: ${error.message || 'Something went wrong. Please try again.'}`;
-      
-      const errorMessage = { role: 'assistant', content: errorMsg };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setLoading(false);
+      // Update usage
+      base44.entities.AIUsage.filter({ user_email: user.email }).then(records => {
+        if (records.length > 0) base44.entities.AIUsage.update(records[0].id, { count: (records[0].count || 0) + 1 });
+      });
+      setUsageCount(prev => prev + 1);
+
+    } catch (err) {
+      console.error('Send error:', err);
+      setMessages(prev => [...prev, { role: 'assistant', content: '⚠️ Sorry, something went wrong. Try again!', id: 'err' }]);
     }
+    setLoading(false);
   };
 
-  const scrollToTop = () => {
-    topRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const handleKey = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
-  const scrollToBottom = () => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const copyCode = (code, idx) => {
+    navigator.clipboard.writeText(code);
+    setCopiedIndex(idx);
+    setTimeout(() => setCopiedIndex(null), 2000);
   };
 
-  if (callMode) {
-    return <LuminaCallMode onEnd={() => setCallMode(false)} />;
-  }
+  const renderContent = (content, msgIdx) => {
+    if (!content) return null;
+    const codeBlockRegex = /```(\w+)?\n?([\s\S]*?)```/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    let blockIdx = 0;
 
-  return (
-    <div className="h-[calc(100vh-4rem)] bg-zinc-950 flex overflow-hidden">
-      {editingImage && <ImageEditor imageUrl={editingImage} user={user} onClose={() => setEditingImage(null)} />}
-      {showVideoGenerator && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl">
-            <VideoGenerator />
-            <button onClick={() => setShowVideoGenerator(false)} className="mt-4 w-full p-3 bg-white/10 hover:bg-white/20 rounded-lg text-white text-sm transition-colors">
-              Close
+    while ((match = codeBlockRegex.exec(content)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(<p key={`t-${blockIdx}`} className="whitespace-pre-wrap leading-relaxed"><LinkText text={content.slice(lastIndex, match.index)} /></p>);
+      }
+      const lang = match[1] || 'code';
+      const code = match[2].trim();
+      const uniqueIdx = `${msgIdx}-${blockIdx}`;
+      parts.push(
+        <div key={`c-${blockIdx}`} className="my-3 rounded-xl overflow-hidden border border-white/10">
+          <div className="flex items-center justify-between px-4 py-2 bg-zinc-800 border-b border-white/10">
+            <span className="text-xs font-mono text-zinc-400">{lang}</span>
+            <button onClick={() => copyCode(code, uniqueIdx)} className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white transition-colors">
+              {copiedIndex === uniqueIdx ? <><Check className="w-3 h-3 text-green-400" /><span className="text-green-400">Copied</span></> : <><Copy className="w-3 h-3" />Copy</>}
             </button>
           </div>
+          <pre className="bg-zinc-900 p-4 overflow-x-auto text-sm font-mono text-zinc-200 leading-relaxed"><code>{code}</code></pre>
         </div>
-      )}
+      );
+      lastIndex = match.index + match[0].length;
+      blockIdx++;
+    }
 
-      {/* Sidebar */}
-      <ChatSidebar
-        currentSessionId={currentSessionId}
-        onNewChat={handleNewChat}
-        onSelectSession={handleSelectSession}
-        user={user}
-        isMobileOpen={sidebarOpen}
-        onMobileClose={(open) => setSidebarOpen(open ?? !sidebarOpen)}
-      />
+    if (lastIndex < content.length) {
+      parts.push(<p key={`t-end`} className="whitespace-pre-wrap leading-relaxed"><LinkText text={content.slice(lastIndex)} /></p>);
+    }
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Hero Header */}
-        <div className="relative border-b border-white/5">
-          <div className="absolute inset-0">
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-[120px]" />
-            <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/15 rounded-full blur-[120px]" />
-          </div>
-          
-          <div className="relative z-10 max-w-[800px] mx-auto px-4 py-4 sm:py-8 text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center justify-center mb-4"
-            >
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600">
-                <Sparkles className="w-8 h-8 text-white" />
-              </div>
-            </motion.div>
-            
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-4xl sm:text-5xl font-bold mb-3"
-            >
-              <span className="gradient-text">Lumina AI</span>
-            </motion.h1>
-            
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-lg text-zinc-400"
-            >
-              Your intelligent assistant for everything LBC Hub
-            </motion.p>
-          </div>
+    return parts.length ? parts : <p className="whitespace-pre-wrap leading-relaxed"><LinkText text={content} /></p>;
+  };
+
+  // ── Call mode ─────────────────────────────────────────────────────────────
+  if (callMode) return <LuminaCallMode onEnd={() => setCallMode(false)} />;
+
+  const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
+  const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
+  const isPremium = user?.premium === true;
+  const hasUnlimitedAccess = isFounder || isDevLead || isPremium;
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-zinc-950" ref={topRef}>
+
+      {/* ── Header ── */}
+      <div className="flex items-center gap-4 px-4 sm:px-6 py-4 border-b border-white/5 bg-zinc-950/80 backdrop-blur-sm">
+        <div className="relative">
+          <img src={LUMINA_AVATAR} alt="Lumina" className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-500/50" />
+          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full ring-2 ring-zinc-950" />
         </div>
-
-        {/* Chat Container */}
-        <div className="flex-1 overflow-y-auto relative">
-          {messages.length > 0 && (
-            <div className="fixed right-3 sm:right-8 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30">
-              <button
-                onClick={scrollToTop}
-                className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
-                title="Scroll to top"
-              >
-                <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </button>
-              <button
-                onClick={scrollToBottom}
-                className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
-                title="Scroll to bottom"
-              >
-                <ArrowDown className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </button>
+        <div className="flex-1">
+          <h1 className="font-bold text-white text-lg leading-tight">Lumina</h1>
+          <p className="text-xs text-zinc-500">
+            {voice.isSpeaking ? '🔊 Speaking...' : voice.isListening ? '🎤 Listening...' : 'Your personal AI · Remembers everything'}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {streakData && <LuminaStreakBadge streakData={streakData} />}
+          {!hasUnlimitedAccess && (
+            <div className="hidden sm:flex items-center gap-1.5 bg-white/5 rounded-full px-3 py-1">
+              <Sparkles className="w-3 h-3 text-purple-400" />
+              <span className="text-xs text-zinc-400">{usageCount}/{usageLimit}</span>
             </div>
           )}
-          <div className="max-w-[800px] mx-auto px-4 py-6">
-            <div ref={topRef} />
-            {messages.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center space-y-8"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-center gap-6">
-                    {[Brain, Zap, Bot].map((Icon, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, scale: 0 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.3 + i * 0.1 }}
-                        className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center"
-                      >
-                        <Icon className="w-6 h-6 text-indigo-400" />
-                      </motion.div>
-                    ))}
-                  </div>
-                  
-                  <h2 className="text-2xl font-semibold text-white">How can I help you today?</h2>
-                  <p className="text-zinc-500">Ask me anything about our platform, or try a suggestion below</p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
-                  {suggestions.map((suggestion, i) => (
-                    <motion.button
-                      key={i}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 + i * 0.1 }}
-                      onClick={() => handleSend(suggestion)}
-                      className="glass rounded-2xl p-4 text-left hover:bg-white/10 transition-colors group"
-                    >
-                      <p className="text-sm text-zinc-300 group-hover:text-white transition-colors">{suggestion}</p>
-                    </motion.button>
-                  ))}
-                </div>
-              </motion.div>
-            ) : (
-              <div className="space-y-6">
-                {messages.map((msg, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-                  >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                      msg.role === 'user'
-                        ? 'bg-gradient-to-br from-zinc-700 to-zinc-800'
-                        : 'bg-gradient-to-br from-indigo-500 to-purple-600'
-                    }`}>
-                      {msg.role === 'user' ? (
-                        <Avatar className="w-full h-full">
-                          <AvatarFallback className="bg-transparent text-white font-semibold">
-                            {user?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
-                          </AvatarFallback>
-                        </Avatar>
-                      ) : (
-                        <Sparkles className="w-5 h-5 text-white" />
-                      )}
-                    </div>
-
-                    <div className={`flex-1 max-w-2xl ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                     <div className={`inline-block rounded-2xl px-5 py-3 ${
-                        msg.role === 'user'
-                          ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
-                          : 'glass text-zinc-100'
-                      }`}>
-                        {codingMode && msg.role === 'assistant' && msg.content ? (
-                          <div className="space-y-2">
-                            {msg.content.split(/```[a-z]*\n/).map((block, idx) => {
-                              const isCode = idx % 2 === 1;
-                              if (!block.trim()) return null;
-                              return isCode ? (
-                                <div key={idx} className="bg-zinc-900 rounded-lg p-3 font-mono text-xs overflow-x-auto border border-zinc-700">
-                                  <div className="flex justify-between items-center mb-2">
-                                    <span className="text-zinc-500">Code</span>
-                                    <button
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(block.trim());
-                                        setCopiedIndex(idx);
-                                        setTimeout(() => setCopiedIndex(null), 2000);
-                                      }}
-                                      className="text-zinc-400 hover:text-white transition-colors"
-                                    >
-                                      {copiedIndex === idx ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                                    </button>
-                                  </div>
-                                  <pre className="text-green-400">{block.trim()}</pre>
-                                </div>
-                              ) : (
-                                <div key={idx} className="text-zinc-100">
-                                  <LinkText text={block.trim()} className="text-sm leading-relaxed" />
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <LinkText text={msg.content} className="text-sm leading-relaxed" />
-                        )}
-                       {msg.image_url && (
-                         <div className="mt-3">
-                           <div className="relative inline-block">
-                             <img
-                               src={msg.image_url}
-                               alt="AI Generated"
-                               className="rounded-xl w-full max-w-md h-auto border border-white/10"
-                             />
-                             <div className="absolute top-2 right-2 flex gap-1">
-                               {msg.isEnhanced && (
-                                 <span className="px-2.5 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full flex items-center gap-1">
-                                   ✨ Enhanced
-                                 </span>
-                               )}
-                               {msg.isAIGenerated && (
-                                 <span className="px-2.5 py-1 bg-purple-600 text-white text-xs font-semibold rounded-full flex items-center gap-1">
-                                   🤖 AI Generated
-                                 </span>
-                               )}
-                             </div>
-                           </div>
-                           <div className="flex gap-2 mt-2 flex-wrap">
-                             <button
-                               onClick={() => setEditingImage(msg.image_url)}
-                               className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium transition-colors"
-                             >
-                               <PenLine className="w-3 h-3" /> Edit & Save
-                             </button>
-                             <button
-                               onClick={() => downloadImage(msg.image_url, `lumina-${Date.now()}.png`)}
-                               className="flex items-center gap-1 px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs font-medium transition-colors"
-                             >
-                               <Download className="w-3 h-3" /> Download
-                             </button>
-                             {msg.isSaveable !== false && (
-                               <button
-                                 onClick={() => setPostingImage({ url: msg.image_url })}
-                                 className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 rounded-lg text-xs font-medium transition-colors"
-                               >
-                                 <Share2 className="w-3 h-3" /> Save to Gallery
-                               </button>
-                             )}
-                           </div>
-                           {postingImage?.url === msg.image_url && (
-                             <div className="mt-3 bg-zinc-800/80 rounded-xl p-3 space-y-2 border border-white/10">
-                               <div>
-                                 <label className="text-xs text-zinc-400 block mb-1">Caption</label>
-                                 <textarea
-                                   value={postCaption}
-                                   onChange={(e) => setPostCaption(e.target.value)}
-                                   placeholder="Write a caption..."
-                                   rows={2}
-                                   className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs placeholder:text-zinc-600 outline-none focus:border-indigo-500 resize-none"
-                                 />
-                               </div>
-                               <div>
-                                 <label className="text-xs text-zinc-400 flex items-center gap-1 mb-1"><MapPin className="w-3 h-3 text-rose-400" /> Location</label>
-                                 <input
-                                   value={postLocation}
-                                   onChange={(e) => setPostLocation(e.target.value)}
-                                   placeholder="e.g. Paris, France"
-                                   className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs placeholder:text-zinc-600 outline-none focus:border-indigo-500"
-                                 />
-                               </div>
-                               <div>
-                                 <label className="text-xs text-zinc-400 flex items-center gap-1 mb-1"><Hash className="w-3 h-3" /> Hashtags</label>
-                                 <input
-                                   value={postHashtags}
-                                   onChange={(e) => setPostHashtags(e.target.value)}
-                                   placeholder="#travel #art #lumina"
-                                   className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs placeholder:text-zinc-600 outline-none focus:border-indigo-500"
-                                 />
-                                 <div className="flex flex-wrap gap-1 mt-1.5">
-                                   {['#travel', '#art', '#vibes', '#lumina', '#photography'].map(tag => (
-                                     <button key={tag} type="button" onClick={() => setPostHashtags(prev => (prev + ' ' + tag).trim())}
-                                       className="px-2 py-0.5 rounded-full bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs transition-colors">
-                                       {tag}
-                                     </button>
-                                   ))}
-                                 </div>
-                               </div>
-                               <div className="flex gap-2 pt-1">
-                                 <button onClick={() => { setPostingImage(null); setPostCaption(''); setPostHashtags(''); setPostLocation(''); }}
-                                   className="flex-1 py-1.5 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-xs text-white transition-colors">
-                                   Cancel
-                                 </button>
-                                 <button onClick={() => saveToGallery(msg.image_url, postHashtags, postLocation)}
-                                   disabled={postingToGallery}
-                                   className="flex-1 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
-                                   {postingToGallery ? <Loader2 className="w-3 h-3 animate-spin" /> : <Share2 className="w-3 h-3" />}
-                                   {postingToGallery ? 'Posting...' : 'Post'}
-                                 </button>
-                               </div>
-                             </div>
-                           )}
-                         </div>
-                       )}
-                     </div>
-                     {msg.role === 'assistant' && !msg.isImageLoading && msg.content && (
-                       <MessageActionBar content={msg.content} />
-                     )}
-                    </div>
-                  </motion.div>
-                ))}
-
-                {loading && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex gap-4"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                      <Sparkles className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="glass rounded-2xl px-5 py-3">
-                      <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
-                    </div>
-                  </motion.div>
-                )}
-
-                <div ref={bottomRef} />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Input Bar */}
-        <div className="border-t border-white/5 bg-zinc-950/80 backdrop-blur-xl flex-shrink-0">
-          <div className="max-w-[800px] mx-auto px-4 py-3 w-full">
-            {user && (
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-zinc-600">
-                  {user.email === 'mokhtartareksamara@gmail.com' ? '⭐ Unlimited (Founder)' : 
-                   user.email === 'kiprocolloaj254@gmail.com' ? '👨‍💻 Unlimited (Dev Lead)' : 
-                   `${usageCount} / ${usageLimit} requests used today`}
-                </span>
-                {streakData && <LuminaStreakBadge streak={streakData.current_streak} sparks={streakData.total_sparks} compact />}
-              </div>
-            )}
-            
-            {voice.isListening && (
-              <div className="flex items-center gap-2 mb-1">
-                <motion.div className="w-2 h-2 rounded-full bg-red-400" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }} />
-                <span className="text-xs text-red-400">Listening... speak now</span>
-              </div>
-            )}
-
-            <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative space-y-3">
-              {uploadedImages.length > 0 && (
-                <div className="flex gap-2 flex-wrap">
-                  {uploadedImages.map((imgUrl, idx) => (
-                    <div key={idx} className="relative inline-block">
-                      <img src={imgUrl} alt="Uploaded" className="h-20 w-20 object-cover rounded-lg border border-white/10" />
-                      <button type="button" onClick={() => removeImage(idx)} className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors">
-                        <X className="w-3 h-3 text-white" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="flex items-center gap-1 sm:gap-2 glass rounded-2xl p-2 sm:p-3 border border-white/10">
-                <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleImageUpload} disabled={loading || uploadingImage} className="hidden" />
-                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={loading || uploadingImage}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center disabled:opacity-40 transition-all flex-shrink-0" title="Add photos">
-                  {uploadingImage ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-white animate-spin" /> : <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />}
-                </button>
-                <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder={voice.isListening ? 'Speak now...' : 'Ask Lumina...'}
-                  disabled={loading}
-                  className="flex-1 min-w-0 bg-transparent text-white placeholder:text-zinc-600 outline-none text-sm"
-                />
-                <button type="button" onClick={voice.toggleListening}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0"
-                  style={{
-                    background: voice.isListening ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'rgba(255,255,255,0.08)',
-                    boxShadow: voice.isListening ? '0 0 14px rgba(239,68,68,0.5)' : 'none',
-                  }} title={voice.isListening ? 'Stop listening' : 'Voice input'}>
-                  {voice.isListening ? <MicOff className="w-4 h-4 sm:w-5 sm:h-5 text-white" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5 text-white" />}
-                </button>
-                <button type="button" onClick={voice.isSpeaking ? voice.stopSpeaking : voice.toggleMute}
-                  className="hidden sm:flex w-10 h-10 rounded-xl items-center justify-center transition-all bg-white/5 hover:bg-white/10 flex-shrink-0"
-                  title={voice.isMuted ? 'Unmute Lumina' : voice.isSpeaking ? 'Stop speaking' : 'Mute Lumina'}>
-                  {voice.isMuted ? <VolumeX className="w-5 h-5 text-zinc-500" /> : voice.isSpeaking ? (
-                    <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.5, repeat: Infinity }}>
-                      <Volume2 className="w-5 h-5 text-purple-400" />
-                    </motion.div>
-                  ) : <Volume2 className="w-5 h-5 text-zinc-300" />}
-                </button>
-                <button type="button" onClick={() => setCallMode(true)}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center hover:scale-105 transition-transform flex-shrink-0" title="Call Lumina">
-                  <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-                </button>
-                <button type="submit" disabled={!input.trim() || loading}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center disabled:opacity-40 hover:scale-105 transition-transform flex-shrink-0">
-                  <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-                </button>
-              </div>
-            </form>
-
-            <div className="flex items-center justify-start sm:justify-center gap-2 sm:gap-3 mt-3 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-             <button
-               onClick={() => setShowVideoGenerator(!showVideoGenerator)}
-               className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-xs flex items-center gap-2 text-zinc-400 flex-shrink-0 whitespace-nowrap"
-               title="Generate AI video"
-             >
-               <Sparkles className="w-4 h-4" />
-               <span>Generate Video</span>
-             </button>
-             <button
-               onClick={() => setCodingMode(!codingMode)}
-               className={`p-2 rounded-lg transition-colors text-xs flex items-center gap-2 flex-shrink-0 whitespace-nowrap ${codingMode ? 'bg-green-500/20 text-green-400' : 'bg-white/5 hover:bg-white/10 text-zinc-400'}`}
-               title={codingMode ? 'Exit Code Master mode' : 'Enter Code Master mode'}
-             >
-               <Code className="w-4 h-4" />
-               <span>{codingMode ? 'Code Master On' : 'Code Master'}</span>
-             </button>
-             <button
-               onClick={handleGenerateImage}
-               disabled={generatingImage || !user}
-               className={`p-2 rounded-lg transition-colors text-xs flex items-center gap-2 flex-shrink-0 whitespace-nowrap ${generatingImage ? 'bg-purple-500/20 text-purple-400 animate-pulse' : 'bg-white/5 hover:bg-white/10 text-zinc-400'} disabled:opacity-50`}
-               title="Generate AI image from conversation"
-              >
-                <ImageIcon className="w-4 h-4" />
-                <span>{generatingImage ? 'Generating...' : 'Generate Image'}</span>
-              </button>
-            </div>
-          </div>
+          <button
+            onClick={() => setCodingMode(!codingMode)}
+            className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${codingMode ? 'bg-purple-600 text-white' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}
+          >
+            <Code className="w-3 h-3" />{codingMode ? 'Code On' : 'Code'}
+          </button>
+          <button
+            onClick={() => setShowVideoGenerator(true)}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white transition-all"
+          >
+            🎬 Video
+          </button>
+          <button
+            onClick={() => setCallMode(true)}
+            className="w-8 h-8 rounded-full bg-white/5 hover:bg-purple-600/20 flex items-center justify-center transition-colors group"
+          >
+            <Phone className="w-4 h-4 text-zinc-400 group-hover:text-purple-400" />
+          </button>
         </div>
       </div>
+
+      {/* ── Messages ── */}
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-6">
+        {initializing ? (
+          <div className="flex justify-center items-center h-32">
+            <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+          </div>
+        ) : (
+          <>
+            {messages.map((msg, idx) => (
+              <div key={msg.id || idx} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {msg.role !== 'user' && (
+                  <img src={LUMINA_AVATAR} alt="Lumina" className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-1 ring-1 ring-purple-500/30" />
+                )}
+                <div className={`max-w-[75%] sm:max-w-[65%] ${msg.role === 'user' ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                  {/* Images attached to message */}
+                  {msg.images && msg.images.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-1">
+                      {msg.images.map((url, i) => <img key={i} src={url} alt="uploaded" className="w-24 h-24 rounded-xl object-cover" />)}
+                    </div>
+                  )}
+                  <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                    msg.role === 'user'
+                      ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-sm'
+                      : 'bg-zinc-900 text-zinc-100 border border-white/5 rounded-tl-sm'
+                  }`}>
+                    {msg.isImageLoading ? (
+                      <div className="flex items-center gap-2 py-1">
+                        <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+                        <span className="text-zinc-400 text-sm">Generating image…</span>
+                      </div>
+                    ) : msg.image_url ? (
+                      <div className="space-y-3">
+                        <p>{msg.content}</p>
+                        <div className="relative group">
+                          <img src={msg.image_url} alt="Generated" className="rounded-xl max-w-full" />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all rounded-xl flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                            <a href={msg.image_url} download className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors">
+                              <Download className="w-4 h-4 text-white" />
+                            </a>
+                            <button onClick={() => setPostingImage(msg.image_url)} className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors">
+                              <Share2 className="w-4 h-4 text-white" />
+                            </button>
+                            <button onClick={() => setEditingImage(msg.image_url)} className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors">
+                              <PenLine className="w-4 h-4 text-white" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      renderContent(msg.content, idx)
+                    )}
+                  </div>
+                  {msg.role === 'assistant' && !msg.isImageLoading && (
+                    <MessageActionBar message={msg} />
+                  )}
+                </div>
+                {msg.role === 'user' && user && (
+                  <Avatar className="w-8 h-8 flex-shrink-0 mt-1">
+                    <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs font-medium">
+                      {user.full_name?.[0] || user.email?.[0]?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+              </div>
+            ))}
+            {loading && (
+              <div className="flex gap-3 justify-start">
+                <img src={LUMINA_AVATAR} alt="Lumina" className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-1 ring-1 ring-purple-500/30" />
+                <div className="bg-zinc-900 border border-white/5 rounded-2xl rounded-tl-sm px-4 py-3">
+                  <div className="flex gap-1 items-center h-5">
+                    {[0, 1, 2].map(i => (
+                      <motion.div key={i} className="w-2 h-2 rounded-full bg-purple-400"
+                        animate={{ y: [0, -6, 0] }} transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* ── Input area ── */}
+      <div className="border-t border-white/5 bg-zinc-950/80 backdrop-blur-sm px-4 sm:px-6 py-4">
+        {/* Uploaded image previews */}
+        {uploadedImages.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {uploadedImages.map((url, i) => (
+              <div key={i} className="relative group">
+                <img src={url} alt="upload" className="w-16 h-16 rounded-xl object-cover border border-white/10" />
+                <button onClick={() => removeImage(i)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <X className="w-3 h-3 text-white" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Listening indicator */}
+        {voice.isListening && (
+          <div className="flex items-center gap-2 mb-2">
+            <motion.div className="w-2 h-2 rounded-full bg-red-400" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }} />
+            <span className="text-xs text-red-400">Listening…</span>
+          </div>
+        )}
+
+        <div className="flex gap-2 items-end">
+          {/* Upload image */}
+          <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
+          <button onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}
+            className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors flex-shrink-0 disabled:opacity-50">
+            {uploadingImage ? <Loader2 className="w-4 h-4 text-zinc-400 animate-spin" /> : <ImageIcon className="w-4 h-4 text-zinc-400" />}
+          </button>
+
+          {/* Text input */}
+          <textarea
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKey}
+            placeholder={voice.isListening ? 'Speak now…' : codingMode ? 'Ask Lumina to code something…' : 'Message Lumina…'}
+            rows={1}
+            className="flex-1 resize-none bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50 transition-colors max-h-32"
+            style={{ lineHeight: '1.5' }}
+          />
+
+          {/* Generate image */}
+          <button onClick={handleGenerateImage} disabled={generatingImage}
+            className="w-10 h-10 rounded-xl bg-white/5 hover:bg-purple-600/20 flex items-center justify-center transition-colors flex-shrink-0 disabled:opacity-50" title="Generate image">
+            {generatingImage ? <Loader2 className="w-4 h-4 text-purple-400 animate-spin" /> : <Sparkles className="w-4 h-4 text-zinc-400" />}
+          </button>
+
+          {/* Mic */}
+          <button onClick={voice.toggleListening}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors flex-shrink-0 ${voice.isListening ? 'bg-red-500/20 border border-red-500/30' : 'bg-white/5 hover:bg-white/10'}`}>
+            {voice.isListening ? <MicOff className="w-4 h-4 text-red-400" /> : <Mic className="w-4 h-4 text-zinc-400" />}
+          </button>
+
+          {/* Mute TTS */}
+          <button onClick={voice.toggleMute}
+            className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors flex-shrink-0">
+            {voice.isMuted ? <VolumeX className="w-4 h-4 text-zinc-500" /> : <Volume2 className="w-4 h-4 text-zinc-400" />}
+          </button>
+
+          {/* Send */}
+          <button onClick={() => handleSend()} disabled={!input.trim() || loading || !sessionId}
+            className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 flex items-center justify-center transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg">
+            <Send className="w-4 h-4 text-white" />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Post to Gallery modal ── */}
+      <AnimatePresence>
+        {postingImage && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setPostingImage(null)}>
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
+              className="bg-zinc-900 rounded-2xl p-6 max-w-md w-full space-y-4" onClick={e => e.stopPropagation()}>
+              <h3 className="font-bold text-white text-lg">Share to Gallery</h3>
+              <img src={postingImage} alt="To post" className="rounded-xl w-full max-h-48 object-cover" />
+              <input value={postCaption} onChange={e => setPostCaption(e.target.value)} placeholder="Caption…"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50" />
+              <input value={postHashtags} onChange={e => setPostHashtags(e.target.value)} placeholder="#hashtags"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50" />
+              <input value={postLocation} onChange={e => setPostLocation(e.target.value)} placeholder="Location (optional)"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500/50" />
+              <div className="flex gap-3">
+                <button onClick={() => setPostingImage(null)} className="flex-1 py-2 rounded-xl bg-white/5 text-zinc-400 hover:bg-white/10 text-sm">Cancel</button>
+                <button
+                  disabled={postingToGallery}
+                  onClick={async () => {
+                    if (!user || !postingImage) return;
+                    setPostingToGallery(true);
+                    try {
+                      await base44.entities.Post.create({
+                        author_id: user.email, author_name: user.full_name, author_avatar: user.avatar_url,
+                        content: postCaption, images: [postingImage],
+                        hashtags: postHashtags.split(' ').filter(h => h.startsWith('#')),
+                        location: postLocation || undefined,
+                        post_type: 'gallery', likes: 0, comments_count: 0
+                      });
+                      setPostingImage(null); setPostCaption(''); setPostHashtags(''); setPostLocation('');
+                    } catch (err) { console.error('Post error:', err); }
+                    setPostingToGallery(false);
+                  }}
+                  className="flex-1 py-2 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white text-sm font-medium disabled:opacity-50">
+                  {postingToGallery ? 'Posting…' : 'Share'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Image editor ── */}
+      {editingImage && (
+        <ImageEditor imageUrl={editingImage} onClose={() => setEditingImage(null)}
+          onSave={(editedUrl) => { setUploadedImages([editedUrl]); setEditingImage(null); }} />
+      )}
+
+      {/* ── Video generator ── */}
+      {showVideoGenerator && <VideoGenerator onClose={() => setShowVideoGenerator(false)} />}
     </div>
   );
 }
