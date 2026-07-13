@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Monitor, Pen, BarChart2, BookOpen, Megaphone,
   Wrench, Camera, Globe, Shield, ArrowRight, X,
-  CheckCircle, Star, Users, Zap, TrendingUp
+  CheckCircle, Star, Users, Zap, TrendingUp, ExternalLink, Play
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -263,6 +263,63 @@ export default function Services() {
               <p className="text-xs text-zinc-500 mt-1">{stat.label}</p>
             </div>
           ))}
+        </motion.div>
+
+        {/* ── LBC Auto — Featured Flagship Service ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+          className="relative rounded-3xl overflow-hidden mb-10 border border-teal-500/30 bg-gradient-to-br from-teal-950/80 via-zinc-900/90 to-zinc-950 p-8 md:p-12 flex flex-col md:flex-row items-center gap-8 cursor-pointer group"
+          onClick={() => navigate(createPageUrl('LbcAutoProfile'))}
+        >
+          {/* Glow */}
+          <div className="absolute inset-0 bg-teal-500/5 group-hover:bg-teal-500/10 transition-all duration-500 pointer-events-none" />
+          <div className="absolute top-0 left-0 w-72 h-72 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Icon */}
+          <div className="relative flex-shrink-0 w-24 h-24 rounded-3xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center shadow-2xl shadow-teal-500/30 group-hover:scale-105 transition-transform duration-300">
+            <Wrench className="w-12 h-12 text-white" />
+          </div>
+
+          {/* Text */}
+          <div className="relative flex-1 text-center md:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/20 border border-teal-500/30 text-teal-400 text-xs font-bold uppercase tracking-wider mb-3">
+              <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+              Live — Our Flagship Platform
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">LBC Auto</h2>
+            <p className="text-zinc-300 text-lg mb-4 max-w-xl">
+              Full auto shop management — repair orders, estimates, invoices, AI diagnostics, and customer portals. Built for modern repair shops.
+            </p>
+            <div className="flex flex-wrap gap-3 justify-center md:justify-start mb-5">
+              {['Repair Orders', 'AI Diagnostics', 'Customer Portal', 'Invoicing', 'Appointments'].map(f => (
+                <span key={f} className="px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-300 text-xs font-medium">{f}</span>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-3 justify-center md:justify-start">
+              <Button
+                className="bg-teal-500 hover:bg-teal-400 text-white rounded-xl px-6 h-11 font-semibold flex items-center gap-2"
+                onClick={e => { e.stopPropagation(); navigate(createPageUrl('LbcAutoProfile')); }}
+              >
+                <Play className="w-4 h-4" /> Get Started
+              </Button>
+              <Button
+                variant="outline"
+                className="border-teal-500/40 text-teal-300 hover:bg-teal-500/10 rounded-xl px-6 h-11 flex items-center gap-2"
+                onClick={e => { e.stopPropagation(); window.open('https://lbchub.tech', '_blank', 'noopener,noreferrer'); }}
+              >
+                <ExternalLink className="w-4 h-4" /> Visit lbchub.tech
+              </Button>
+            </div>
+          </div>
+
+          {/* Price badge */}
+          <div className="relative flex-shrink-0 text-center">
+            <div className="rounded-2xl bg-teal-500/10 border border-teal-500/20 p-5">
+              <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Starting at</p>
+              <p className="text-3xl font-bold text-teal-400">$199<span className="text-base font-normal text-zinc-400">/mo</span></p>
+              <p className="text-xs text-zinc-500 mt-1">+ $2,999 setup</p>
+            </div>
+          </div>
         </motion.div>
 
         {/* Services Grid */}
