@@ -7,6 +7,7 @@ import LuminaCallMode from './LuminaCallMode';
 import MessageActionBar from './MessageActionBar';
 
 const LUMINA_AVATAR = 'https://images.unsplash.com/photo-1635002962487-2c1d4d2f63c2?w=80&h=80&fit=crop&crop=face';
+const DAILY_LIMIT = 30;
 
 export default function LuminaChatWidget() {
   const [open, setOpen] = useState(false);
@@ -17,6 +18,8 @@ export default function LuminaChatWidget() {
   const [hasUnread, setHasUnread] = useState(false);
   const [user, setUser] = useState(null);
   const [callMode, setCallMode] = useState(false);
+  const [usageCount, setUsageCount] = useState(0);
+  const [usageRecordId, setUsageRecordId] = useState(null);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
   const initialized = useRef(false);
@@ -25,7 +28,6 @@ export default function LuminaChatWidget() {
     onTranscript: (t) => setInput(t),
     onFinalTranscript: (t) => {
       setInput(t);
-      // Auto-send after 1.5s pause (already handled inside hook, we just trigger send)
       setTimeout(() => {
         setInput(prev => {
           if (prev.trim()) sendMessageText(prev.trim());
@@ -43,11 +45,12 @@ export default function LuminaChatWidget() {
     });
   }, []);
 
-  // Load history when opened
+  // Load history + usage when opened
   useEffect(() => {
     if (open && user && !initialized.current) {
       initialized.current = true;
       loadHistory();
+      loadUsage();
     }
     if (open) {
       setHasUnread(false);
@@ -68,10 +71,56 @@ export default function LuminaChatWidget() {
     }
   }, [open]);
 
+  const loadUsage = async () => {
+    if (!user?.email) return;
+    try {
+      const isFounder = user.email === 'tarek-samara@lbc-hub.com' || user.role === 'admin';
+      if (isFounder) return; // unlimited
+
+      const records = await base44.entities.AIUsage.filter({ user_email: user.email });
+      if (records.length > 0) {
+        const rec = records[0];
+        // Reset daily count if last_reset was yesterday or earlier
+        const lastReset = new Date(rec.last_reset || 0);
+        const now = new Date();
+        const isNewDay = lastReset.toDateString() !== now.toDateString();
+        if (isNewDay) {
+          await base44.entities.AIUsage.update(rec.id, { count: 0, last_reset: now.toISOString() });
+          setUsageCount(0);
+        } else {
+          setUsageCount(rec.count || 0);
+        }
+        setUsageRecordId(rec.id);
+      } else {
+        // Create fresh record
+        const newRec = await base44.entities.AIUsage.create({
+          user_email: user.email,
+          count: 0,
+          last_reset: new Date().toISOString()
+        });
+        setUsageRecordId(newRec.id);
+        setUsageCount(0);
+      }
+    } catch (err) {
+      console.error('Usage load error:', err);
+    }
+  };
+
+  const incrementUsage = async () => {
+    try {
+      const newCount = usageCount + 1;
+      setUsageCount(newCount);
+      if (usageRecordId) {
+        await base44.entities.AIUsage.update(usageRecordId, { count: newCount });
+      }
+    } catch (err) {
+      console.error('Usage increment error:', err);
+    }
+  };
+
   const loadHistory = async () => {
     setInitializing(true);
     try {
-      // Load from LuminaMessage entity — private 1-on-1 chat only
       const chatMessages = await base44.entities.LuminaMessage.filter(
         { user_id: user.email },
         '-created_date',
@@ -79,7 +128,6 @@ export default function LuminaChatWidget() {
       );
       const history = chatMessages.reverse();
 
-      // Load user memory for greeting context
       const memories = await base44.entities.UserMemory.filter({ user_id: user.email });
       const mem = memories.length > 0 ? memories[0] : null;
 
@@ -114,24 +162,44 @@ export default function LuminaChatWidget() {
     return "Hey! I'm Lumina 👋 Your personal AI on LBC Hub. Tell me your name and what you're looking for — I'll remember everything from now on!";
   };
 
+  const isOverLimit = () => {
+    if (!user) return false;
+    const isFounder = user.email === 'tarek-samara@lbc-hub.com' || user.role === 'admin';
+    const isPremium = user.premium === true;
+    return !isFounder && !isPremium && usageCount >= DAILY_LIMIT;
+  };
+
   const sendMessageText = async (text) => {
     if (!text || loading || !user) return;
+
+    // Usage gate
+    if (isOverLimit()) {
+      setMessages(prev => [...prev, {
+        role: 'lumina',
+        content: `⚠️ Daily limit reached (${DAILY_LIMIT}/day). Upgrade to Premium for unlimited access!`,
+        id: Date.now() + '_lim'
+      }]);
+      return;
+    }
+
     const userMsg = { role: 'user', content: text, id: Date.now().toString() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
 
     try {
-      // Get AI response (luminaChat backend handles saving to LuminaMessage)
       const res = await base44.functions.invoke('luminaChat', { action: 'send', message: text });
       const reply = res.data?.reply || "I'm here! What can I help you with?";
 
-      // Sync user memory with new learning
+      // Sync memory
       try {
         await base44.functions.invoke('syncUserMemory', { lumina_response: reply });
       } catch (err) {
         console.error('Failed to sync memory:', err);
       }
+
+      // Increment usage counter
+      await incrementUsage();
 
       setMessages(prev => [...prev, { role: 'lumina', content: reply, id: Date.now().toString() + '_l' }]);
       if (!voice.isMuted) voice.speak(reply);
@@ -158,6 +226,10 @@ export default function LuminaChatWidget() {
       return () => clearTimeout(t);
     }
   }, [user, open]);
+
+  const isFounder = user?.email === 'tarek-samara@lbc-hub.com' || user?.role === 'admin';
+  const isPremium = user?.premium === true;
+  const showUsageBadge = user && !isFounder && !isPremium;
 
   if (callMode) {
     return <LuminaCallMode onEnd={() => setCallMode(false)} />;
@@ -188,6 +260,12 @@ export default function LuminaChatWidget() {
                   {voice.isSpeaking ? '🔊 Speaking...' : voice.isListening ? '🎤 Listening...' : 'Online — your personal AI'}
                 </div>
               </div>
+              {/* Usage badge */}
+              {showUsageBadge && (
+                <div className={`text-xs px-2 py-0.5 rounded-full font-medium ${usageCount >= DAILY_LIMIT ? 'bg-red-500/30 text-red-300' : 'bg-white/15 text-purple-100'}`}>
+                  {usageCount}/{DAILY_LIMIT}
+                </div>
+              )}
               {/* Call button */}
               <button
                 onClick={() => setCallMode(true)}
@@ -224,7 +302,6 @@ export default function LuminaChatWidget() {
 
             {/* Input */}
             <div className="px-3 py-3 border-t border-white/10 bg-zinc-900 space-y-2">
-              {/* Listening indicator */}
               {voice.isListening && (
                 <div className="flex items-center gap-2 px-2">
                   <motion.div className="w-2 h-2 rounded-full bg-red-400" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }} />
@@ -237,48 +314,35 @@ export default function LuminaChatWidget() {
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={handleKey}
-                  placeholder={voice.isListening ? 'Speak now...' : 'Message Lumina...'}
+                  placeholder={isOverLimit() ? '⚠️ Daily limit reached' : voice.isListening ? 'Speak now...' : 'Message Lumina...'}
                   rows={1}
-                  className="flex-1 resize-none bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors max-h-24"
+                  disabled={isOverLimit()}
+                  className="flex-1 resize-none bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors max-h-24 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ lineHeight: '1.5' }}
                 />
                 {/* Mic button */}
                 <button
                   onClick={voice.toggleListening}
-                  className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-                  style={{
-                    background: voice.isListening
-                      ? 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)'
-                      : 'rgba(255,255,255,0.08)',
-                    boxShadow: voice.isListening ? '0 0 12px rgba(239,68,68,0.5)' : 'none',
-                  }}
-                  title={voice.isListening ? 'Stop listening' : 'Start voice input'}
+                  disabled={isOverLimit()}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${
+                    voice.isListening ? 'bg-red-500 text-white' : 'bg-white/10 text-zinc-400 hover:bg-white/20 hover:text-white'
+                  }`}
                 >
-                  {voice.isListening ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4 text-zinc-300" />}
+                  {voice.isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                 </button>
-                {/* Mute toggle */}
+                {/* Mute button */}
                 <button
-                  onClick={voice.isSpeaking ? voice.stopSpeaking : voice.toggleMute}
-                  className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-                  style={{ background: 'rgba(255,255,255,0.08)' }}
-                  title={voice.isMuted ? 'Unmute Lumina' : voice.isSpeaking ? 'Stop speaking' : 'Mute Lumina'}
+                  onClick={voice.toggleMute}
+                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors flex-shrink-0"
+                  title={voice.isMuted ? 'Unmute' : 'Mute'}
                 >
-                  {voice.isMuted ? (
-                    <VolumeX className="w-4 h-4 text-zinc-500" />
-                  ) : voice.isSpeaking ? (
-                    <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.5, repeat: Infinity }}>
-                      <Volume2 className="w-4 h-4 text-purple-400" />
-                    </motion.div>
-                  ) : (
-                    <Volume2 className="w-4 h-4 text-zinc-300" />
-                  )}
+                  {voice.isMuted ? <VolumeX className="w-4 h-4 text-zinc-400" /> : <Volume2 className="w-4 h-4 text-zinc-400" />}
                 </button>
                 {/* Send */}
                 <button
                   onClick={sendMessage}
-                  disabled={!input.trim() || loading}
-                  className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all disabled:opacity-40"
-                  style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)' }}
+                  disabled={!input.trim() || loading || isOverLimit()}
+                  className="w-9 h-9 rounded-full bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors flex-shrink-0"
                 >
                   <Send className="w-4 h-4 text-white" />
                 </button>
@@ -288,70 +352,59 @@ export default function LuminaChatWidget() {
         )}
       </AnimatePresence>
 
-      {/* Floating Bubble */}
-      <motion.div
-        className="fixed bottom-6 right-6 z-[9999]"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+      {/* FAB */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="fixed bottom-6 right-4 z-[9998] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+        style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)' }}
       >
-        <div className="relative group">
-          <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 rounded-lg text-xs text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-zinc-800 border border-white/10">
-            Chat with Lumina
-          </div>
-          <button
-            onClick={() => setOpen(o => !o)}
-            className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl shadow-purple-900/50 transition-all"
-            style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)' }}
-          >
-            {open ? (
+        <AnimatePresence mode="wait">
+          {open ? (
+            <motion.div key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
               <X className="w-6 h-6 text-white" />
-            ) : (
-              <Sparkles className="w-7 h-7 text-white" />
-            )}
-          </button>
-          {hasUnread && !open && (
-            <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-zinc-950 animate-pulse" />
+            </motion.div>
+          ) : (
+            <motion.div key="spark" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
+              <Sparkles className="w-6 h-6 text-white" />
+            </motion.div>
           )}
-        </div>
-      </motion.div>
+        </AnimatePresence>
+        {hasUnread && !open && (
+          <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-purple-700" />
+        )}
+      </button>
     </>
-  );
-}
-
-function MessageBubble({ msg }) {
-  const isLumina = msg.role === 'lumina';
-  return (
-    <div className={`flex ${isLumina ? 'justify-start' : 'justify-end'}`}>
-      {isLumina && (
-        <img src={LUMINA_AVATAR} alt="Lumina" className="w-6 h-6 rounded-full object-cover mr-2 mt-1 flex-shrink-0" />
-      )}
-      <div className={`max-w-[80%] ${isLumina ? 'space-y-0.5' : ''}`}>
-        <div
-          className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
-            isLumina ? 'rounded-tl-sm text-white' : 'rounded-tr-sm text-white bg-zinc-700'
-          }`}
-          style={isLumina ? { background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)' } : {}}
-        >
-          {msg.content}
-        </div>
-        {isLumina && msg.content && <MessageActionBar content={msg.content} />}
-      </div>
-    </div>
   );
 }
 
 function TypingDots() {
   return (
-    <div className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl rounded-tl-sm" style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)' }}>
-      <img src={LUMINA_AVATAR} alt="" className="w-4 h-4 rounded-full object-cover -ml-1 mr-1" />
+    <div className="flex items-center gap-1 px-3 py-2 rounded-2xl bg-white/8 max-w-[80px]">
       {[0, 1, 2].map(i => (
         <motion.div
           key={i}
-          className="w-1.5 h-1.5 bg-white/70 rounded-full"
-          animate={{ y: [0, -4, 0] }}
-          transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+          className="w-2 h-2 rounded-full bg-purple-400"
+          animate={{ opacity: [0.3, 1, 0.3], y: [0, -4, 0] }}
+          transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.2 }}
         />
       ))}
+    </div>
+  );
+}
+
+function MessageBubble({ msg }) {
+  const isUser = msg.role === 'user';
+  return (
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+      <div
+        className={`max-w-[85%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
+          isUser
+            ? 'bg-purple-600 text-white rounded-br-sm'
+            : 'bg-white/8 text-zinc-100 rounded-bl-sm'
+        }`}
+      >
+        {msg.content}
+      </div>
     </div>
   );
 }
