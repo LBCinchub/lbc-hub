@@ -26,21 +26,30 @@ export default function FloatingDM({ user }) {
 
   const [dmLoaded, setDmLoaded] = useState(false);
 
+  // Load DMs on open; refresh every 5s while panel is open
   useEffect(() => {
-    if (!user?.email || !open || dmLoaded) return;
+    if (!user?.email || !open) return;
     const load = async () => {
       try {
-        const sent = await base44.entities.DirectMessage.filter({ from_email: user.email }, '-created_date', 100);
-        await new Promise(r => setTimeout(r, 800));
-        const received = await base44.entities.DirectMessage.filter({ to_email: user.email }, '-created_date', 100);
+        const [sent, received] = await Promise.all([
+          base44.entities.DirectMessage.filter({ from_email: user.email }, '-created_date', 100),
+          base44.entities.DirectMessage.filter({ to_email: user.email }, '-created_date', 100),
+        ]);
         setAllMessages([...sent, ...received].sort((a, b) => new Date(a.created_date) - new Date(b.created_date)));
         setDmLoaded(true);
       } catch (e) {
-        console.warn('DM load failed, will retry on next open');
+        console.warn('DM load failed, will retry');
       }
     };
     load();
+    const interval = setInterval(load, 5000); // poll every 5s while open
+    return () => clearInterval(interval);
   }, [user?.email, open]);
+
+  // Reset dmLoaded when panel closes so it re-fetches on next open
+  useEffect(() => {
+    if (!open) setDmLoaded(false);
+  }, [open]);
 
   useEffect(() => {
     if (!user?.email) return;

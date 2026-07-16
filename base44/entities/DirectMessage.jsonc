@@ -47,7 +47,14 @@
       ]
     },
     "update": {
-      "data.from_email": "{{user.email}}"
+      "$or": [
+        {
+          "data.from_email": "{{user.email}}"
+        },
+        {
+          "data.to_email": "{{user.email}}"
+        }
+      ]
     },
     "delete": {
       "user_condition": {
