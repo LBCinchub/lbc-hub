@@ -212,7 +212,16 @@ export default function LuminaAI() {
   // ── Send message ──────────────────────────────────────────────────────────
   const handleSend = async (overrideText) => {
     const text = (overrideText ?? input).trim();
-    if (!text || loading || !user || !sessionId) return;
+    if (!text || loading) return;
+    if (!user) {
+      setMessages(prev => [...prev, 
+        { role: "user", content: text, id: Date.now().toString() },
+        { role: "assistant", content: "Hey! 👋 I'd love to chat — but you'll need to sign in first so I can remember our conversation. Tap **Get Started** in the top right to create your free LBC Hub account!", id: Date.now() + "_auth" }
+      ]);
+      setInput('');
+      return;
+    }
+    if (!sessionId) return;
 
     const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
     const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
