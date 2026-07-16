@@ -263,7 +263,7 @@ export default function LuminaAI() {
       const aiResponse = await base44.integrations.Core.InvokeLLM({
         prompt: text,
         response_type: 'text',
-        model: 'gpt-4o',
+        add_context_from_internet: false,
         system_prompt: systemPrompt,
         conversation_history: conversationHistory,
         file_urls: uploadedImages.length ? uploadedImages : undefined
@@ -295,8 +295,13 @@ export default function LuminaAI() {
       setUsageCount(prev => prev + 1);
 
     } catch (err) {
-      console.error('Send error:', err);
-      setMessages(prev => [...prev, { role: 'assistant', content: '⚠️ Sorry, something went wrong. Try again!', id: 'err' }]);
+      console.error('Lumina send error:', err?.message || err);
+      const errMsg = err?.message?.includes('not found') || err?.message?.includes('entity')
+        ? '⚠️ Session setup failed. Please refresh and try again.'
+        : err?.message?.includes('quota') || err?.message?.includes('limit')
+        ? '⚠️ AI limit reached. Please try again shortly.'
+        : '⚠️ Something went wrong. Try again!';
+      setMessages(prev => [...prev, { role: 'assistant', content: errMsg, id: 'err_' + Date.now() }]);
     }
     setLoading(false);
   };
