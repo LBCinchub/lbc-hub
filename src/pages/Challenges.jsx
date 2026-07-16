@@ -12,10 +12,10 @@ export default function Challenges() {
   const [filter, setFilter] = useState('active');
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me().then(setUser).catch(() => { /* unauthenticated — intentional */ });
   }, []);
 
-  const { data: challenges = [] } = useQuery({
+  const { data: challenges = [], isError: challengesError } = useQuery({
     queryKey: ['challenges'],
     queryFn: () => base44.entities.Challenge.list('-created_date', 50),
     initialData: []
@@ -37,6 +37,11 @@ export default function Challenges() {
   return (
     <div className="min-h-screen bg-zinc-950 py-20 px-4">
       <div className="max-w-7xl mx-auto">
+        {challengesError && (
+          <div className="mb-4 bg-red-900/30 border border-red-500/30 text-red-300 rounded-xl px-4 py-3 text-sm">
+            Failed to load challenges. Please refresh the page.
+          </div>
+        )}
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

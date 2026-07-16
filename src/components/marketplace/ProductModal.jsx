@@ -44,6 +44,7 @@ function ReviewForm({ productId, sellerEmail, user, onDone }) {
 
   const mutation = useMutation({
     mutationFn: (data) => base44.entities.Review.create(data),
+    onError: () => { alert('Failed to submit review. Please try again.'); },
     onSuccess: async () => {
       // Update product avg_rating
       const allReviews = await base44.entities.Review.filter({ product_id: productId, type: 'product' });
@@ -159,6 +160,7 @@ function InquiryForm({ product, user, onDone }) {
   const [message, setMessage] = useState('');
   const mutation = useMutation({
     mutationFn: (data) => base44.entities.BuyerInquiry.create(data),
+    onError: () => { alert('Failed to send inquiry. Please try again.'); },
     onSuccess: onDone,
   });
 
@@ -217,7 +219,7 @@ export default function ProductModal({ product, user, onClose }) {
     if (product.seller_email) {
       base44.entities.User.filter({ email: product.seller_email }, '-created_date', 1)
         .then(users => setSellerData(users[0]))
-        .catch(() => {});
+        .catch((e) => { console.warn('Image fetch failed', e); });
     }
   }, [product.seller_email]);
 
@@ -242,6 +244,7 @@ export default function ProductModal({ product, user, onClose }) {
         cancelUrl: `${window.location.origin}/Marketplace`,
       });
       if (res.data?.url) {
+        // External payment redirect — intentional
         window.location.href = res.data.url;
       }
     } catch (err) {

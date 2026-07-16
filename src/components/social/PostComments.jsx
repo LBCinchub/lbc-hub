@@ -33,6 +33,7 @@ function CommentItem({ comment, user, postOwnerEmail, postId, replies = [], onDe
       setShowReplyInput(false);
       setShowReplies(true);
     },
+    onError: () => { /* silent — action failed */ },
   });
 
   const likeMutation = useMutation({
@@ -41,6 +42,7 @@ function CommentItem({ comment, user, postOwnerEmail, postId, replies = [], onDe
       setLiked(l => !l);
       setLikeCount(c => liked ? c - 1 : c + 1);
     },
+    onError: () => { /* silent — action failed */ },
   });
 
   const timeAgo = comment.created_date

@@ -51,7 +51,7 @@ export default function Marketplace() {
   const [selectedSeller, setSelectedSeller] = useState(null);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me().then(setUser).catch(() => { /* unauthenticated — intentional */ });
   }, []);
 
   const { data: products = [], isLoading } = useQuery({

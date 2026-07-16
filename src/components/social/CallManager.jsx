@@ -89,7 +89,13 @@ export default function CallManager({ user }) {
       }
 
       if (sig.type === 'offer' && pc.current) {
-        const offer = JSON.parse(sig.payload);
+        let offer;
+        try {
+          offer = JSON.parse(sig.payload);
+        } catch (e) {
+          console.warn('Signal parse error', e);
+          return;
+        }
         await pc.current.setRemoteDescription(new RTCSessionDescription(offer));
         const answer = await pc.current.createAnswer();
         await pc.current.setLocalDescription(answer);
@@ -97,15 +103,27 @@ export default function CallManager({ user }) {
       }
 
       if (sig.type === 'answer' && pc.current) {
-        const answer = JSON.parse(sig.payload);
+        let answer;
+        try {
+          answer = JSON.parse(sig.payload);
+        } catch (e) {
+          console.warn('Signal parse error', e);
+          return;
+        }
         if (pc.current.signalingState === 'have-local-offer') {
           await pc.current.setRemoteDescription(new RTCSessionDescription(answer));
         }
       }
 
       if (sig.type === 'ice-candidate' && pc.current) {
-        const candidate = JSON.parse(sig.payload);
-        await pc.current.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
+        let candidate;
+        try {
+          candidate = JSON.parse(sig.payload);
+        } catch (e) {
+          console.warn('Signal parse error', e);
+          return;
+        }
+        await pc.current.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => { /* intentional silent catch */ });
       }
 
       if (sig.type === 'hangup') {

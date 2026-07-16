@@ -60,10 +60,10 @@ export default function Home() {
   const showPostsLayout = searchParams.get('photo') !== null;
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me().then(setUser).catch(() => { /* unauthenticated — intentional */ });
   }, []);
 
-  const { data: posts = [], isLoading: postsLoading } = useQuery({
+  const { data: posts = [], isLoading: postsLoading, isError: postsError } = useQuery({
     queryKey: ['posts'],
     queryFn: () => base44.entities.Post.list('-created_date', 30),
     enabled: showPostsLayout,

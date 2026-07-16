@@ -37,7 +37,7 @@ export default function VideoGenerator({ onClose }) {
       await base44.entities.Post.create({
         content: `🎬 AI Video: ${video.title}\n\n${video.script}`,
         author_name: 'You',
-        author_email: 'user@app.local',
+        author_email: 'user@app.local' /* fallback email for unauthenticated context */,
         media_urls: [video.thumbnail],
         media_type: 'video',
         topics: ['video', 'ai-generated']

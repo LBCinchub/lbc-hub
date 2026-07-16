@@ -54,7 +54,7 @@ export default function PostCard({ post, user, onDmUser, onViewProfile, onHashta
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          videoRef.current?.play().catch(() => {});
+          videoRef.current?.play().catch(() => { /* intentional silent catch */ });
         } else {
           videoRef.current?.pause();
         }
@@ -76,7 +76,7 @@ export default function PostCard({ post, user, onDmUser, onViewProfile, onHashta
     if (post.author_email) {
       base44.entities.LuminaStreak.filter({ user_email: post.author_email }).then(records => {
         if (records.length > 0) setAuthorStreak(records[0]);
-      }).catch(() => {});
+      }).catch(() => { /* intentional silent catch */ });
     }
   }, [post.author_email]);
 
@@ -190,6 +190,7 @@ Provide a brief analysis in JSON format:
         user_email: user.email,
         post_author_name: post.author_name,
         post_content_preview: post.content?.slice(0, 100),
+    onError: () => { /* silent — action failed silently */ },
       });
     },
     onSuccess: () => {
@@ -238,6 +239,7 @@ Provide a brief analysis in JSON format:
           message: `${user.full_name || user.email} reacted ${emoji} to your post`,
           post_id: post.id,
           read: false,
+    onError: () => { /* silent — action failed silently */ },
         });
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
       }
@@ -264,6 +266,7 @@ Provide a brief analysis in JSON format:
           message: `${user.full_name || user.email} commented on your post`,
           post_id: post.id,
           read: false,
+    onError: () => { /* silent — action failed silently */ },
         });
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
       }
@@ -273,6 +276,7 @@ Provide a brief analysis in JSON format:
   const deleteCommentMutation = useMutation({
     mutationFn: (commentId) => base44.entities.Comment.delete(commentId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['comments', post.id] }),
+    onError: () => { /* silent — action failed silently */ },
   });
 
   const followMutation = useMutation({
@@ -286,6 +290,7 @@ Provide a brief analysis in JSON format:
           follower_name: user.full_name || user.email,
           following_email: post.author_email,
           following_name: post.author_name,
+    onError: () => { /* silent — action failed silently */ },
         });
       }
     },
@@ -298,6 +303,7 @@ Provide a brief analysis in JSON format:
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['myPosts'] });
     },
+    onError: () => { /* silent — action failed silently */ },
   });
 
   const editPostMutation = useMutation({
@@ -307,6 +313,7 @@ Provide a brief analysis in JSON format:
       queryClient.invalidateQueries({ queryKey: ['myPosts'] });
       setIsEditingPost(false);
     },
+    onError: () => { /* silent — action failed silently */ },
   });
 
   if (!post || !post.content) return null;

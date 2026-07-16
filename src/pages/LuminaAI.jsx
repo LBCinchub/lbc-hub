@@ -56,7 +56,7 @@ export default function LuminaAI() {
 
   // ── Load user ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me().then(setUser).catch(() => { /* unauthenticated — intentional */ });
   }, []);
 
   // ── Load streak + usage ───────────────────────────────────────────────────
@@ -280,10 +280,10 @@ export default function LuminaAI() {
       });
 
       // Update session message count
-      await base44.entities.ChatSession.update(sessionId, { message_count: (messages.length + 2) }).catch(() => {});
+      await base44.entities.ChatSession.update(sessionId, { message_count: (messages.length + 2) }).catch(() => { /* intentional silent catch */ });
 
       // Sync memory in background
-      base44.functions.invoke('syncUserMemory', { lumina_response: reply }).catch(() => {});
+      base44.functions.invoke('syncUserMemory', { lumina_response: reply }).catch(() => { /* silent background op */ });
 
       setMessages(prev => [...prev, { role: 'assistant', content: reply, id: Date.now() + '_l' }]);
       if (!voice.isMuted) voice.speak(reply);

@@ -43,6 +43,8 @@ export default function MemberSearch({ onSelectMember, onViewProfile }) {
   }, [searchQuery]);
 
   const handleSelectMember = (member) => {
+    // Notify parent via both callbacks (onSelectMember for DM flow, onViewProfile for profile view)
+    onSelectMember?.(member);
     onViewProfile?.({
       email: member.email,
       full_name: member.full_name || member.email,

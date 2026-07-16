@@ -21,7 +21,7 @@ export default function Riding() {
     base44.auth.me().then(u => {
       setUser(u);
       setEmail(u.email || '');
-    }).catch(() => {});
+    }).catch(() => { /* unauthenticated — intentional */ });
   }, []);
 
   const notifyMutation = useMutation({

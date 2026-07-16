@@ -53,8 +53,9 @@ export default function DirectMessages({ user }) {
         type: 'message',
         message: `${user.full_name || user.email} sent you a message`,
         read: false,
-      }).catch(() => {});
-    }
+      }).catch((e) => { console.warn('DM load error', e); });
+    },
+    onError: () => { alert('Failed to send message. Please try again.'); }
   });
 
   const handleSend = (e) => {

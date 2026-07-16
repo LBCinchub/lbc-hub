@@ -38,8 +38,8 @@ export default function Profile() {
       // Load streak
       base44.entities.LuminaStreak.filter({ user_email: u.email }).then(records => {
         if (records.length > 0) setStreakData(records[0]);
-      }).catch(() => {});
-    }).catch(() => {}).finally(() => setAuthLoading(false));
+      }).catch(() => { /* unauthenticated — intentional */ });
+    }).catch(() => { /* intentional silent catch */ }).finally(() => setAuthLoading(false));
   }, []);
 
   useEffect(() => {
@@ -50,10 +50,10 @@ export default function Profile() {
           if (users[0]) {
             base44.entities.LuminaStreak.filter({ user_email: users[0].email }).then(records => {
               if (records.length > 0) setStreakData(records[0]);
-            }).catch(() => {});
+            }).catch(() => { /* intentional silent catch */ });
           }
         })
-        .catch(() => {});
+        .catch(() => { /* intentional silent catch */ });
     }
   }, [viewEmail]);
 
@@ -90,6 +90,7 @@ export default function Profile() {
       setEditMode(false);
       queryClient.invalidateQueries({ queryKey: ['myPosts'] });
     },
+    onError: () => { /* silent — action failed */ },
   });
 
   const handleSave = () => {

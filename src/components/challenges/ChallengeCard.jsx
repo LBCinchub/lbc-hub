@@ -25,6 +25,9 @@ export default function ChallengeCard({ challenge, user, onViewLeaderboard }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['challenges'] });
+    },
+    onError: () => {
+      alert('Action failed. Please try again.');
     }
   });
 

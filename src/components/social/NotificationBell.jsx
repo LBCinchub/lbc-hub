@@ -21,7 +21,7 @@ export default function NotificationBell({ user }) {
     if (!user?.email) return;
     // Initial load
     base44.entities.Notification.filter({ to_email: user.email }, '-created_date', 20)
-      .then(setNotifications).catch(() => {});
+      .then(setNotifications).catch(() => { /* silent — non-critical */ });
     // Real-time subscription instead of polling
     const unsub = base44.entities.Notification.subscribe((event) => {
       const n = event.data;
@@ -40,6 +40,7 @@ export default function NotificationBell({ user }) {
 
   const markReadMutation = useMutation({
     mutationFn: (id) => base44.entities.Notification.update(id, { read: true }),
+    onError: () => { /* silent — non-critical */ },
     onSuccess: (_, id) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n)),
   });
 

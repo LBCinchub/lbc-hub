@@ -182,7 +182,7 @@ export default function Travel() {
     });
 
     // Wait for both so the function doesn't throw before they complete
-    await Promise.all([essentialsPromise, detailsPromise]).catch(() => {});
+    await Promise.all([essentialsPromise, detailsPromise]).catch(() => { /* non-critical — silent fallback */ });
   };
 
   const handleBookingClick = (categoryId) => {

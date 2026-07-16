@@ -86,6 +86,7 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
       following_email: targetUser.email,
       following_name: targetUser.full_name || targetUser.email,
     }),
+    onError: () => { alert('Failed to follow user.'); },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['followers', targetUser.email] });
       queryClient.invalidateQueries({ queryKey: ['followRecord'] });
@@ -94,6 +95,7 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
 
   const unfollowMutation = useMutation({
     mutationFn: () => base44.entities.Follow.delete(followRecord[0].id),
+    onError: () => { alert('Failed to unfollow user.'); },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['followers', targetUser.email] });
       queryClient.invalidateQueries({ queryKey: ['followRecord'] });
@@ -102,6 +104,7 @@ export default function UserProfileModal({ targetUser, currentUser, onClose }) {
 
   const updateProfileMutation = useMutation({
     mutationFn: (data) => base44.auth.updateMe(data),
+    onError: () => { alert('Failed to save profile changes.'); },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['userProfile'] });
       setSavedData(prev => ({ ...prev, ...variables }));

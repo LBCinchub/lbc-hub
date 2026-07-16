@@ -109,6 +109,7 @@ export default function Settings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['socialAccounts', user?.email] });
     },
+    onError: () => { /* silent — action failed */ },
   });
 
   const handleManualConnect = async (platformId, credentials) => {

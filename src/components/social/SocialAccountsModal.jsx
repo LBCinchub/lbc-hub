@@ -24,6 +24,7 @@ export default function SocialAccountsModal({ user, onClose }) {
 
   const deleteAccountMutation = useMutation({
     mutationFn: (accountId) => base44.entities.SocialAccount.delete(accountId),
+    onError: () => { alert('Failed to remove account.'); },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['socialAccounts', user?.email] });
     },

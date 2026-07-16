@@ -148,7 +148,10 @@ function BookingDialog({ service, open, onClose }) {
 
   const bookMutation = useMutation({
     mutationFn: (data) => base44.entities.ServiceBooking.create(data),
-    onSuccess: () => setDone(true)
+    onSuccess: () => setDone(true),
+    onError: () => {
+      alert('Booking failed. Please try again or contact support.');
+    }
   });
 
   const handleSubmit = () => {

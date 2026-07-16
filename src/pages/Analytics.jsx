@@ -11,7 +11,7 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me().then(setUser).catch(() => { /* unauthenticated — intentional */ });
   }, []);
 
   useEffect(() => {
@@ -83,6 +83,11 @@ export default function Analytics() {
   return (
     <div className="min-h-screen bg-zinc-950 px-4 py-10">
       <div className="max-w-5xl mx-auto space-y-8">
+        {dataError && (
+          <div className="bg-red-900/30 border border-red-500/30 text-red-300 rounded-xl px-4 py-3 text-sm">
+            Failed to load analytics data. Please refresh the page.
+          </div>
+        )}
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">

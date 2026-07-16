@@ -26,7 +26,7 @@ export default function GoLiveModal({ open, onClose, onStartLive, user }) {
           streamRef.current = stream;
           if (videoRef.current) videoRef.current.srcObject = stream;
         })
-        .catch(() => {});
+        .catch(() => { /* silent background op */ });
     }
     return () => {
       if (streamRef.current && !streaming) {

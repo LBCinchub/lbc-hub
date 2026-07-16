@@ -144,21 +144,25 @@ export default function SellerDashboard({ user, onClose, openAddListing = false 
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Product.create({ ...data, seller_email: user.email, seller_name: user.full_name || user.email }),
+    onError: () => { alert('Failed to create listing. Please try again.'); },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['myProducts'] }); queryClient.invalidateQueries({ queryKey: ['products'] }); setCreatingNew(false); }
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Product.update(id, data),
+    onError: () => { alert('Failed to update listing.'); },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['myProducts'] }); queryClient.invalidateQueries({ queryKey: ['products'] }); setEditingProduct(null); }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Product.delete(id),
+    onError: () => { alert('Failed to delete listing. Please try again.'); },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['myProducts'] }); queryClient.invalidateQueries({ queryKey: ['products'] }); }
   });
 
   const replyMutation = useMutation({
     mutationFn: ({ id, reply }) => base44.entities.BuyerInquiry.update(id, { reply, status: 'replied' }),
+    onError: () => { alert('Failed to send reply.'); },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['myInquiries'] }); }
   });
 

@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,7 +28,8 @@ const MOODS = [
 const SUGGESTED_HASHTAGS = ['#travel', '#lifestyle', '#motivation', '#photography', '#food', '#fitness', '#art', '#music', '#tech', '#fashion', '#nature', '#vibes'];
 
 export default function CreatePost({ user, onGoLive }) {
-  const urlParams = new URLSearchParams(window.location.search);
+  const [searchParams] = useSearchParams();
+  const urlParams = new URLSearchParams(searchParams);
   const shareTripId = urlParams.get('shareTrip');
   const shareTripName = urlParams.get('tripName');
   const shareTripDest = urlParams.get('dest');
@@ -146,6 +148,7 @@ export default function CreatePost({ user, onGoLive }) {
       setLocation(''); setShowLocation(false); setShowMood(false); setShowHashtags(false);
       setExpanded(false);
     },
+    onError: () => { alert('Failed to create post. Please try again.'); }
   });
 
   const handlePost = () => {

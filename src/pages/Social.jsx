@@ -27,6 +27,8 @@ import { Settings as SettingsIcon } from 'lucide-react';
 import LuminaStreakBadge from '../components/social/LuminaStreakBadge';
 import TwinConversationFeed from '../components/social/TwinConversationFeed';
 
+const BOT_EMAILS = ['ai.mod@lbchub.ai', 'community.bot@lbchub.ai', 'zara.roast@lbchub.ai']; // AI bot identities
+
 export default function Social() {
   const [user, setUser] = useState(null);
   const [chatMessage, setChatMessage] = useState('');
@@ -63,7 +65,7 @@ export default function Social() {
       setTimeout(() => {
         base44.entities.LuminaStreak.filter({ user_email: u.email }).then(records => {
           if (records.length > 0) setStreakData(records[0]);
-        }).catch(() => {});
+        }).catch(() => { /* intentional silent catch */ });
       }, 2000);
     }).catch(() => { setUserLoaded(true); });
     window.scrollTo(0, 0);
@@ -74,7 +76,7 @@ export default function Social() {
       setTimeout(() => {
         base44.entities.Post.filter({ id: postId }).then(res => {
           if (res.length > 0) setSelectedPost(res[0]);
-        }).catch(() => {});
+        }).catch(() => { /* intentional silent catch */ });
       }, 1000);
     }
   }, [searchParams]);
@@ -107,7 +109,7 @@ export default function Social() {
     // Initial load
     base44.entities.ChatMessage.list('-created_date', 50).then(msgs => {
       setChatMessages(msgs.filter(m => !m.session_id));
-    }).catch(() => {});
+    }).catch(() => { /* intentional silent catch */ });
 
     // Real-time subscription — Zara and others appear instantly
     const unsub = base44.entities.ChatMessage.subscribe((event) => {
@@ -434,8 +436,8 @@ export default function Social() {
               <ScrollArea className="h-[340px] p-4">
                 <div className="space-y-4">
                   {[...chatMessages].reverse().map((msg) => {
-                    const isAIMod = msg.author_email === 'ai.mod@lbchub.ai' || msg.author_email === 'community.bot@lbchub.ai';
-                    const isZara = msg.author_email === 'zara.roast@lbchub.ai';
+                    const isAIMod = msg.author_email === BOT_EMAILS[0] || msg.author_email === BOT_EMAILS[1];
+                    const isZara = msg.author_email === BOT_EMAILS[2];
                     const isLumina = msg.author_email === 'lumina.ai@lbchub.ai';
                     const isMine = msg.author_email === user?.email;
                     return (

@@ -6,6 +6,8 @@ import { useVoice } from '@/hooks/useVoice';
 import LuminaCallMode from './LuminaCallMode';
 import MessageActionBar from './MessageActionBar';
 
+const WIDGET_ADMIN_EMAIL = 'tarek-samara@lbc-hub.com'; // privileged admin identity
+
 const LUMINA_AVATAR = 'https://images.unsplash.com/photo-1635002962487-2c1d4d2f63c2?w=80&h=80&fit=crop&crop=face';
 const DAILY_LIMIT = 30;
 
@@ -41,7 +43,7 @@ export default function LuminaChatWidget() {
   // Load current user
   useEffect(() => {
     base44.auth.isAuthenticated().then(authed => {
-      if (authed) base44.auth.me().then(setUser).catch(() => {});
+      if (authed) base44.auth.me().then(setUser).catch(() => { /* intentional silent catch */ });
     });
   }, []);
 
@@ -74,7 +76,7 @@ export default function LuminaChatWidget() {
   const loadUsage = async () => {
     if (!user?.email) return;
     try {
-      const isFounder = user.email === 'tarek-samara@lbc-hub.com' || user.role === 'admin';
+      const isFounder = user.email === WIDGET_ADMIN_EMAIL || user.role === 'admin';
       if (isFounder) return; // unlimited
 
       const records = await base44.entities.AIUsage.filter({ user_email: user.email });
@@ -164,7 +166,7 @@ export default function LuminaChatWidget() {
 
   const isOverLimit = () => {
     if (!user) return false;
-    const isFounder = user.email === 'tarek-samara@lbc-hub.com' || user.role === 'admin';
+    const isFounder = user.email === WIDGET_ADMIN_EMAIL || user.role === 'admin';
     const isPremium = user.premium === true;
     return !isFounder && !isPremium && usageCount >= DAILY_LIMIT;
   };
@@ -227,7 +229,7 @@ export default function LuminaChatWidget() {
     }
   }, [user, open]);
 
-  const isFounder = user?.email === 'tarek-samara@lbc-hub.com' || user?.role === 'admin';
+  const isFounder = user?.email === WIDGET_ADMIN_EMAIL || user?.role === 'admin';
   const isPremium = user?.premium === true;
   const showUsageBadge = user && !isFounder && !isPremium;
 

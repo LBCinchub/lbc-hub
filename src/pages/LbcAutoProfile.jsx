@@ -12,14 +12,22 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
+const AUTHORIZED_SHOP_OWNERS = [
+  'mokhtartareksamara@gmail.com',   // LBC Admin
+  'belalautoservices@gmail.com',    // Belal Auto Services
+  'hajwheels@gmail.com',            // Haj Rims & Wheels
+  'aka.auto.group@gmail.com',       // AKA Auto Group
+  'terryfoxauto@gmail.com',         // Terry Fox Auto
+];
+
 // LBC Auto — all shops run on the same app, scoped by owner email (RLS).
 const SHOP_APP_ID = "69b0bd497bfce90f18df6cdd";
 const FN_BASE = `https://base44.app/api/apps/${SHOP_APP_ID}/functions`;
 
 const SHOPS = {
-  mokhtar: { email: "mokhtartareksamara@gmail.com", name: "LBC Auto", tagline: "Full auto shop management — repair orders, estimates, invoices & AI diagnostics.", phone: "+16133141994" },
-  belal: { email: "belalautoservices@gmail.com", name: "Belal Auto Services", tagline: "Trusted repairs and maintenance, powered by LBC Auto." },
-  haj: { email: "hajwheels@gmail.com", name: "Haj Wheels", tagline: "Quality auto care, powered by LBC Auto." },
+  mokhtar: { email: AUTHORIZED_SHOP_OWNERS[0], name: "LBC Auto", tagline: "Full auto shop management — repair orders, estimates, invoices & AI diagnostics.", phone: "+16133141994" },
+  belal: { email: AUTHORIZED_SHOP_OWNERS[1], name: "Belal Auto Services", tagline: "Trusted repairs and maintenance, powered by LBC Auto." },
+  haj: { email: AUTHORIZED_SHOP_OWNERS[2], name: "Haj Wheels", tagline: "Quality auto care, powered by LBC Auto." },
   aka: { email: "aka.auto.group@gmail.com", name: "AKA Auto Group", tagline: "Reliable auto service, powered by LBC Auto." },
 };
 const DEFAULT_SLUG = "mokhtar";
@@ -436,7 +444,7 @@ function TrackVehiclePanel({ shopEmail }) {
                   <Gift className="w-4 h-4 text-amber-400" />
                   <span className="text-sm font-semibold text-amber-300">Active Offer</span>
                 </div>
-                <p className="text-white text-sm">{data.offers[0].title}</p>
+                <p className="text-white text-sm">{data.offers[0]?.title}</p>
               </div>
             )}
 
@@ -484,6 +492,7 @@ function QuickContactCard({ shopSlug, shopName, shopEmail, shopPhone }) {
   const mutation = useMutation({
     mutationFn: (data) => base44.entities.ServiceBooking.create(data),
     onSuccess: () => setDone(true),
+    onError: () => { alert('Booking failed. Please try again.'); },
   });
 
   const submit = () => {

@@ -103,19 +103,23 @@ export default function FloatingDM({ user }) {
 
   const sendCommunityMutation = useMutation({
     mutationFn: (content) => base44.entities.ChatMessage.create({ content, author_name: user.full_name || user.email, author_email: user.email, author_avatar: user.avatar_url || '' }),
-    onSuccess: () => { setText(''); }
+    onSuccess: () => { setText(''); },
+    onError: () => { alert('Failed to send message.'); }
   });
 
   const deleteMessageMutation = useMutation({
     mutationFn: (id) => base44.entities.ChatMessage.delete(id),
+    onError: () => { alert('Failed to delete message.'); }
   });
 
   const pinMessageMutation = useMutation({
     mutationFn: ({ id, pinned }) => base44.entities.ChatMessage.update(id, { is_pinned: pinned }),
+    onError: () => { /* silent */ }
   });
 
   const muteUserMutation = useMutation({
     mutationFn: (email) => base44.entities.MutedUser.create({ email, muted_by: user.email }),
+    onError: () => { /* silent */ }
   });
 
   const unmuteUserMutation = useMutation({
@@ -123,6 +127,7 @@ export default function FloatingDM({ user }) {
       const record = mutedUsers.find(m => m.email === email);
       return record ? base44.entities.MutedUser.delete(record.id) : Promise.resolve();
     },
+    onError: () => { /* silent */ }
   });
 
   const threads = {};
@@ -146,6 +151,7 @@ export default function FloatingDM({ user }) {
         m.from_email === email && m.to_email === user.email ? { ...m, read: true } : m
       ));
     },
+    onError: () => { /* silent — non-critical */ }
   });
 
   const sendMutation = useMutation({
@@ -158,8 +164,9 @@ export default function FloatingDM({ user }) {
         type: 'message',
         message: `${user.full_name || user.email} sent you a message`,
         read: false,
-      }).catch(() => {});
-    }
+      }).catch(() => { /* silent background op */ });
+    },
+    onError: () => { alert('Failed to send message.'); }
   });
 
   const handleSend = (e) => {
