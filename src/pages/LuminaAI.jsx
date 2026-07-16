@@ -56,7 +56,12 @@ export default function LuminaAI() {
 
   // ── Load user ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => { /* unauthenticated — intentional */ });
+    base44.auth.me()
+      .then(u => {
+        setUser(u);
+        if (!u) setInitializing(false); // guest: stop spinner immediately, show guest UI
+      })
+      .catch(() => setInitializing(false)); // auth error: stop spinner too
   }, []);
 
   // ── Load streak + usage ───────────────────────────────────────────────────
@@ -155,11 +160,15 @@ export default function LuminaAI() {
       } catch (err) {
         console.error('Failed to init session:', err);
         setMessages([{ role: 'assistant', content: "Hey! I'm Lumina ✨ What can I help you with today?", id: 'greeting' }]);
+        // Even if init fails, create a temporary session ID so user can still chat
+        setSessionId('temp_' + Date.now());
       }
       setInitializing(false);
     };
 
-    initSession();
+    // Safety: never leave user staring at spinner forever
+    const safetyTimer = setTimeout(() => setInitializing(false), 8000);
+    initSession().finally(() => clearTimeout(safetyTimer));
   }, [user]);
 
   // ── Auto-scroll ───────────────────────────────────────────────────────────
@@ -413,6 +422,16 @@ export default function LuminaAI() {
           <div className="flex justify-center items-center h-32">
             <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
           </div>
+        ) : !user ? (
+          <div className="flex flex-col items-center justify-center h-full gap-6 px-6 text-center">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-600 to-violet-800 flex items-center justify-center text-4xl shadow-xl shadow-purple-900/40">✨</div>
+            <div>
+              <h2 className="text-white text-2xl font-bold mb-2">Meet Lumina</h2>
+              <p className="text-zinc-400 text-sm max-w-xs">Your personal AI on LBC Hub. She remembers everything, helps with everything, and gets smarter every conversation.</p>
+            </div>
+            <a href="/login" className="px-8 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold transition-colors shadow-lg shadow-violet-900/30">Sign in to start chatting</a>
+            <p className="text-zinc-600 text-xs">Don't have an account? <a href="/register" className="text-zinc-400 hover:text-white underline">Create one free</a></p>
+          </div>
         ) : (
           <>
             {messages.map((msg, idx) => (
@@ -552,7 +571,7 @@ export default function LuminaAI() {
           </button>
 
           {/* Send */}
-          <button onClick={() => handleSend()} disabled={!input.trim() || loading || !sessionId}
+          <button onClick={() => handleSend()} disabled={!input.trim() || loading || !sessionId || !user}
             className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 flex items-center justify-center transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg">
             <Send className="w-4 h-4 text-white" />
           </button>
