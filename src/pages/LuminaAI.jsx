@@ -109,11 +109,14 @@ export default function LuminaAI() {
       setInitializing(true);
       try {
         // Look for the single persistent session
-        const sessions = await base44.entities.ChatSession.filter({ user_id: user.email, title: PERSISTENT_SESSION_LABEL });
+        // Sort ascending so we always reuse the OLDEST persistent session (has history)
+        // avoids picking newly created empty duplicates
+        const allSessions = await base44.entities.ChatSession.filter({ user_id: user.email, title: PERSISTENT_SESSION_LABEL });
+        const sessions = allSessions.sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
 
         let sid;
         if (sessions.length > 0) {
-          // Use existing persistent session
+          // Use the oldest existing persistent session (has actual message history)
           sid = sessions[0].id;
         } else {
           // First time — create the single persistent session
@@ -280,11 +283,11 @@ export default function LuminaAI() {
 
       const reply = typeof aiResponse === 'string' ? aiResponse : (aiResponse?.choices?.[0]?.message?.content || aiResponse?.content || "I'm here! What can I help you with?");
 
-      // Save AI reply
+      // Save AI reply — role must be 'lumina' (ChatMessage enum: user | lumina)
       await base44.entities.ChatMessage.create({
         user_id: user.email,
         session_id: sessionId,
-        role: 'assistant',
+        role: 'lumina',
         content: reply
       });
 
