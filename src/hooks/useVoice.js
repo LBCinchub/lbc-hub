@@ -67,6 +67,7 @@ export function useVoice({ onTranscript, onFinalTranscript, onSpeakEnd, continuo
       clearTimeout(autoSendTimer.current);
       try { rec.stop(); } catch {}
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [continuous]);
 
   const startListening = useCallback(async () => {

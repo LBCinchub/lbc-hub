@@ -1,3 +1,14 @@
+// Safe AI response parser — prevents crashes on malformed JSON
+function safeParseAIJson(raw) {
+  try {
+    if (typeof raw === 'object' && raw !== null) return raw;
+    const cleaned = raw.replace(/```json\n?/g, '').replace(/```/g, '').trim();
+    return JSON.parse(cleaned);
+  } catch {
+    return null;
+  }
+}
+
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';

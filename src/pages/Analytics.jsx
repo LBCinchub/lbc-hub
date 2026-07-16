@@ -19,14 +19,23 @@ export default function Analytics() {
     loadData();
   }, [user]);
 
+  const [dataError, setDataError] = React.useState(false);
+
   const loadData = async () => {
     setLoading(true);
+    setDataError(false);
     const thirtyDaysAgo = subDays(new Date(), 30).toISOString();
-
-    const [posts, follows] = await Promise.all([
-      base44.entities.Post.filter({ author_email: user.email }, '-created_date', 200).catch(() => []),
-      base44.entities.Follow.filter({ following_email: user.email }, '-created_date', 200).catch(() => [])
-    ]);
+    let posts, follows;
+    try {
+      [posts, follows] = await Promise.all([
+        base44.entities.Post.filter({ author_email: user.email }, '-created_date', 200).catch(() => []),
+        base44.entities.Follow.filter({ following_email: user.email }, '-created_date', 200).catch(() => [])
+      ]);
+    } catch (err) {
+      setDataError(true);
+      setLoading(false);
+      return;
+    }
 
     // Build day-by-day map for last 30 days
     const days = {};

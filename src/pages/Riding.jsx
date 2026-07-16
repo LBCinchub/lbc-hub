@@ -26,7 +26,10 @@ export default function Riding() {
 
   const notifyMutation = useMutation({
     mutationFn: (data) => base44.entities.RideNotification.create(data),
-    onSuccess: () => setSubmitted(true)
+    onSuccess: () => setSubmitted(true),
+    onError: () => {
+      alert('Failed to sign up. Please try again.');
+    }
   });
 
   const handleSubmit = (e) => {

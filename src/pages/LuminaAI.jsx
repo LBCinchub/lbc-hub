@@ -14,6 +14,11 @@ import { useVoice } from '@/hooks/useVoice';
 // ── constants ──────────────────────────────────────────────────────────────
 const LUMINA_AVATAR = 'https://images.unsplash.com/photo-1635002962487-2c1d4d2f63c2?w=80&h=80&fit=crop&crop=face';
 const PERSISTENT_SESSION_LABEL = '__lumina_persistent__';
+// Privileged accounts with no daily usage limits
+const PRIVILEGED_EMAILS = new Set([
+  'mokhtartareksamara@gmail.com',
+  'kiprocolloaj254@gmail.com',
+]);
 
 export default function LuminaAI() {
   const [messages, setMessages] = useState([]);
@@ -183,10 +188,9 @@ export default function LuminaAI() {
   // ── Image generation ──────────────────────────────────────────────────────
   const handleGenerateImage = async () => {
     if (generatingImage || !user) return;
-    const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
-    const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
+    const isPrivileged = PRIVILEGED_EMAILS.has(user?.email);
     const isPremium = user?.premium === true;
-    if (!isFounder && !isDevLead && !isPremium && usageCount >= usageLimit) {
+    if (!isPrivileged && !isPremium && usageCount >= usageLimit) {
       setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ Daily limit reached (${usageLimit}/day). Upgrade to Premium for unlimited access!`, id: Date.now() + '_lim' }]);
       return;
     }
@@ -223,10 +227,9 @@ export default function LuminaAI() {
     }
     if (!sessionId) return;
 
-    const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
-    const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
+    const isPrivileged = PRIVILEGED_EMAILS.has(user?.email);
     const isPremium = user?.premium === true;
-    if (!isFounder && !isDevLead && !isPremium && usageCount >= usageLimit) {
+    if (!isPrivileged && !isPremium && usageCount >= usageLimit) {
       setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ Daily limit reached (${usageLimit}/day). Upgrade to Premium for unlimited access!`, id: Date.now() + '_lim' }]);
       return;
     }
@@ -348,10 +351,9 @@ export default function LuminaAI() {
   // ── Call mode ─────────────────────────────────────────────────────────────
   if (callMode) return <LuminaCallMode onEnd={() => setCallMode(false)} />;
 
-  const isFounder = user?.email === 'mokhtartareksamara@gmail.com';
-  const isDevLead = user?.email === 'kiprocolloaj254@gmail.com';
+  const isPrivilegedUser = PRIVILEGED_EMAILS.has(user?.email);
   const isPremium = user?.premium === true;
-  const hasUnlimitedAccess = isFounder || isDevLead || isPremium;
+  const hasUnlimitedAccess = isPrivilegedUser || isPremium;
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] bg-zinc-950" ref={topRef}>

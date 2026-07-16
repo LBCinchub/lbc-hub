@@ -54,6 +54,9 @@ function PostJobDialog({ onSuccess }) {
       queryClient.invalidateQueries({ queryKey: ['jobs'] });
       setOpen(false);
       setForm({ title: '', company: '', location: '', category: 'technology', type: 'full-time', salary_range: '', description: '' });
+    },
+    onError: () => {
+      alert('Failed to post job. Please try again.');
     }
   });
 

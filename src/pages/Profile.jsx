@@ -108,6 +108,7 @@ export default function Profile() {
       queryClient.invalidateQueries({ queryKey: ['myPosts'] });
     } catch (err) {
       console.error('Upload failed:', err);
+      alert('Photo upload failed. Please try again.');
     }
     setUploading(false);
   };

@@ -27,13 +27,21 @@ export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let isMounted = true;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
     const loadUser = () => {
-      base44.auth.me().then(setUser).catch(() => {
-        // Retry after 3s if rate limited
-        setTimeout(loadUser, 3000);
+      base44.auth.me().then(u => {
+        if (isMounted) setUser(u);
+      }).catch(() => {
+        if (isMounted && retryCount < MAX_RETRIES) {
+          retryCount++;
+          setTimeout(loadUser, 3000);
+        }
       });
     };
     loadUser();
+    return () => { isMounted = false; };
   }, []);
 
   // Handle cross-site login from lbchub.site

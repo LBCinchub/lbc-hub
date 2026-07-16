@@ -1,3 +1,4 @@
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -103,6 +104,40 @@ const AuthenticatedApp = () => {
 };
 
 
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, info) {
+    console.error('LBC Hub crash:', error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-8">
+          <div className="text-center space-y-4">
+            <div className="text-4xl">⚡</div>
+            <h1 className="text-xl font-bold text-white">Something went wrong</h1>
+            <p className="text-zinc-400 text-sm">LBC Hub hit an unexpected error.</p>
+            <button
+              onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}
+              className="px-6 py-2 rounded-full bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 transition-colors"
+            >
+              Reload App
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function App() {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -113,6 +148,7 @@ function App() {
   }, []);
 
   return (
+    <ErrorBoundary>
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
@@ -122,6 +158,7 @@ function App() {
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>
+    </ErrorBoundary>
   )
 }
 

@@ -59,7 +59,8 @@ export default function Marketplace() {
     queryFn: () => base44.entities.Product.list('-created_date', 50),
   });
 
-  const allProducts = products.length > 0 ? products : demoProducts;
+  const isDemoData = products.length === 0;
+  const allProducts = isDemoData ? demoProducts : products;
 
   const modeCategories = MODES[mode].categories.map(c => c.id).filter(id => id !== 'all');
   const displayProducts = selectedSeller 

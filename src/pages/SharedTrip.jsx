@@ -3,12 +3,12 @@ import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Calendar, ChevronDown, ChevronUp, Clock, Sparkles, ArrowLeft, Share2, Copy, Users, Check } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } , useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
 export default function SharedTrip() {
-  const params = new URLSearchParams(window.location.search);
-  const tripId = params.get('id');
+  const [searchParams] = useSearchParams();
+  const tripId = searchParams.get('id');
   const navigate = useNavigate();
 
   const [trip, setTrip] = useState(null);

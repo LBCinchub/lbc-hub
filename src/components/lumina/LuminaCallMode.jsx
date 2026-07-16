@@ -35,13 +35,11 @@ export default function LuminaCallMode({ onEnd }) {
     recognitionRef.current = recognition;
 
     recognition.onstart = () => {
-      console.log('🎤 Started listening');
     };
 
     recognition.onresult = (event) => {
       if (!event.results.length) return;
       const transcript = event.results[0][0].transcript;
-      console.log('📝 Transcript:', transcript);
       setLiveTranscript('');
       sendToLumina(transcript);
     };
@@ -51,7 +49,6 @@ export default function LuminaCallMode({ onEnd }) {
     };
 
     recognition.onend = () => {
-      console.log('🛑 Recognition ended');
     };
 
     // Timer
@@ -79,10 +76,8 @@ export default function LuminaCallMode({ onEnd }) {
     recognitionRef.current?.stop();
 
     try {
-      console.log('📡 Sending to Lumina...');
       const res = await base44.functions.invoke('luminaChat', { action: 'send', message: text });
       const reply = res.data?.reply || "I'm here!";
-      console.log('💬 Lumina replied:', reply);
       
       setTranscript(prev => [...prev, { role: 'lumina', content: reply }]);
       setCallState('speaking');
@@ -98,7 +93,6 @@ export default function LuminaCallMode({ onEnd }) {
   };
 
   const speakReply = (text) => {
-    console.log('🔊 Speaking reply...');
     window.speechSynthesis.cancel();
     // Pause listening while Lumina speaks (so she doesn't hear herself)
     recognitionRef.current?.stop();
@@ -131,7 +125,6 @@ export default function LuminaCallMode({ onEnd }) {
 
       const speakNext = () => {
         if (sentenceIndex >= sentences.length) {
-          console.log('🔁 Looping back to listen');
           setCallState('listening');
           isBusyRef.current = false;
           // Auto-resume listening after natural pause
