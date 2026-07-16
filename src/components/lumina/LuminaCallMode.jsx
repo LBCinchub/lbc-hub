@@ -7,6 +7,7 @@ const LUMINA_AVATAR = 'https://images.unsplash.com/photo-1635002962487-2c1d4d2f6
 
 export default function LuminaCallMode({ onEnd }) {
   const [callState, setCallState] = useState('listening');
+  const [authError, setAuthError] = useState(false);
   const [transcript, setTranscript] = useState([]);
   const [elapsed, setElapsed] = useState(0);
   const [userMuted, setUserMuted] = useState(false);
@@ -46,9 +47,28 @@ export default function LuminaCallMode({ onEnd }) {
 
     recognition.onerror = (event) => {
       console.error('❌ Recognition error:', event.error);
+      if (event.error === 'not-allowed') {
+        // Mic permission denied — end the call gracefully
+        onEnd();
+        return;
+      }
+      // For transient errors (no-speech, network, aborted) — reset and resume
+      setCallState('listening');
+      isBusyRef.current = false;
+      if (!userMuted) {
+        resumeListeningRef.current = setTimeout(() => {
+          try { recognitionRef.current?.start(); } catch {}
+        }, 800);
+      }
     };
 
     recognition.onend = () => {
+      // If we ended unexpectedly while still in listening state, restart
+      if (!isBusyRef.current && !userMuted && callState === 'listening') {
+        resumeListeningRef.current = setTimeout(() => {
+          try { recognitionRef.current?.start(); } catch {}
+        }, 300);
+      }
     };
 
     // Timer
@@ -68,6 +88,15 @@ export default function LuminaCallMode({ onEnd }) {
 
   const sendToLumina = async (text) => {
     if (isBusyRef.current || !text.trim()) return;
+    // Quick auth check before every message
+    try {
+      const me = await base44.auth.me();
+      if (!me) {
+        setAuthError(true);
+        recognitionRef.current?.stop();
+        return;
+      }
+    } catch { setAuthError(true); recognitionRef.current?.stop(); return; }
     isBusyRef.current = true;
     setCallState('thinking');
     setTranscript(prev => [...prev, { role: 'user', content: text }]);
@@ -192,6 +221,18 @@ export default function LuminaCallMode({ onEnd }) {
 
   const ringColor = callState === 'speaking' ? '#7c3aed' : callState === 'thinking' ? '#f59e0b' : '#22c55e';
   const statusLabel = callState === 'speaking' ? 'Lumina is speaking...' : callState === 'thinking' ? 'Lumina is thinking...' : userMuted ? 'Microphone muted' : 'Listening...';
+
+  if (authError) return (
+    <div className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-zinc-950" style={{ background: 'radial-gradient(ellipse at top, #1e1040 0%, #09090b 60%)' }}>
+      <div className="text-center px-8">
+        <div className="text-4xl mb-4">🔐</div>
+        <p className="text-white text-xl font-semibold mb-2">Sign in to use Voice Chat</p>
+        <p className="text-white/50 text-sm mb-6">Voice calls with Lumina require an account</p>
+        <a href="/login" className="px-6 py-3 rounded-xl bg-violet-600 text-white font-medium hover:bg-violet-500 transition-colors mr-3">Sign In</a>
+        <button onClick={onEnd} className="px-6 py-3 rounded-xl bg-white/10 text-white font-medium hover:bg-white/20 transition-colors">Go Back</button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 z-[99999] flex flex-col items-center justify-between bg-zinc-950" style={{ background: 'radial-gradient(ellipse at top, #1e1040 0%, #09090b 60%)' }}>

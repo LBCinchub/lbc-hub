@@ -396,7 +396,10 @@ export default function LuminaAI() {
             🎬 Video
           </button>
           <button
-            onClick={() => setCallMode(true)}
+            onClick={() => {
+              if (!user) { alert('Please sign in to use voice chat with Lumina.'); return; }
+              setCallMode(true);
+            }}
             className="w-8 h-8 rounded-full bg-white/5 hover:bg-purple-600/20 flex items-center justify-center transition-colors group"
           >
             <Phone className="w-4 h-4 text-zinc-400 group-hover:text-purple-400" />
