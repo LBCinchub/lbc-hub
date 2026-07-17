@@ -261,7 +261,8 @@ export default function Layout({ children, currentPageName }) {
       {/* Lumina Chat Widget — global on every page, including the Lumina AI page.
           Intentional "twin" experience: the floating widget is the quick, always-there
           Lumina, and the full Lumina AI page is the deep-dive space — both coexist by design. */}
-      <LuminaChatWidget />
+      {/* Exclude floating widget from /LuminaAI — that page IS Lumina, no need for the widget */}
+      {!window.location.href.includes('LuminaAI') && !window.location.href.includes('lumina-ai') && <LuminaChatWidget />}
 
       {/* Main Content */}
       <main className="pt-16 bg-zinc-950">

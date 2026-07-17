@@ -9,7 +9,7 @@ const LUMINA_BOT_EMAIL = 'lumina.ai@lbchub.ai';
 const LUMINA_ULTRA_EMAIL = 'lumina.ultra@lbchub.ai';
 
 const LUMINA_AI_EMAIL = LUMINA_BOT_EMAIL;
-const LUMINA_ULTRA_EMAIL = LUMINA_ULTRA_EMAIL;
+// LUMINA_ULTRA_EMAIL already declared above — removed duplicate
 
 const BOT_META = {
   [LUMINA_AI_EMAIL]: {
